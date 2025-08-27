@@ -5,16 +5,17 @@ pub struct IndexedVarResolver
     vars: Vec<Vec<f64>>,
 }
 
-const ALPHABET_SIZE: usize = ('z' as u8 - 'a' as u8 + 1) as usize;
-const ALPHABET_START_U8: u8 = 'a' as u8;
-const ALPHABET_START_USIZE: usize = 'a' as usize;
+const ALPHABET_SIZE: usize = (b'z' - b'a' + 1) as usize;
+const ALPHABET_START_USIZE: usize = b'a' as usize;
 
 impl VarResolver for IndexedVarResolver
 {
     fn get(&self, name: &str) -> Option<f64>
     {
-        let letter = (name.chars().next().unwrap() as u8 - ALPHABET_START_U8) as usize;
-        let idx = name[1..].parse::<usize>().ok()?;
+        let name_bytes = name.as_bytes();
+
+        let letter = (name_bytes[0] as usize - ALPHABET_START_USIZE);
+        let idx = str_to_usize(&name_bytes[1..]);
         Some(self.vars[letter][idx])
     }
 }
@@ -37,4 +38,15 @@ impl IndexedVarResolver
     {
         self.vars[identifier as usize - ALPHABET_START_USIZE][index] = value;
     }
+}
+
+fn str_to_usize(s: &[u8]) -> usize
+{
+    let mut result = 0;
+    
+    for &byte in s {
+        result = result * 10 + (byte - b'0');
+    }
+    
+    result as usize
 }
