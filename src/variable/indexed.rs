@@ -2,7 +2,7 @@ use crate::prelude::VarResolver;
 
 pub struct IndexedVarResolver 
 {
-    
+    vars: Vec<f64>,
 }
 
 impl VarResolver for IndexedVarResolver 
@@ -14,5 +14,15 @@ impl VarResolver for IndexedVarResolver
 
 impl IndexedVarResolver 
 {
+    pub fn new(len: usize) -> Self {
+        Self {
+            vars: vec![0.0; len],
+        }
+    }
     
+    pub fn set(&mut self, index: usize, value: f64) {
+        if index < self.vars.len() {
+            self.vars[index] = value;
+        }
+    }
 }

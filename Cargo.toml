@@ -5,3 +5,10 @@ edition = "2024"
 
 [dependencies]
 thiserror = { version = "2.0.16" }
+
+[dev-dependencies]
+criterion = { version = "0.7.0" }
+
+[[bench]]
+name = "fee benchmark"
+harness = false
