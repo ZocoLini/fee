@@ -12,4 +12,7 @@ impl VarResolver for IndexedVarResolver
     }
 }
 
-impl IndexedVarResolver {}
+impl IndexedVarResolver 
+{
+    
+}
