@@ -1,7 +1,7 @@
-use fee::{DefaultFnResolver, DefaultVarResolver, RPNEvaluator, prelude::*};
+use fee::{prelude::*, DefaultFnResolver, DefaultVarResolver, IndexedVarResolver, RPNEvaluator};
 
 #[test]
-fn test_default_eval_1()
+fn test_rpn_eval_without_vars()
 {
     let var_resolver = DefaultVarResolver::new();
     let fn_resolver = DefaultFnResolver::new();
@@ -18,7 +18,7 @@ fn test_default_eval_1()
 }
 
 #[test]
-fn test_default_eval_2()
+fn test_rpn_eval_with_vars()
 {
     let mut var_resolver = DefaultVarResolver::new();
 
@@ -29,6 +29,26 @@ fn test_default_eval_2()
     let context = Context::new(var_resolver, fn_resolver);
 
     let expr = "(2 + 4) * 6 / (p1 + 2)";
+
+    let evaluator = RPNEvaluator::new(expr, &context).unwrap();
+
+    let result = evaluator.eval();
+
+    assert_eq!(result, 6.0);
+}
+
+#[test]
+fn test_rpn_eval_2_with_indexed_var_resolver()
+{
+    let mut var_resolver = IndexedVarResolver::new(1);
+
+    var_resolver.set(0, 4.0);
+
+    let fn_resolver = DefaultFnResolver::new();
+
+    let context = Context::new(var_resolver, fn_resolver);
+
+    let expr = "(2 + 4) * 6 / (_0 + 2)";
 
     let evaluator = RPNEvaluator::new(expr, &context).unwrap();
 
