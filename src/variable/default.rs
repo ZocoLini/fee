@@ -20,6 +20,21 @@ impl DefaultVarResolver<Unlocked>
 {
     pub fn new() -> Self
     {
+        let mut hashmap = HashMap::new();
+
+        hashmap.insert("pi".to_string(), std::f64::consts::PI);
+        hashmap.insert("e".to_string(), std::f64::consts::E);
+        hashmap.insert("tau".to_string(), std::f64::consts::TAU);
+        hashmap.insert("sqrt2".to_string(), std::f64::consts::SQRT_2);
+
+        DefaultVarResolver {
+            vars: hashmap,
+            state: Unlocked,
+        }
+    }
+
+    pub fn new_empty() -> Self
+    {
         DefaultVarResolver {
             vars: HashMap::new(),
             state: Unlocked,

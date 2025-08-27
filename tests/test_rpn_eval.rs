@@ -1,4 +1,4 @@
-use fee::{prelude::*, DefaultFnResolver, DefaultVarResolver, IndexedVarResolver, RPNEvaluator};
+use fee::{DefaultFnResolver, DefaultVarResolver, IndexedVarResolver, RPNEvaluator, prelude::*};
 
 #[test]
 fn test_rpn_eval_without_vars()

@@ -1,9 +1,10 @@
 use std::hint::black_box;
 
-use criterion::{Criterion, criterion_group, criterion_main, BatchSize};
+use criterion::{BatchSize, Criterion, criterion_group, criterion_main};
 use fee::{DefaultVarResolver, IndexedVarResolver, prelude::*};
 
-fn default_var_resolver(c: &mut Criterion) {
+fn default_var_resolver(c: &mut Criterion)
+{
     c.bench_function("default var resolver", |b| {
         b.iter_batched(
             || {
@@ -23,7 +24,8 @@ fn default_var_resolver(c: &mut Criterion) {
     });
 }
 
-fn indexed_var_resolver(c: &mut Criterion) {
+fn indexed_var_resolver(c: &mut Criterion)
+{
     c.bench_function("indexed var resolver", |b| {
         b.iter_batched(
             || {
