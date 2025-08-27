@@ -1,4 +1,4 @@
-use fee::prelude::*;
+use fee::{DefaultFnResolver, DefaultVarResolver, RPNEvaluator, prelude::*};
 
 #[test]
 fn test_default_eval_1()
@@ -7,7 +7,7 @@ fn test_default_eval_1()
     let fn_resolver = DefaultFnResolver::new();
 
     let context = Context::new(var_resolver, fn_resolver);
-    
+
     let expr = "(2 + 4) * 6";
 
     let evaluator = RPNEvaluator::new(expr, &context).unwrap();
