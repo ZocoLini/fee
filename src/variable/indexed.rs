@@ -9,11 +9,8 @@ impl VarResolver for IndexedVarResolver
 {
     fn get(&self, name: &str) -> Option<f64>
     {
-        self.vars
-            .get(name[1..].parse::<usize>().expect(&format!(
-                "Not valid name for indexed variable resolver: {name}"
-            )))
-            .copied()
+        let idx = name[1..].parse::<usize>().ok()? - 1;
+        self.vars.get(idx).copied()
     }
 }
 
