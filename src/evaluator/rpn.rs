@@ -1,4 +1,4 @@
-use crate::{prelude::*, Error};
+use crate::{Error, prelude::*};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Operator
@@ -53,7 +53,7 @@ pub enum Token<'e>
 pub struct RPNEvaluator<'e, 'c, V: VarResolver, F: FnResolver>
 {
     expr: &'e str,
-    ctx: &'c Context< V, F>,
+    ctx: &'c Context<V, F>,
     rpn: Vec<Token<'e>>,
 }
 

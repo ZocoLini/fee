@@ -1,9 +1,9 @@
 #![allow(unused)]
 
-pub mod prelude;
 mod error;
 mod evaluator;
 mod function;
+pub mod prelude;
 mod variable;
 
 pub use crate::error::Error;

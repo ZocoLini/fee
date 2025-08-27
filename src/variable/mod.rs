@@ -8,4 +8,3 @@ pub trait VarResolver
 {
     fn get(&self, name: &str) -> Option<f64>;
 }
-
