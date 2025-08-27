@@ -252,6 +252,7 @@ fn shunting_yard<'e>(tokens: &[Token<'e>]) -> Vec<Token<'e>>
     output
 }
 
+#[cfg(test)]
 mod tests
 {
     use super::*;

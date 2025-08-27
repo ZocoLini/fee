@@ -7,3 +7,6 @@ mod function;
 mod variable;
 
 pub use crate::error::Error;
+
+pub struct Locked;
+pub struct Unlocked;

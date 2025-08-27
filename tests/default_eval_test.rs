@@ -25,7 +25,7 @@ fn default_eval_test_2()
 {
     let mut var_resolver = DefaultVarResolver::new();
     
-    var_resolver.add_function("p1".to_string(), 4.0);
+    var_resolver.add_var("p1".to_string(), 4.0);
     
     let fn_resolver = DefaultFnResolver::new();
     
