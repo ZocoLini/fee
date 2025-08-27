@@ -1,13 +1,13 @@
 use fee::prelude::*;
 
 #[test]
-fn default_eval_test_1()
+fn test_default_eval_1()
 {
     let var_resolver = DefaultVarResolver::new();
     let fn_resolver = DefaultFnResolver::new();
 
     let context = Context::new(var_resolver, fn_resolver);
-
+    
     let expr = "(2 + 4) * 6";
 
     let evaluator = RPNEvaluator::new(expr, &context).unwrap();
@@ -18,7 +18,7 @@ fn default_eval_test_1()
 }
 
 #[test]
-fn default_eval_test_2()
+fn test_default_eval_2()
 {
     let mut var_resolver = DefaultVarResolver::new();
 

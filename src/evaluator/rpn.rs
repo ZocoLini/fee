@@ -258,7 +258,7 @@ mod tests
     use super::*;
 
     #[test]
-    fn lex_test()
+    fn test_lex()
     {
         let tokens = lex("2 + 3 * 4").unwrap();
         assert_eq!(
@@ -274,7 +274,7 @@ mod tests
     }
 
     #[test]
-    fn shunting_yard_test()
+    fn test_shunting_yard()
     {
         let tokens = vec![
             Token::Number(2.0),
