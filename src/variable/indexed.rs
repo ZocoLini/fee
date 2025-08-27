@@ -2,31 +2,39 @@ use crate::prelude::VarResolver;
 
 pub struct IndexedVarResolver
 {
-    vars: Vec<f64>,
+    vars: Vec<Vec<f64>>,
 }
+
+const ALPHABET_SIZE: usize = ('z' as u8 - 'a' as u8 + 1) as usize;
+const ALPHABET_START_U8: u8 = 'a' as u8;
+const ALPHABET_START_USIZE: usize = 'a' as usize;
 
 impl VarResolver for IndexedVarResolver
 {
     fn get(&self, name: &str) -> Option<f64>
     {
-        let idx = name[1..].parse::<usize>().ok()? - 1;
-        self.vars.get(idx).copied()
+        let letter = (name.chars().next().unwrap() as u8 - ALPHABET_START_U8) as usize;
+        let idx = name[1..].parse::<usize>().ok()?;
+        Some(self.vars[letter][idx])
     }
 }
 
 impl IndexedVarResolver
 {
-    pub fn new(len: usize) -> Self
+    pub fn new() -> Self
     {
         Self {
-            vars: vec![0.0; len],
+            vars: vec![vec![0.0; 0]; ALPHABET_SIZE],
         }
     }
 
-    pub fn set(&mut self, index: usize, value: f64)
+    pub fn add_identifier(&mut self, identifier: char, len: usize)
     {
-        if index < self.vars.len() {
-            self.vars[index] = value;
-        }
+        self.vars[identifier as usize - ALPHABET_START_USIZE].resize(len, 0.0);
+    }
+
+    pub fn set(&mut self, identifier: char, index: usize, value: f64)
+    {
+        self.vars[identifier as usize - ALPHABET_START_USIZE][index] = value;
     }
 }
