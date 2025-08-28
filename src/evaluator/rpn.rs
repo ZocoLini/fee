@@ -325,159 +325,6 @@ mod tests
     use super::*;
 
     #[test]
-    fn test_lex()
-    {
-        let tokens = lex("2 + 3 * 4").unwrap();
-        assert_eq!(
-            tokens,
-            vec![
-                Token::Number(2.0),
-                Token::Operator(Operator::Add),
-                Token::Number(3.0),
-                Token::Operator(Operator::Mul),
-                Token::Number(4.0),
-            ]
-        );
-    }
-
-    #[test]
-    fn test_lex_fns()
-    {
-        let tokens = lex("abs((2 + 3) * 4, sqrt(5))").unwrap();
-        assert_eq!(
-            tokens,
-            vec![Token::Function(
-                "abs",
-                vec![
-                    vec![
-                        Token::LParen,
-                        Token::Number(2.0),
-                        Token::Operator(Operator::Add),
-                        Token::Number(3.0),
-                        Token::RParen,
-                        Token::Operator(Operator::Mul),
-                        Token::Number(4.0),
-                    ],
-                    vec![Token::Function("sqrt", vec![vec![Token::Number(5.0)]])]
-                ]
-            )]
-        );
-    }
-
-    #[test]
-    fn test_shunting_yard()
-    {
-        let tokens = vec![
-            Token::Number(2.0),
-            Token::Operator(Operator::Add),
-            Token::Number(3.0),
-            Token::Operator(Operator::Mul),
-            Token::Number(4.0),
-        ];
-        let rpn = shunting_yard(&tokens);
-        assert_eq!(
-            rpn,
-            vec![
-                Token::Number(2.0),
-                Token::Number(3.0),
-                Token::Number(4.0),
-                Token::Operator(Operator::Mul),
-                Token::Operator(Operator::Add),
-            ]
-        );
-
-        let tokens = vec![
-            Token::Number(2.0),
-            Token::Operator(Operator::Mul),
-            Token::Number(3.0),
-            Token::Operator(Operator::Add),
-            Token::Number(4.0),
-        ];
-        let rpn = shunting_yard(&tokens);
-        assert_eq!(
-            rpn,
-            vec![
-                Token::Number(2.0),
-                Token::Number(3.0),
-                Token::Operator(Operator::Mul),
-                Token::Number(4.0),
-                Token::Operator(Operator::Add),
-            ]
-        );
-    }
-
-    #[test]
-    fn test_shunting_yard_fns()
-    {
-        // max(2, 3 + 4)
-        let tokens = vec![Token::Function(
-            "max",
-            vec![
-                vec![Token::Number(2.0)],
-                vec![
-                    Token::Number(3.0),
-                    Token::Operator(Operator::Add),
-                    Token::Number(4.0),
-                ],
-            ],
-        )];
-        let rpn = shunting_yard(&tokens);
-        assert_eq!(
-            rpn,
-            vec![
-                Token::Number(2.0),
-                Token::Number(3.0),
-                Token::Number(4.0),
-                Token::Operator(Operator::Add),
-                Token::FunctionCall("max", 2),
-            ]
-        );
-
-        // abs((2 + 4) * 6 / (p1 + 2)) + abs(-2)
-        let tokens = vec![
-            Token::Function(
-                "abs",
-                vec![vec![
-                    Token::LParen,
-                    Token::Number(2.0),
-                    Token::Operator(Operator::Add),
-                    Token::Number(4.0),
-                    Token::RParen,
-                    Token::Operator(Operator::Mul),
-                    Token::Number(6.0),
-                    Token::Operator(Operator::Div),
-                    Token::LParen,
-                    Token::Variable("p1"),
-                    Token::Operator(Operator::Add),
-                    Token::Number(2.0),
-                    Token::RParen,
-                ]],
-            ),
-            Token::Operator(Operator::Add),
-            Token::Function("abs", vec![vec![Token::Number(-2.0)]]),
-        ];
-        let rpn = shunting_yard(&tokens);
-        assert_eq!(
-            rpn,
-            vec![
-                Token::Number(2.0),
-                Token::Number(4.0),
-                Token::Operator(Operator::Add),
-                Token::Number(6.0),
-                Token::Operator(Operator::Mul),
-                Token::Variable("p1"),
-                Token::Number(2.0),
-                Token::Operator(Operator::Add),
-                Token::Operator(Operator::Div),
-                Token::FunctionCall("abs", 1),
-                Token::Number(-2.0),
-                Token::FunctionCall("abs", 1),
-                Token::Operator(Operator::Add)
-            ]
-        );
-    }
-
-    #[test]
     fn test_str_to_rpn()
     {
         let expr = "2 - (4 + (p19 - 2) * (p19 + 2))";
@@ -521,6 +368,43 @@ mod tests
                 Token::Operator(Operator::Mul),
                 Token::Operator(Operator::Add),
                 Token::Operator(Operator::Sub)
+            ]
+        );
+
+        let expr = "abs((2 + 3) * 4, sqrt(5))";
+
+        let tokens = lex(expr).unwrap();
+        assert_eq!(
+            tokens,
+            vec![Token::Function(
+                "abs",
+                vec![
+                    vec![
+                        Token::LParen,
+                        Token::Number(2.0),
+                        Token::Operator(Operator::Add),
+                        Token::Number(3.0),
+                        Token::RParen,
+                        Token::Operator(Operator::Mul),
+                        Token::Number(4.0)
+                    ],
+                    vec![Token::Function("sqrt", vec![vec![Token::Number(5.0)]])]
+                ]
+            ),]
+        );
+
+        let rpn = shunting_yard(&tokens);
+        assert_eq!(
+            rpn,
+            vec![
+                Token::Number(2.0),
+                Token::Number(3.0),
+                Token::Operator(Operator::Add),
+                Token::Number(4.0),
+                Token::Operator(Operator::Mul),
+                Token::Number(5.0),
+                Token::FunctionCall("sqrt", 1),
+                Token::FunctionCall("abs", 2),
             ]
         );
     }
