@@ -1,4 +1,4 @@
-use fee::{*, prelude::*};
+use fee::{prelude::*, *};
 
 #[test]
 fn test_rpn_eval_with_indexed_var_resolver()
@@ -40,7 +40,7 @@ fn test_rpn_eval_with_vars_and_fn()
     let evaluator = RPNEvaluator::new(expr, &context).unwrap();
     let result = evaluator.eval();
     assert_eq!(result, 8.0);
-    
+
     let expr = "(2 + 4) * 6 / (p1 + 2)";
     let evaluator = RPNEvaluator::new(expr, &context).unwrap();
     let result = evaluator.eval();
