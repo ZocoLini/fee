@@ -1,6 +1,6 @@
-use std::ops::Deref;
+use std::{borrow::Cow, ops::Deref};
 
-use crate::{Error, prelude::*};
+use crate::{Error, ParseError, prelude::*};
 
 mod rpn;
 pub use rpn::RPNEvaluator;
@@ -77,7 +77,7 @@ impl<'e, T> Deref for Expr<'e, T>
 
 impl<'e> Expr<'e, Infix>
 {
-    fn new(input: &'e str) -> Result<Self, crate::Error>
+    fn new(input: &'e str) -> Result<Self, crate::Error<'e>>
     {
         let mut tokens: Vec<Token<'e>> = Vec::new();
         let mut chars = input.char_indices().peekable();
@@ -120,9 +120,9 @@ impl<'e> Expr<'e, Infix>
                     }
 
                     let num_str = &input[start_index..end_index];
-                    let value: f64 = num_str
-                        .parse()
-                        .map_err(|_| Error::InvalidNumber(format!("{num_str} at index {i}")))?;
+                    let value: f64 = num_str.parse().map_err(|_| {
+                        Error::ParseError(ParseError::InvalidNumber(Cow::Borrowed(num_str), i))
+                    })?;
                     tokens.push(Token::Number(value * multiplier))
                 }
 
@@ -209,7 +209,10 @@ impl<'e> Expr<'e, Infix>
                 }
 
                 other => {
-                    return Err(Error::UnexpectedToken(format!("{other} at index {i}")));
+                    return Err(Error::ParseError(ParseError::UnexpectedChar(
+                        Cow::Owned(other),
+                        i,
+                    )));
                 }
             }
         }
@@ -306,6 +309,35 @@ mod tests
                     }
                 ]
             ),]
+        );
+    }
+
+    #[test]
+    fn test_errors()
+    {
+        // TODO: The indices of the errors are relative to the start of the function due 
+        //  to the recursion used to parse the expression
+        
+        let expr = "abs((2.0.0 + 3) * 4, sqrt(5))";
+        let result = Expr::new(expr);
+
+        assert_eq!(
+            result,
+            Err(Error::ParseError(ParseError::InvalidNumber(
+                Cow::Borrowed("2.0.0"),
+                1
+            )))
+        );
+        
+        let expr = "abs((2 + 3) &* 4, sqrt(5))";
+        let result = Expr::new(expr);
+
+        assert_eq!(
+            result,
+            Err(Error::ParseError(ParseError::UnexpectedChar(
+                Cow::Owned('&'),
+                8
+            )))
         );
     }
 }

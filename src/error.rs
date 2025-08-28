@@ -1,19 +1,33 @@
+use std::borrow::Cow;
+
 use thiserror::Error;
 
-#[derive(Debug, Error)]
-pub enum Error
+#[derive(Debug, Error, PartialEq)]
+pub enum Error<'a>
 {
-    #[error("unknown variable: {0}")]
-    UnknownVariable(String),
+    #[error("parse error: {0}")]
+    ParseError(ParseError<'a>),
 
-    #[error("unknown operator: {0}")]
-    UnknownOperator(String),
+    #[error("eval error: {0}")]
+    EvalError(EvalError<'a>),
+}
 
-    #[error("unknown function: {0}")]
-    UnknownFunction(String),
+#[derive(Debug, Error, PartialEq)]
+pub enum ParseError<'a>
+{
+    #[error("unexpected character '{0}' at {1}")]
+    UnexpectedChar(Cow<'a, char>, usize),
 
-    #[error("unexpected token: {0}")]
-    UnexpectedToken(String),
-    #[error("invalid number: {0}")]
-    InvalidNumber(String),
+    #[error("invalid number '{0}' at {1}")]
+    InvalidNumber(Cow<'a, str>, usize),
+}
+
+#[derive(Debug, Error, PartialEq)]
+pub enum EvalError<'a>
+{
+    #[error("unknown variable '{0}'")]
+    UnknownVariable(Cow<'a, str>),
+
+    #[error("unknown function '{0}'")]
+    UnknownFunction(Cow<'a, str>),
 }

@@ -6,7 +6,7 @@ mod function;
 pub mod prelude;
 mod variable;
 
-pub use crate::error::Error;
+pub use crate::error::*;
 
 pub use crate::variable::{DefaultVarResolver, IndexedVarResolver};
 

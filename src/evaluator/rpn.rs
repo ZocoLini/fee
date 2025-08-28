@@ -124,7 +124,7 @@ pub struct RPNEvaluator<'e, 'c, V: VarResolver, F: FnResolver>
 
 impl<'e, 'c, V: VarResolver, F: FnResolver> RPNEvaluator<'e, 'c, V, F>
 {
-    pub fn new(expr: &'e str, ctx: &'c Context<V, F>) -> Result<Self, crate::Error>
+    pub fn new(expr: &'e str, ctx: &'c Context<V, F>) -> Result<Self, crate::Error<'e>>
     {
         let infix_expr = Expr::new(expr)?;
         let rpn_expr = Expr::from(infix_expr);
