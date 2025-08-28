@@ -38,14 +38,16 @@ impl Operator
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Token<'e>
 {
     Number(f64),
     Variable(&'e str),
     /// name and number of arguments
-    Function(&'e str, usize),
+    FunctionCall(&'e str, usize),
+    Function(&'e str, Vec<Vec<Token<'e>>>),
     Operator(Operator),
+    Comma,
     LParen,
     RParen,
 }
@@ -79,7 +81,7 @@ impl<'e, 'c, V: VarResolver, F: FnResolver> Evaluator for RPNEvaluator<'e, 'c, V
                 Token::Variable(name) => {
                     stack.push(self.ctx.vals.get(*name).expect("Missing variable"))
                 }
-                Token::Function(name, argc) => {
+                Token::FunctionCall(name, argc) => {
                     if *argc > stack.len() {
                         panic!("Not enough args to call {name}")
                     }
@@ -123,13 +125,33 @@ fn lex<'e>(input: &'e str) -> Result<Vec<Token<'e>>, crate::Error>
 
     while let Some(&(i, c)) = chars.peek() {
         match c {
+            ',' => {
+                chars.next();
+                tokens.push(Token::Comma);
+            }
+
             // ignoring whitespace
             ' ' | '\t' | '\n' => {
                 chars.next();
             }
 
-            // numbers
-            '0'..='9' | '.' => {
+            // TODO: The parser is expected to fail parsing 2 -4.
+            //  State machine should solve this issue detecting if we are expecting an operator or a number
+            // numbers and substract operator
+            '0'..='9' | '.' | '-' => {
+                chars.next();
+
+                if c == '-'
+                    && chars
+                        .peek()
+                        .map_or(true, |&(_, next)| !next.is_ascii_digit() && next != '.')
+                {
+                    tokens.push(Token::Operator(Operator::Sub));
+                    continue;
+                }
+
+                let multiplier = if c == '-' { -1.0 } else { 1.0 };
+
                 let start_index = i;
                 let mut end_index = input.len();
 
@@ -146,33 +168,64 @@ fn lex<'e>(input: &'e str) -> Result<Vec<Token<'e>>, crate::Error>
                 let value: f64 = num_str
                     .parse()
                     .map_err(|_| Error::InvalidNumber(format!("{num_str} at index {i}")))?;
-                tokens.push(Token::Number(value));
+                tokens.push(Token::Number(value * multiplier))
             }
 
-            // variables
+            // variables or functions
             'a'..='z' | 'A'..='Z' | '_' => {
                 let start_index = i;
                 let mut end_index = input.len();
 
-                while let Some(&(i, d)) = chars.peek() {
-                    if d.is_alphanumeric() || d == '_' {
-                        chars.next();
-                    } else {
-                        end_index = i;
-                        break;
-                    }
-                }
+                let token = loop {
+                    if let Some(&(i, d)) = chars.peek() {
+                        if d.is_alphanumeric() || d == '_' {
+                            chars.next();
+                            continue;
+                        }
 
-                tokens.push(Token::Variable(&input[start_index..end_index]));
+                        // function found
+                        if d == '(' || d == '[' {
+                            let fn_name = &input[start_index..i];
+                            chars.next();
+
+                            let mut depth = 1;
+                            let start_index = i + 1; // Skipping the opening bracket of the function call
+                            let mut end_index = input.len();
+
+                            while let Some((i, d)) = chars.next() {
+                                if d == '(' || d == '[' {
+                                    depth += 1;
+                                } else if d == ')' || d == ']' {
+                                    depth -= 1;
+                                }
+
+                                if depth == 0 {
+                                    end_index = i;
+                                    break;
+                                }
+                            }
+
+                            let fun_params = lex(&input[start_index..end_index])?;
+                            let splitted_fun_params: Vec<Vec<Token>> = fun_params
+                                .split(|tok| *tok == Token::Comma)
+                                .map(|tokens| tokens.to_vec())
+                                .collect();
+
+                            break Token::Function(fn_name, splitted_fun_params);
+                        }
+
+                        break Token::Variable(&input[start_index..i]);
+                    } else {
+                        break Token::Variable(&input[start_index..i]);
+                    }
+                };
+
+                tokens.push(token);
             }
 
             // operators and parentheses
             '+' => {
                 tokens.push(Token::Operator(Operator::Add));
-                chars.next();
-            }
-            '-' => {
-                tokens.push(Token::Operator(Operator::Sub));
                 chars.next();
             }
             '*' => {
@@ -213,7 +266,7 @@ fn shunting_yard<'e>(tokens: &[Token<'e>]) -> Vec<Token<'e>>
     for tok in tokens {
         match tok {
             Token::Number(_) | Token::Variable(_) => {
-                output.push(*tok);
+                output.push(tok.clone());
             }
             Token::Operator(op) => {
                 while let Some(Token::Operator(top)) = ops.last() {
@@ -229,9 +282,9 @@ fn shunting_yard<'e>(tokens: &[Token<'e>]) -> Vec<Token<'e>>
                         break;
                     }
                 }
-                ops.push(*tok);
+                ops.push(tok.clone());
             }
-            Token::LParen => ops.push(*tok),
+            Token::LParen => ops.push(tok.clone()),
             Token::RParen => {
                 while let Some(top) = ops.pop() {
                     if let Token::LParen = top {
@@ -241,7 +294,21 @@ fn shunting_yard<'e>(tokens: &[Token<'e>]) -> Vec<Token<'e>>
                     }
                 }
             }
-            Token::Function(_, _) => todo!("Function support not implemented yet"),
+            Token::Function(name, args) => {
+                let fun_call_token = Token::FunctionCall(name, args.len());
+
+                let rpn_args = args
+                    .into_iter()
+                    .map(|arg_tokens| shunting_yard(arg_tokens))
+                    .collect::<Vec<_>>();
+
+                rpn_args
+                    .iter()
+                    .for_each(|rpn_arg| output.extend_from_slice(rpn_arg));
+
+                output.push(fun_call_token);
+            }
+            _ => panic!("Unexpected token"),
         }
     }
 
@@ -270,6 +337,30 @@ mod tests
                 Token::Operator(Operator::Mul),
                 Token::Number(4.0),
             ]
+        );
+    }
+
+    #[test]
+    fn test_lex_fns()
+    {
+        let tokens = lex("abs((2 + 3) * 4, sqrt(5))").unwrap();
+        assert_eq!(
+            tokens,
+            vec![Token::Function(
+                "abs",
+                vec![
+                    vec![
+                        Token::LParen,
+                        Token::Number(2.0),
+                        Token::Operator(Operator::Add),
+                        Token::Number(3.0),
+                        Token::RParen,
+                        Token::Operator(Operator::Mul),
+                        Token::Number(4.0),
+                    ],
+                    vec![Token::Function("sqrt", vec![vec![Token::Number(5.0)]])]
+                ]
+            )]
         );
     }
 
@@ -311,6 +402,125 @@ mod tests
                 Token::Operator(Operator::Mul),
                 Token::Number(4.0),
                 Token::Operator(Operator::Add),
+            ]
+        );
+    }
+
+    #[test]
+    fn test_shunting_yard_fns()
+    {
+        // max(2, 3 + 4)
+        let tokens = vec![Token::Function(
+            "max",
+            vec![
+                vec![Token::Number(2.0)],
+                vec![
+                    Token::Number(3.0),
+                    Token::Operator(Operator::Add),
+                    Token::Number(4.0),
+                ],
+            ],
+        )];
+        let rpn = shunting_yard(&tokens);
+        assert_eq!(
+            rpn,
+            vec![
+                Token::Number(2.0),
+                Token::Number(3.0),
+                Token::Number(4.0),
+                Token::Operator(Operator::Add),
+                Token::FunctionCall("max", 2),
+            ]
+        );
+
+        // abs((2 + 4) * 6 / (p1 + 2)) + abs(-2)
+        let tokens = vec![
+            Token::Function(
+                "abs",
+                vec![vec![
+                    Token::LParen,
+                    Token::Number(2.0),
+                    Token::Operator(Operator::Add),
+                    Token::Number(4.0),
+                    Token::RParen,
+                    Token::Operator(Operator::Mul),
+                    Token::Number(6.0),
+                    Token::Operator(Operator::Div),
+                    Token::LParen,
+                    Token::Variable("p1"),
+                    Token::Operator(Operator::Add),
+                    Token::Number(2.0),
+                    Token::RParen,
+                ]],
+            ),
+            Token::Operator(Operator::Add),
+            Token::Function("abs", vec![vec![Token::Number(-2.0)]]),
+        ];
+        let rpn = shunting_yard(&tokens);
+        assert_eq!(
+            rpn,
+            vec![
+                Token::Number(2.0),
+                Token::Number(4.0),
+                Token::Operator(Operator::Add),
+                Token::Number(6.0),
+                Token::Operator(Operator::Mul),
+                Token::Variable("p1"),
+                Token::Number(2.0),
+                Token::Operator(Operator::Add),
+                Token::Operator(Operator::Div),
+                Token::FunctionCall("abs", 1),
+                Token::Number(-2.0),
+                Token::FunctionCall("abs", 1),
+                Token::Operator(Operator::Add)
+            ]
+        );
+    }
+
+    #[test]
+    fn test_str_to_rpn()
+    {
+        let expr = "2 - (4 + (p19 - 2) * (p19 + 2))";
+
+        let tokens = lex(expr).unwrap();
+        assert_eq!(
+            tokens,
+            vec![
+                Token::Number(2.0),
+                Token::Operator(Operator::Sub),
+                Token::LParen,
+                Token::Number(4.0),
+                Token::Operator(Operator::Add),
+                Token::LParen,
+                Token::Variable("p19"),
+                Token::Operator(Operator::Sub),
+                Token::Number(2.0),
+                Token::RParen,
+                Token::Operator(Operator::Mul),
+                Token::LParen,
+                Token::Variable("p19"),
+                Token::Operator(Operator::Add),
+                Token::Number(2.0),
+                Token::RParen,
+                Token::RParen,
+            ]
+        );
+
+        let rpn = shunting_yard(&tokens);
+        assert_eq!(
+            rpn,
+            vec![
+                Token::Number(2.0),
+                Token::Number(4.0),
+                Token::Variable("p19"),
+                Token::Number(2.0),
+                Token::Operator(Operator::Sub),
+                Token::Variable("p19"),
+                Token::Number(2.0),
+                Token::Operator(Operator::Add),
+                Token::Operator(Operator::Mul),
+                Token::Operator(Operator::Add),
+                Token::Operator(Operator::Sub)
             ]
         );
     }

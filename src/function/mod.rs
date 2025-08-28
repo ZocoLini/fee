@@ -27,7 +27,7 @@ impl DefaultFnResolver
         }
     }
 
-    pub fn add_function(&mut self, name: String, func: fn(&[f64]) -> f64)
+    pub fn add_fn(&mut self, name: String, func: fn(&[f64]) -> f64)
     {
         self.functions.insert(name, func);
     }

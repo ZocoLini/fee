@@ -27,7 +27,7 @@ fn indexed_var_resolver(c: &mut Criterion)
         for i in 0..100 {
             resolver.set('p', i, 2.0);
         }
-        
+
         b.iter(|| {
             black_box(resolver.get("p99").unwrap());
             black_box(resolver.get("p50").unwrap());
