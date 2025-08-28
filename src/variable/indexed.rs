@@ -44,10 +44,10 @@ impl IndexedVarResolver
 fn str_to_usize(s: &[u8]) -> usize
 {
     let mut result = 0;
-    
+
     for &byte in s {
         result = result * 10 + (byte - b'0');
     }
-    
+
     result as usize
 }

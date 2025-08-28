@@ -27,6 +27,7 @@ fn indexed_var_resolver(c: &mut Criterion)
         for i in 0..100 {
             resolver.set('p', i, 2.0);
         }
+        
         b.iter(|| {
             black_box(resolver.get("p99").unwrap());
             black_box(resolver.get("p50").unwrap());
@@ -35,5 +36,23 @@ fn indexed_var_resolver(c: &mut Criterion)
     });
 }
 
-criterion_group!(benches, default_var_resolver, indexed_var_resolver,);
+fn target_speed(c: &mut Criterion)
+{
+    c.bench_function("target speed", |b| {
+        let resolver = vec![0.0; 100];
+
+        b.iter(|| {
+            black_box(resolver[99]);
+            black_box(resolver[50]);
+            black_box(resolver[1]);
+        });
+    });
+}
+
+criterion_group!(
+    benches,
+    default_var_resolver,
+    indexed_var_resolver,
+    target_speed
+);
 criterion_main!(benches);
