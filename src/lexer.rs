@@ -68,7 +68,7 @@ impl<'e> TryFrom<&'e str> for Expr<'e, Infix>
             chars: Peekable<CharIndices<'e>>,
             state: Box<dyn State>,
         };
-
+        
         impl<'e> Lexer<'e>
         {
             fn new(expr: &'e str) -> Self
@@ -76,7 +76,7 @@ impl<'e> TryFrom<&'e str> for Expr<'e, Infix>
                 Lexer {
                     input: expr,
                     chars: expr.char_indices().peekable(),
-                    state: Box::new(Default),
+                    state: Box::new(ExpectingNumberProducer),
                 }
             }
 
@@ -89,116 +89,6 @@ impl<'e> TryFrom<&'e str> for Expr<'e, Infix>
                     match c {
                         ' ' | '\t' | '\n' => {
                             chars.next();
-                        }
-                        '0'..='9' | '.' | '-' => {
-                            chars.next();
-
-                            if c == '-'
-                                && chars.peek().map_or(true, |&(_, next)| {
-                                    !next.is_ascii_digit() && next != '.'
-                                })
-                            {
-                                return Ok(Some(Token::Operator(Operator::Sub)));
-                            }
-
-                            let multiplier = if c == '-' { -1.0 } else { 1.0 };
-
-                            let start_index = i;
-                            let mut end_index = input.len();
-
-                            while let Some(&(i, d)) = chars.peek() {
-                                if d.is_ascii_digit() || d == '.' {
-                                    chars.next();
-                                } else {
-                                    end_index = i;
-                                    break;
-                                }
-                            }
-
-                            let num_str = &input[start_index..end_index];
-                            let value: f64 = num_str.parse().map_err(|_| {
-                                Error::ParseError(ParseError::InvalidNumber(
-                                    Cow::Borrowed(num_str),
-                                    i,
-                                ))
-                            })?;
-                            return Ok(Some(Token::Number(value * multiplier)));
-                        }
-
-                        // variables or functions
-                        'a'..='z' | 'A'..='Z' | '_' => {
-                            let start_index = i;
-                            let mut end_index = input.len();
-
-                            let token = loop {
-                                if let Some(&(i, d)) = chars.peek() {
-                                    if d.is_alphanumeric() || d == '_' {
-                                        chars.next();
-                                        continue;
-                                    }
-
-                                    // function found
-                                    if d == '(' || d == '[' {
-                                        let fn_name = &input[start_index..i];
-                                        chars.next();
-
-                                        let mut params = Vec::new();
-
-                                        let mut depth = 1;
-                                        let mut start_index = i + 1; // Skipping the opening bracket of the function call
-                                        let mut end_index = input.len();
-
-                                        while let Some((i, d)) = chars.next() {
-                                            match d {
-                                                '(' | '[' => depth += 1,
-                                                ')' | ']' => depth -= 1,
-                                                ',' => {
-                                                    let param_expr =
-                                                        Expr::try_from(&input[start_index..i])?;
-                                                    params.push(param_expr);
-                                                    start_index = i + 1;
-                                                }
-                                                _ => {}
-                                            }
-
-                                            if depth == 0 {
-                                                end_index = i;
-                                                break;
-                                            }
-                                        }
-
-                                        let param_expr =
-                                            Expr::try_from(&input[start_index..end_index])?;
-                                        params.push(param_expr);
-
-                                        break Token::Function(fn_name, params);
-                                    }
-
-                                    break Token::Variable(&input[start_index..i]);
-                                } else {
-                                    break Token::Variable(&input[start_index..i]);
-                                }
-                            };
-
-                            return Ok(Some(token));
-                        }
-
-                        // operators and parentheses
-                        '+' => {
-                            chars.next();
-                            return Ok(Some(Token::Operator(Operator::Add)));
-                        }
-                        '*' => {
-                            chars.next();
-                            return Ok(Some(Token::Operator(Operator::Mul)));
-                        }
-                        '/' => {
-                            chars.next();
-                            return Ok(Some(Token::Operator(Operator::Div)));
-                        }
-                        '^' => {
-                            chars.next();
-                            return Ok(Some(Token::Operator(Operator::Pow)));
                         }
                         '(' | '[' => {
                             chars.next();
@@ -230,9 +120,10 @@ impl<'e> TryFrom<&'e str> for Expr<'e, Infix>
             ) -> (Result<Token<'e>, Error<'e>>, Box<dyn State>);
         }
 
-        struct Default;
+        // number itself, variable or function
+        struct ExpectingOperator;
 
-        impl State for Default
+        impl State for ExpectingOperator
         {
             fn next_token<'e>(
                 &mut self,
@@ -241,8 +132,28 @@ impl<'e> TryFrom<&'e str> for Expr<'e, Infix>
             ) -> (Result<Token<'e>, Error<'e>>, Box<dyn State>)
             {
                 let &(i, c) = chars.peek().expect("Already peeked");
-                
+
                 match c {
+                    '+' => {
+                        chars.next();
+                        return (Ok(Token::Operator(Operator::Add)), Box::new(ExpectingNumberProducer));
+                    }
+                    '*' => {
+                        chars.next();
+                        return (Ok(Token::Operator(Operator::Mul)), Box::new(ExpectingNumberProducer));
+                    }
+                    '/' => {
+                        chars.next();
+                        return (Ok(Token::Operator(Operator::Div)), Box::new(ExpectingNumberProducer));
+                    }
+                    '^' => {
+                        chars.next();
+                        return (Ok(Token::Operator(Operator::Pow)), Box::new(ExpectingNumberProducer));
+                    }
+                    '-' => {
+                        chars.next();
+                        return (Ok(Token::Operator(Operator::Sub)), Box::new(ExpectingNumberProducer));
+                    }
                     _ => (
                         Err(Error::ParseError(ParseError::UnexpectedChar(
                             Cow::Owned(c),
@@ -253,10 +164,9 @@ impl<'e> TryFrom<&'e str> for Expr<'e, Infix>
                 }
             }
         }
+        struct ExpectingNumberProducer;
 
-        struct AfterOperator;
-
-        impl State for AfterOperator
+        impl State for ExpectingNumberProducer
         {
             fn next_token<'e>(
                 &mut self,
@@ -267,6 +177,108 @@ impl<'e> TryFrom<&'e str> for Expr<'e, Infix>
                 let &(i, c) = chars.peek().expect("Already peeked");
 
                 match c {
+                    // if a minus sign is read after an operator, it is a negative number
+                    '0'..='9' | '.' | '-' => {
+                        chars.next();
+
+                        let multiplier = if c == '-' { -1.0 } else { 1.0 };
+
+                        let start_index = i;
+                        let mut end_index = input.len();
+
+                        while let Some(&(i, d)) = chars.peek() {
+                            if d.is_ascii_digit() || d == '.' {
+                                chars.next();
+                            } else {
+                                end_index = i;
+                                break;
+                            }
+                        }
+
+                        let num_str = &input[start_index..end_index];
+                        let value: f64 = match num_str.parse() {
+                            Ok(value) => value,
+                            Err(_) => {
+                                return (
+                                    Err(Error::ParseError(ParseError::InvalidNumber(
+                                        Cow::Borrowed(num_str),
+                                        i,
+                                    ))),
+                                    Box::new(AfterError),
+                                );
+                            }
+                        };
+
+                        (
+                            Ok(Token::Number(value * multiplier)),
+                            Box::new(ExpectingOperator),
+                        )
+                    }
+                    // variables or functions
+                    'a'..='z' | 'A'..='Z' | '_' => {
+                        let start_index = i;
+                        let mut end_index = input.len();
+
+                        let token = loop {
+                            if let Some(&(i, d)) = chars.peek() {
+                                if d.is_alphanumeric() || d == '_' {
+                                    chars.next();
+                                    continue;
+                                }
+
+                                // function found
+                                if d == '(' || d == '[' {
+                                    let fn_name = &input[start_index..i];
+                                    chars.next();
+
+                                    let mut params = Vec::new();
+
+                                    let mut depth = 1;
+                                    let mut start_index = i + 1; // Skipping the opening bracket of the function call
+                                    let mut end_index = input.len();
+
+                                    while let Some((i, d)) = chars.next() {
+                                        match d {
+                                            '(' | '[' => depth += 1,
+                                            ')' | ']' => depth -= 1,
+                                            ',' => {
+                                                let param_expr =
+                                                    match Expr::try_from(&input[start_index..i]) {
+                                                        Ok(expr) => expr,
+                                                        Err(err) => {
+                                                            return (Err(err), Box::new(AfterError));
+                                                        }
+                                                    };
+                                                params.push(param_expr);
+                                                start_index = i + 1;
+                                            }
+                                            _ => {}
+                                        }
+
+                                        if depth == 0 {
+                                            end_index = i;
+                                            break;
+                                        }
+                                    }
+
+                                    let param_expr =
+                                        match Expr::try_from(&input[start_index..end_index]) {
+                                            Ok(expr) => expr,
+                                            Err(err) => return (Err(err), Box::new(AfterError)),
+                                        };
+                                    params.push(param_expr);
+
+                                    break Token::Function(fn_name, params);
+                                }
+
+                                break Token::Variable(&input[start_index..i]);
+                            } else {
+                                break Token::Variable(&input[start_index..i]);
+                            }
+                        };
+
+                        (Ok(token), Box::new(ExpectingOperator))
+                    }
                     _ => (
                         Err(Error::ParseError(ParseError::UnexpectedChar(
                             Cow::Owned(c),
