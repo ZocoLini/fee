@@ -10,3 +10,11 @@ pub trait VarResolver
 {
     fn get(&self, name: &str) -> Option<f64>;
 }
+
+impl VarResolver for HashMap<String, f64>
+{
+    fn get(&self, name: &str) -> Option<f64>
+    {
+        self.get(name).copied()
+    }
+}

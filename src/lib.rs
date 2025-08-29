@@ -3,14 +3,15 @@
 mod error;
 mod evaluator;
 mod function;
-pub mod prelude;
 mod variable;
+
+pub mod prelude;
 
 pub use crate::error::*;
 
-pub use crate::variable::{DefaultVarResolver, IndexedVarResolver};
-
 pub use crate::function::DefaultFnResolver;
+
+pub use crate::variable::{DefaultVarResolver, IndexedVarResolver};
 
 pub use crate::evaluator::RPNEvaluator;
 
