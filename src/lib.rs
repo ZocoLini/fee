@@ -3,6 +3,8 @@
 mod error;
 mod evaluator;
 mod function;
+mod lexer;
+mod token;
 mod variable;
 
 pub mod prelude;

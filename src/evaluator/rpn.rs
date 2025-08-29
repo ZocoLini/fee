@@ -1,5 +1,6 @@
-use super::{Expr, Operator, Token};
-use crate::{Error, evaluator::Infix, prelude::*};
+use crate::lexer::{Expr, Infix};
+use crate::token::{Operator, Token};
+use crate::{Error, prelude::*};
 use std::{borrow::Cow, ops::Deref};
 
 #[derive(Debug, PartialEq)]
@@ -61,7 +62,7 @@ impl<'e> TryFrom<Expr<'e, Infix>> for Expr<'e, RPN>
         let mut output: Vec<Token> = Vec::with_capacity(expr.len());
         let mut ops: Vec<Token> = Vec::new();
 
-        for (i, tok) in expr.tokens.into_iter().enumerate() {
+        for (i, tok) in expr.into_iter().enumerate() {
             match tok {
                 Token::Number(_) | Token::Variable(_) => {
                     output.push(tok);
@@ -118,10 +119,7 @@ impl<'e> TryFrom<Expr<'e, Infix>> for Expr<'e, RPN>
             output.push(op);
         }
 
-        Ok(Self {
-            tokens: output,
-            type_: RPN,
-        })
+        Ok(Expr::new(output, RPN))
     }
 }
 
@@ -135,7 +133,7 @@ impl<'e, 'c, V: VarResolver, F: FnResolver> RPNEvaluator<'e, 'c, V, F>
 {
     pub fn new(expr: &'e str, ctx: &'c Context<V, F>) -> Result<Self, crate::Error<'e>>
     {
-        let infix_expr = Expr::new(expr)?;
+        let infix_expr = Expr::try_from(expr)?;
         let rpn_expr = Expr::try_from(infix_expr)?;
 
         Ok(RPNEvaluator { ctx, rpn: rpn_expr })
@@ -160,8 +158,8 @@ mod tests
     fn test_infix_to_rpn()
     {
         // 2 - (4 + (p19 - 2) * (p19 + 2))
-        let infix_expr = Expr {
-            tokens: vec![
+        let infix_expr = Expr::new(
+            vec![
                 Token::Number(2.0),
                 Token::Operator(Operator::Sub),
                 Token::LParen,
@@ -180,8 +178,8 @@ mod tests
                 Token::RParen,
                 Token::RParen,
             ],
-            type_: Infix,
-        };
+            Infix,
+        );
 
         let rpn_expr: Expr<RPN> = infix_expr.try_into().unwrap();
         assert_eq!(
@@ -202,12 +200,12 @@ mod tests
         );
 
         //abs((2 + 3) * 4, sqrt(5))
-        let infix_expr = Expr {
-            tokens: vec![Token::Function(
+        let infix_expr = Expr::new(
+            vec![Token::Function(
                 "abs",
                 vec![
-                    Expr {
-                        tokens: vec![
+                    Expr::new(
+                        vec![
                             Token::LParen,
                             Token::Number(2.0),
                             Token::Operator(Operator::Add),
@@ -216,22 +214,19 @@ mod tests
                             Token::Operator(Operator::Mul),
                             Token::Number(4.0),
                         ],
-                        type_: Infix,
-                    },
-                    Expr {
-                        tokens: vec![Token::Function(
+                        Infix,
+                    ),
+                    Expr::new(
+                        vec![Token::Function(
                             "sqrt",
-                            vec![Expr {
-                                tokens: vec![Token::Number(5.0)],
-                                type_: Infix,
-                            }],
+                            vec![Expr::new(vec![Token::Number(5.0)], Infix)],
                         )],
-                        type_: Infix,
-                    },
+                        Infix,
+                    ),
                 ],
             )],
-            type_: Infix,
-        };
+            Infix,
+        );
 
         let rpn_expr: Expr<RPN> = infix_expr.try_into().unwrap();
         assert_eq!(
@@ -255,15 +250,15 @@ mod tests
         // TODO: The indices of the errors are relative to the start of the functions due
         //  to the recursion used to convert the expression
 
-        let infix_expr = Expr {
-            tokens: vec![
+        let infix_expr = Expr::new(
+            vec![
                 Token::Number(2.0),
                 Token::Operator(Operator::Sub),
                 Token::Number(4.0),
                 Token::FunctionCall("asd", 3),
             ],
-            type_: Infix,
-        };
+            Infix,
+        );
 
         let result: Result<Expr<RPN>, Error> = infix_expr.try_into();
 
