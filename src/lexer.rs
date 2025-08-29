@@ -53,6 +53,8 @@ impl<'e> TryFrom<&'e str> for Expr<'e, Infix>
         let mut tokens: Vec<Token<'e>> = Vec::new();
         let mut chars = input.char_indices().peekable();
 
+        let mut expecting_operator = false;
+        
         while let Some(&(i, c)) = chars.peek() {
             match c {
                 // ignoring whitespace
@@ -60,19 +62,14 @@ impl<'e> TryFrom<&'e str> for Expr<'e, Infix>
                     chars.next();
                 }
 
-                // TODO: The parser is expected to fail parsing 2 -4.
-                //  State machine should solve this issue detecting if we are expecting an operator or a number
-
                 // numbers and substract operator
                 '0'..='9' | '.' | '-' => {
                     chars.next();
 
-                    if c == '-'
-                        && chars
-                            .peek()
-                            .map_or(true, |&(_, next)| !next.is_ascii_digit() && next != '.')
+                    if c == '-' && expecting_operator
                     {
                         tokens.push(Token::Operator(Operator::Sub));
+                        expecting_operator = false;
                         continue;
                     }
 
@@ -94,7 +91,8 @@ impl<'e> TryFrom<&'e str> for Expr<'e, Infix>
                     let value: f64 = num_str.parse().map_err(|_| {
                         Error::ParseError(ParseError::InvalidNumber(Cow::Borrowed(num_str), i))
                     })?;
-                    tokens.push(Token::Number(value * multiplier))
+                    tokens.push(Token::Number(value * multiplier));
+                    expecting_operator = true;
                 }
 
                 // variables or functions
