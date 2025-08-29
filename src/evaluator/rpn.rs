@@ -1,7 +1,8 @@
 use super::{Expr, Operator, Token};
 use crate::{Error, evaluator::Infix, prelude::*};
-use std::ops::Deref;
+use std::{borrow::Cow, ops::Deref};
 
+#[derive(Debug, PartialEq)]
 struct RPN;
 
 impl Expr<'_, RPN>
@@ -48,15 +49,17 @@ impl Expr<'_, RPN>
     }
 }
 
-impl<'e> From<Expr<'e, Infix>> for Expr<'e, RPN>
+impl<'e> TryFrom<Expr<'e, Infix>> for Expr<'e, RPN>
 {
+    type Error = crate::Error<'e>;
+
     // shunting yard algorithm
-    fn from(expr: Expr<'e, Infix>) -> Self
+    fn try_from(expr: Expr<'e, Infix>) -> Result<Self, Self::Error>
     {
         let mut output: Vec<Token> = Vec::with_capacity(expr.len());
         let mut ops: Vec<Token> = Vec::new();
 
-        for tok in expr.tokens.into_iter() {
+        for (i, tok) in expr.tokens.into_iter().enumerate() {
             match tok {
                 Token::Number(_) | Token::Variable(_) => {
                     output.push(tok.clone());
@@ -90,10 +93,12 @@ impl<'e> From<Expr<'e, Infix>> for Expr<'e, RPN>
                 Token::Function(name, args) => {
                     let fun_call_token = Token::FunctionCall(name, args.len());
 
-                    let rpn_args = args
+                    let rpn_args: Result<Vec<Expr<RPN>>, _> = args
                         .into_iter()
-                        .map(|arg_tokens| arg_tokens.into())
-                        .collect::<Vec<Expr<RPN>>>();
+                        .map(|arg_tokens| arg_tokens.try_into())
+                        .collect();
+
+                    let rpn_args = rpn_args?;
 
                     rpn_args
                         .iter()
@@ -101,7 +106,9 @@ impl<'e> From<Expr<'e, Infix>> for Expr<'e, RPN>
 
                     output.push(fun_call_token);
                 }
-                _ => panic!("Unexpected token"),
+                _ => {
+                    return Err(Error::UnexpectedToken(Cow::Owned(format!("{:?}", tok,)), i));
+                }
             }
         }
 
@@ -109,10 +116,10 @@ impl<'e> From<Expr<'e, Infix>> for Expr<'e, RPN>
             output.push(op);
         }
 
-        Self {
+        Ok(Self {
             tokens: output,
             type_: RPN,
-        }
+        })
     }
 }
 
@@ -127,7 +134,7 @@ impl<'e, 'c, V: VarResolver, F: FnResolver> RPNEvaluator<'e, 'c, V, F>
     pub fn new(expr: &'e str, ctx: &'c Context<V, F>) -> Result<Self, crate::Error<'e>>
     {
         let infix_expr = Expr::new(expr)?;
-        let rpn_expr = Expr::from(infix_expr);
+        let rpn_expr = Expr::try_from(infix_expr)?;
 
         Ok(RPNEvaluator { ctx, rpn: rpn_expr })
     }
@@ -174,7 +181,7 @@ mod tests
             type_: Infix,
         };
 
-        let rpn_expr: Expr<RPN> = infix_expr.into();
+        let rpn_expr: Expr<RPN> = infix_expr.try_into().unwrap();
         assert_eq!(
             *rpn_expr,
             vec![
@@ -224,7 +231,7 @@ mod tests
             type_: Infix,
         };
 
-        let rpn_expr: Expr<RPN> = infix_expr.into();
+        let rpn_expr: Expr<RPN> = infix_expr.try_into().unwrap();
         assert_eq!(
             *rpn_expr,
             vec![
@@ -237,6 +244,33 @@ mod tests
                 Token::FunctionCall("sqrt", 1),
                 Token::FunctionCall("abs", 2),
             ]
+        );
+    }
+
+    #[test]
+    fn test_errors()
+    {
+        // TODO: The indices of the errors are relative to the start of the functions due
+        //  to the recursion used to convert the expression
+
+        let infix_expr = Expr {
+            tokens: vec![
+                Token::Number(2.0),
+                Token::Operator(Operator::Sub),
+                Token::Number(4.0),
+                Token::FunctionCall("asd", 3),
+            ],
+            type_: Infix,
+        };
+
+        let result: Result<Expr<RPN>, Error> = infix_expr.try_into();
+
+        assert_eq!(
+            result,
+            Err(Error::UnexpectedToken(
+                Cow::Borrowed("FunctionCall(\"asd\", 3)"),
+                3
+            ))
         );
     }
 }

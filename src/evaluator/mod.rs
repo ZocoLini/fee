@@ -315,9 +315,9 @@ mod tests
     #[test]
     fn test_errors()
     {
-        // TODO: The indices of the errors are relative to the start of the function due 
+        // TODO: The indices of the errors are relative to the start of the function due
         //  to the recursion used to parse the expression
-        
+
         let expr = "abs((2.0.0 + 3) * 4, sqrt(5))";
         let result = Expr::new(expr);
 
@@ -328,7 +328,7 @@ mod tests
                 1
             )))
         );
-        
+
         let expr = "abs((2 + 3) &* 4, sqrt(5))";
         let result = Expr::new(expr);
 
