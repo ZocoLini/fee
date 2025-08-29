@@ -5,7 +5,7 @@ use fee::{DefaultVarResolver, IndexedVarResolver, prelude::*};
 
 fn default_var_resolver(c: &mut Criterion)
 {
-    c.bench_function("default var resolver", |b| {
+    c.bench_function("var_resolver/default", |b| {
         let mut resolver = DefaultVarResolver::new();
         for i in 0..100 {
             resolver.add_var(format!("p{}", i), 2.0);
@@ -21,7 +21,7 @@ fn default_var_resolver(c: &mut Criterion)
 
 fn indexed_var_resolver(c: &mut Criterion)
 {
-    c.bench_function("indexed var resolver", |b| {
+    c.bench_function("var_resolver/indexed", |b| {
         let mut resolver = IndexedVarResolver::new();
         resolver.add_identifier('p', 100);
         for i in 0..100 {
@@ -38,7 +38,7 @@ fn indexed_var_resolver(c: &mut Criterion)
 
 fn target_speed(c: &mut Criterion)
 {
-    c.bench_function("target speed", |b| {
+    c.bench_function("var_resolver/rust_native", |b| {
         let resolver = vec![0.0; 100];
 
         b.iter(|| {
