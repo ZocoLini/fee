@@ -62,7 +62,7 @@ impl<'e> TryFrom<Expr<'e, Infix>> for Expr<'e, RPN>
         for (i, tok) in expr.tokens.into_iter().enumerate() {
             match tok {
                 Token::Number(_) | Token::Variable(_) => {
-                    output.push(tok.clone());
+                    output.push(tok);
                 }
                 Token::Operator(op) => {
                     while let Some(Token::Operator(top)) = ops.last() {
@@ -78,9 +78,9 @@ impl<'e> TryFrom<Expr<'e, Infix>> for Expr<'e, RPN>
                             break;
                         }
                     }
-                    ops.push(tok.clone());
+                    ops.push(tok);
                 }
-                Token::LParen => ops.push(tok.clone()),
+                Token::LParen => ops.push(tok),
                 Token::RParen => {
                     while let Some(top) = ops.pop() {
                         if let Token::LParen = top {
