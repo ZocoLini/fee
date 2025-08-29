@@ -1,4 +1,4 @@
-use std::{borrow::Cow, ops::Deref};
+use std::{borrow::Cow, iter::Peekable, ops::Deref, str::CharIndices};
 
 use crate::{
     token::{Operator, Token},
@@ -45,156 +45,348 @@ impl<'e, T> IntoIterator for Expr<'e, T>
 }
 
 impl<'e> TryFrom<&'e str> for Expr<'e, Infix>
-{
+{   
     type Error = crate::Error<'e>;
 
     fn try_from(input: &'e str) -> Result<Self, Self::Error>
     {
         let mut tokens: Vec<Token<'e>> = Vec::new();
-        let mut chars = input.char_indices().peekable();
+        let mut lexer = Lexer::new(input);
+        
+        while let Some(token) = lexer.next_token()? 
+        {
+            tokens.push(token);
+        }
 
-        while let Some(&(i, c)) = chars.peek() {
-            match c {
-                // ignoring whitespace
-                ' ' | '\t' | '\n' => {
-                    chars.next();
+        return Ok(Expr {
+            tokens,
+            type_: Infix,
+        });
+        
+        struct Lexer<'e> {
+            chars: Peekable<CharIndices<'e>>,
+            state: Box<dyn State>
+        };
+        
+        impl<'e> Lexer<'e> {
+            fn new(expr: &'e str) -> Self {
+                Lexer {
+                    chars: expr.char_indices().peekable(),
+                    state: Box::new(Default),
                 }
-
-                // TODO: The parser is expected to fail parsing 2 -4.
-                //  State machine should solve this issue detecting if we are expecting an operator or a number
-
-                // numbers and substract operator
-                '0'..='9' | '.' | '-' => {
-                    chars.next();
-
-                    if c == '-'
-                        && chars
-                            .peek()
-                            .map_or(true, |&(_, next)| !next.is_ascii_digit() && next != '.')
-                    {
-                        tokens.push(Token::Operator(Operator::Sub));
-                        continue;
-                    }
-
-                    let multiplier = if c == '-' { -1.0 } else { 1.0 };
-
-                    let start_index = i;
-                    let mut end_index = input.len();
-
-                    while let Some(&(i, d)) = chars.peek() {
-                        if d.is_ascii_digit() || d == '.' {
+            }
+            
+            fn next_token(&mut self) -> Result<Option<Token<'e>>, Error<'e>> {
+                let (result, next_state) = self.state.next_token(&mut self.chars);
+                self.state = next_state;
+                result
+            }
+        }
+        
+        trait State {
+            fn next_token<'e>(&mut self, chars: &mut Peekable<CharIndices<'e>>) -> (Result<Option<Token<'e>>, Error<'e>>, Box<dyn State>);
+        }
+        
+        struct Default;
+        
+        impl State for Default {
+            fn next_token<'e>(&mut self, chars: &mut Peekable<CharIndices<'e>>) -> (Result<Option<Token<'e>>, Error<'e>>, Box<dyn State>) {
+                if let Some(&(i, c)) = chars.peek()
+                {
+                    match c {
+                        // ignoring whitespace
+                        ' ' | '\t' | '\n' => {
                             chars.next();
-                        } else {
-                            end_index = i;
-                            break;
                         }
-                    }
-
-                    let num_str = &input[start_index..end_index];
-                    let value: f64 = num_str.parse().map_err(|_| {
-                        Error::ParseError(ParseError::InvalidNumber(Cow::Borrowed(num_str), i))
-                    })?;
-                    tokens.push(Token::Number(value * multiplier))
-                }
-
-                // variables or functions
-                'a'..='z' | 'A'..='Z' | '_' => {
-                    let start_index = i;
-                    let mut end_index = input.len();
-
-                    let token = loop {
-                        if let Some(&(i, d)) = chars.peek() {
-                            if d.is_alphanumeric() || d == '_' {
-                                chars.next();
+        
+                        // TODO: The parser is expected to fail parsing 2 -4.
+                        //  State machine should solve this issue detecting if we are expecting an operator or a number
+        
+                        // numbers and substract operator
+                        '0'..='9' | '.' | '-' => {
+                            chars.next();
+        
+                            if c == '-'
+                                && chars
+                                    .peek()
+                                    .map_or(true, |&(_, next)| !next.is_ascii_digit() && next != '.')
+                            {
+                                tokens.push(Token::Operator(Operator::Sub));
                                 continue;
                             }
-
-                            // function found
-                            if d == '(' || d == '[' {
-                                let fn_name = &input[start_index..i];
-                                chars.next();
-
-                                let mut params = Vec::new();
-
-                                let mut depth = 1;
-                                let mut start_index = i + 1; // Skipping the opening bracket of the function call
-                                let mut end_index = input.len();
-
-                                while let Some((i, d)) = chars.next() {
-                                    match d {
-                                        '(' | '[' => depth += 1,
-                                        ')' | ']' => depth -= 1,
-                                        ',' => {
-                                            let param_expr =
-                                                Expr::try_from(&input[start_index..i])?;
-                                            params.push(param_expr);
-                                            start_index = i + 1;
-                                        }
-                                        _ => {}
-                                    }
-
-                                    if depth == 0 {
-                                        end_index = i;
-                                        break;
-                                    }
+        
+                            let multiplier = if c == '-' { -1.0 } else { 1.0 };
+        
+                            let start_index = i;
+                            let mut end_index = input.len();
+        
+                            while let Some(&(i, d)) = chars.peek() {
+                                if d.is_ascii_digit() || d == '.' {
+                                    chars.next();
+                                } else {
+                                    end_index = i;
+                                    break;
                                 }
-
-                                let param_expr = Expr::try_from(&input[start_index..end_index])?;
-                                params.push(param_expr);
-
-                                break Token::Function(fn_name, params);
                             }
-
-                            break Token::Variable(&input[start_index..i]);
-                        } else {
-                            break Token::Variable(&input[start_index..i]);
+        
+                            let num_str = &input[start_index..end_index];
+                            let value: f64 = num_str.parse().map_err(|_| {
+                                Error::ParseError(ParseError::InvalidNumber(Cow::Borrowed(num_str), i))
+                            })?;
+                            tokens.push(Token::Number(value * multiplier))
                         }
-                    };
-
-                    tokens.push(token);
-                }
-
-                // operators and parentheses
-                '+' => {
-                    tokens.push(Token::Operator(Operator::Add));
-                    chars.next();
-                }
-                '*' => {
-                    tokens.push(Token::Operator(Operator::Mul));
-                    chars.next();
-                }
-                '/' => {
-                    tokens.push(Token::Operator(Operator::Div));
-                    chars.next();
-                }
-                '^' => {
-                    tokens.push(Token::Operator(Operator::Pow));
-                    chars.next();
-                }
-                '(' | '[' => {
-                    tokens.push(Token::LParen);
-                    chars.next();
-                }
-                ')' | ']' => {
-                    tokens.push(Token::RParen);
-                    chars.next();
-                }
-
-                other => {
-                    return Err(Error::ParseError(ParseError::UnexpectedChar(
-                        Cow::Owned(other),
-                        i,
-                    )));
+        
+                        // variables or functions
+                        'a'..='z' | 'A'..='Z' | '_' => {
+                            let start_index = i;
+                            let mut end_index = input.len();
+        
+                            let token = loop {
+                                if let Some(&(i, d)) = chars.peek() {
+                                    if d.is_alphanumeric() || d == '_' {
+                                        chars.next();
+                                        continue;
+                                    }
+        
+                                    // function found
+                                    if d == '(' || d == '[' {
+                                        let fn_name = &input[start_index..i];
+                                        chars.next();
+        
+                                        let mut params = Vec::new();
+        
+                                        let mut depth = 1;
+                                        let mut start_index = i + 1; // Skipping the opening bracket of the function call
+                                        let mut end_index = input.len();
+        
+                                        while let Some((i, d)) = chars.next() {
+                                            match d {
+                                                '(' | '[' => depth += 1,
+                                                ')' | ']' => depth -= 1,
+                                                ',' => {
+                                                    let param_expr =
+                                                        Expr::try_from(&input[start_index..i])?;
+                                                    params.push(param_expr);
+                                                    start_index = i + 1;
+                                                }
+                                                _ => {}
+                                            }
+        
+                                            if depth == 0 {
+                                                end_index = i;
+                                                break;
+                                            }
+                                        }
+        
+                                        let param_expr = Expr::try_from(&input[start_index..end_index])?;
+                                        params.push(param_expr);
+        
+                                        break Token::Function(fn_name, params);
+                                    }
+        
+                                    break Token::Variable(&input[start_index..i]);
+                                } else {
+                                    break Token::Variable(&input[start_index..i]);
+                                }
+                            };
+        
+                            tokens.push(token);
+                        }
+        
+                        // operators and parentheses
+                        '+' => {
+                            tokens.push(Token::Operator(Operator::Add));
+                            chars.next();
+                        }
+                        '*' => {
+                            tokens.push(Token::Operator(Operator::Mul));
+                            chars.next();
+                        }
+                        '/' => {
+                            tokens.push(Token::Operator(Operator::Div));
+                            chars.next();
+                        }
+                        '^' => {
+                            tokens.push(Token::Operator(Operator::Pow));
+                            chars.next();
+                        }
+                        '(' | '[' => {
+                            tokens.push(Token::LParen);
+                            chars.next();
+                        }
+                        ')' | ']' => {
+                            tokens.push(Token::RParen);
+                            chars.next();
+                        }
+        
+                        other => {
+                            return Err(Error::ParseError(ParseError::UnexpectedChar(
+                                Cow::Owned(other),
+                                i,
+                            )));
+                        }
+                    }
+                } else {
+                    (Ok(None), Box::new(Ended))
                 }
             }
         }
-
-        Ok(Expr {
-            tokens,
-            type_: Infix,
-        })
+        
+        struct AfterOperator;
+        
+        impl State for AfterOperator {
+            fn next_token<'e>(&mut self, chars: &mut Peekable<CharIndices<'e>>) -> (Result<Option<Token<'e>>, Error<'e>>, Box<dyn State>) {
+                if let Some(&(i, c)) = chars.peek()
+                {
+                    match c {
+                        // ignoring whitespace
+                        ' ' | '\t' | '\n' => {
+                            chars.next();
+                        }
+        
+                        // TODO: The parser is expected to fail parsing 2 -4.
+                        //  State machine should solve this issue detecting if we are expecting an operator or a number
+        
+                        // numbers and substract operator
+                        '0'..='9' | '.' | '-' => {
+                            chars.next();
+        
+                            if c == '-'
+                                && chars
+                                    .peek()
+                                    .map_or(true, |&(_, next)| !next.is_ascii_digit() && next != '.')
+                            {
+                                tokens.push(Token::Operator(Operator::Sub));
+                                continue;
+                            }
+        
+                            let multiplier = if c == '-' { -1.0 } else { 1.0 };
+        
+                            let start_index = i;
+                            let mut end_index = input.len();
+        
+                            while let Some(&(i, d)) = chars.peek() {
+                                if d.is_ascii_digit() || d == '.' {
+                                    chars.next();
+                                } else {
+                                    end_index = i;
+                                    break;
+                                }
+                            }
+        
+                            let num_str = &input[start_index..end_index];
+                            let value: f64 = num_str.parse().map_err(|_| {
+                                Error::ParseError(ParseError::InvalidNumber(Cow::Borrowed(num_str), i))
+                            })?;
+                            tokens.push(Token::Number(value * multiplier))
+                        }
+        
+                        // variables or functions
+                        'a'..='z' | 'A'..='Z' | '_' => {
+                            let start_index = i;
+                            let mut end_index = input.len();
+        
+                            let token = loop {
+                                if let Some(&(i, d)) = chars.peek() {
+                                    if d.is_alphanumeric() || d == '_' {
+                                        chars.next();
+                                        continue;
+                                    }
+        
+                                    // function found
+                                    if d == '(' || d == '[' {
+                                        let fn_name = &input[start_index..i];
+                                        chars.next();
+        
+                                        let mut params = Vec::new();
+        
+                                        let mut depth = 1;
+                                        let mut start_index = i + 1; // Skipping the opening bracket of the function call
+                                        let mut end_index = input.len();
+        
+                                        while let Some((i, d)) = chars.next() {
+                                            match d {
+                                                '(' | '[' => depth += 1,
+                                                ')' | ']' => depth -= 1,
+                                                ',' => {
+                                                    let param_expr =
+                                                        Expr::try_from(&input[start_index..i])?;
+                                                    params.push(param_expr);
+                                                    start_index = i + 1;
+                                                }
+                                                _ => {}
+                                            }
+        
+                                            if depth == 0 {
+                                                end_index = i;
+                                                break;
+                                            }
+                                        }
+        
+                                        let param_expr = Expr::try_from(&input[start_index..end_index])?;
+                                        params.push(param_expr);
+        
+                                        break Token::Function(fn_name, params);
+                                    }
+        
+                                    break Token::Variable(&input[start_index..i]);
+                                } else {
+                                    break Token::Variable(&input[start_index..i]);
+                                }
+                            };
+        
+                            tokens.push(token);
+                        }
+        
+                        // operators and parentheses
+                        '+' => {
+                            tokens.push(Token::Operator(Operator::Add));
+                            chars.next();
+                        }
+                        '*' => {
+                            tokens.push(Token::Operator(Operator::Mul));
+                            chars.next();
+                        }
+                        '/' => {
+                            tokens.push(Token::Operator(Operator::Div));
+                            chars.next();
+                        }
+                        '^' => {
+                            tokens.push(Token::Operator(Operator::Pow));
+                            chars.next();
+                        }
+                        '(' | '[' => {
+                            tokens.push(Token::LParen);
+                            chars.next();
+                        }
+                        ')' | ']' => {
+                            tokens.push(Token::RParen);
+                            chars.next();
+                        }
+        
+                        other => {
+                            return Err(Error::ParseError(ParseError::UnexpectedChar(
+                                Cow::Owned(other),
+                                i,
+                            )));
+                        }
+                    }
+                } else {
+                    (Ok(None), Box::new(Ended))
+                }
+            }
+        }
+        
+        struct Ended;
+        
+        impl State for Ended {
+            fn next_token<'e>(&mut self, chars: &mut Peekable<CharIndices<'e>>) -> (Result<Option<Token<'e>>, Error<'e>>, Box<dyn State>) {
+                panic!("tried to obtain next token when the parsed already ended")
+            }
+        }
     }
 }
+
 #[cfg(test)]
 mod tests
 {
