@@ -3,9 +3,12 @@
 mod error;
 mod evaluator;
 mod function;
-mod lexer;
 mod token;
 mod variable;
+
+#[cfg(feature = "bench-internal")] pub mod lexer;
+
+#[cfg(not(feature = "bench-internal"))] mod lexer;
 
 pub mod prelude;
 

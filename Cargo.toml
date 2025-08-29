@@ -6,6 +6,10 @@ edition = "2024"
 [dependencies]
 thiserror = { version = "2.0.16" }
 
+[features]
+default = []
+bench-internal = []
+
 [dev-dependencies]
 criterion = { version = "0.7.0" }
 
@@ -20,6 +24,10 @@ harness = false
 
 [[bench]]
 name = "bench_evaluators"
+harness = false
+
+[[bench]]
+name = "bench_parsers"
 harness = false
 
 [[bench]]
