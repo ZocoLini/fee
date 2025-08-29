@@ -11,13 +11,13 @@ const ALPHABET_START_USIZE: usize = b'a' as usize;
 impl VarResolver for IndexedVarResolver
 {
     #[inline(always)]
-    fn get(&self, name: &str) -> Option<f64>
+    fn get(&self, name: &str) -> Option<&f64>
     {
         let name_bytes = name.as_bytes();
 
         let letter = (name_bytes[0] as usize - ALPHABET_START_USIZE);
         let idx = str_to_usize(&name_bytes[1..]);
-        Some(self.vars[letter][idx])
+        Some(&self.vars[letter][idx])
     }
 }
 
