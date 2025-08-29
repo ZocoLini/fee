@@ -11,7 +11,7 @@ const ALPHABET_START_USIZE: usize = b'a' as usize;
 impl VarResolver for IndexedVarResolver
 {
     #[inline(always)]
-    fn get(&self, name: &str) -> Option<&f64>
+    fn get_var(&self, name: &str) -> Option<&f64>
     {
         let name_bytes = name.as_bytes();
 

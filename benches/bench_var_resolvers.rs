@@ -12,9 +12,9 @@ fn default_var_resolver(c: &mut Criterion)
         }
 
         b.iter(|| {
-            black_box(resolver.get("p99").unwrap());
-            black_box(resolver.get("p50").unwrap());
-            black_box(resolver.get("p1").unwrap());
+            black_box(resolver.get_var("p99").unwrap());
+            black_box(resolver.get_var("p50").unwrap());
+            black_box(resolver.get_var("p1").unwrap());
         });
     });
 }
@@ -29,9 +29,9 @@ fn indexed_var_resolver(c: &mut Criterion)
         }
 
         b.iter(|| {
-            black_box(resolver.get("p99").unwrap());
-            black_box(resolver.get("p50").unwrap());
-            black_box(resolver.get("p1").unwrap());
+            black_box(resolver.get_var("p99").unwrap());
+            black_box(resolver.get_var("p50").unwrap());
+            black_box(resolver.get_var("p1").unwrap());
         });
     });
 }

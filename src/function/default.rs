@@ -9,7 +9,7 @@ pub struct DefaultFnResolver
 
 impl FnResolver for DefaultFnResolver
 {
-    fn call(&self, name: &str, args: &[f64]) -> Option<f64>
+    fn call_fn(&self, name: &str, args: &[f64]) -> Option<f64>
     {
         self.functions.get(name).map(|f| f(args))
     }

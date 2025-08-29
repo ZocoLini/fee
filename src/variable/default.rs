@@ -10,7 +10,7 @@ pub struct DefaultVarResolver<State>
 
 impl<State> VarResolver for DefaultVarResolver<State>
 {
-    fn get(&self, name: &str) -> Option<&f64>
+    fn get_var(&self, name: &str) -> Option<&f64>
     {
         self.vars.get(name)
     }
@@ -79,6 +79,6 @@ mod tests
         let mut x = resolver.get_var_mut("x").unwrap();
         *x = 20.0;
 
-        assert_eq!(resolver.get("x"), Some(&20.0));
+        assert_eq!(resolver.get_var("x"), Some(&20.0));
     }
 }

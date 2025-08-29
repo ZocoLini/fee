@@ -12,7 +12,9 @@ impl Expr<'_, RPN>
         for tok in self.iter() {
             match tok {
                 Token::Number(num) => stack.push(*num),
-                Token::Variable(name) => stack.push(*ctx.vals.get(name).expect("Missing variable")),
+                Token::Variable(name) => {
+                    stack.push(*ctx.vals.get_var(name).expect("Missing variable"))
+                }
                 Token::FunctionCall(name, argc) => {
                     if *argc > stack.len() {
                         panic!("Not enough args to call {name}")
@@ -25,7 +27,7 @@ impl Expr<'_, RPN>
                         let args = args.as_slice();
 
                         ctx.funcs
-                            .call(name, &args)
+                            .call_fn(name, &args)
                             .unwrap_or_else(|| panic!("Unknown function: {}", name))
                     };
 
