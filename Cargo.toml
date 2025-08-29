@@ -9,10 +9,19 @@ thiserror = { version = "2.0.16" }
 [dev-dependencies]
 criterion = { version = "0.7.0" }
 
+# Other expr evaluator to compite against
+evalexpr = "12.0.2"
+meval = "0.2.0"
+mexe = "0.2.0"
+
 [[bench]]
 name = "bench_var_resolvers"
 harness = false
 
 [[bench]]
 name = "bench_evaluators"
+harness = false
+
+[[bench]]
+name = "bench_cmp"
 harness = false
