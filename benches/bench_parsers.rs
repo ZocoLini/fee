@@ -1,3 +1,4 @@
+#[cfg(feature = "bench-internal")]
 use criterion::{criterion_group, criterion_main, Criterion};
 
 #[cfg(feature = "bench-internal")]
