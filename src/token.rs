@@ -1,3 +1,5 @@
+use core::fmt;
+
 use crate::lexer::{Expr, Infix};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

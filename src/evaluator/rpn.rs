@@ -1,6 +1,6 @@
 use crate::lexer::{Expr, Infix};
 use crate::token::{Operator, Token};
-use crate::{Error, prelude::*};
+use crate::{Error, EvalError, prelude::*};
 use std::sync::{Arc, RwLock};
 use std::{borrow::Cow, ops::Deref};
 
@@ -9,15 +9,22 @@ struct RPN;
 
 impl Expr<'_, RPN>
 {
-    fn eval(&self, ctx: &Context<impl VarResolver, impl FnResolver>, stack: &mut Vec<f64>) -> f64
+    fn eval<'e>(
+        &'e self,
+        ctx: &Context<impl VarResolver, impl FnResolver>,
+        stack: &mut Vec<f64>,
+    ) -> Result<f64, Error<'e>>
     {
         for tok in self.iter() {
             match tok {
                 Token::Number(num) => stack.push(*num),
-                Token::Variable(name) => stack.push(*ctx.get_var(name).expect("Missing variable")),
+                Token::Variable(name) => stack.push(
+                    *ctx.get_var(name)
+                        .ok_or(Error::EvalError(EvalError::UnknownVar(Cow::Borrowed(name))))?,
+                ),
                 Token::FunctionCall(name, argc) => {
                     if *argc > stack.len() {
-                        panic!("Not enough args to call {name}")
+                        return Err(Error::EvalError(EvalError::RPNStackUnderflow));
                     }
 
                     let start_index = stack.len() - argc;
@@ -26,27 +33,39 @@ impl Expr<'_, RPN>
                         let args = stack.drain(start_index..stack.len());
                         let args = args.as_slice();
 
-                        ctx.call_fn(name, &args)
-                            .unwrap_or_else(|| panic!("Unknown function: {}", name))
+                        match ctx.call_fn(name, args) {
+                            Some(value) => value,
+                            None => {
+                                return Err(Error::EvalError(EvalError::UnknownFn(Cow::Borrowed(
+                                    name,
+                                ))));
+                            }
+                        }
                     };
 
                     stack.push(val);
                 }
                 Token::Operator(op) => {
-                    let b = stack.pop().expect("Stack underflow for operator");
-                    let a = stack.pop().expect("Stack underflow for operator");
+                    let b = match stack.pop() {
+                        Some(value) => value,
+                        None => return Err(Error::EvalError(EvalError::RPNStackUnderflow)),
+                    };
+                    let a = match stack.pop() {
+                        Some(value) => value,
+                        None => return Err(Error::EvalError(EvalError::RPNStackUnderflow)),
+                    };
                     let res = op.apply(a, b);
                     stack.push(res);
                 }
-                _ => panic!("Unexpected token in RPN: {:?}", tok),
+                _ => {}
             }
         }
 
         if stack.len() != 1 {
-            panic!("Stack didn't contain exactly one element after evaluation")
-        } else {
-            stack.pop().unwrap()
+            return Err(Error::EvalError(EvalError::MalformedExpression));
         }
+
+        Ok(stack.pop().unwrap()) // TODO: Remove this unwrap
     }
 }
 
@@ -107,9 +126,7 @@ impl<'e> TryFrom<Expr<'e, Infix>> for Expr<'e, RPN>
 
                     output.push(fun_call_token);
                 }
-                _ => {
-                    return Err(Error::UnexpectedToken(Cow::Owned(format!("{:?}", tok,)), i));
-                }
+                _ => {}
             }
         }
 
@@ -137,7 +154,7 @@ impl<'e, 'c, V: VarResolver, F: FnResolver> Evaluator<'e, 'c, V, F> for RPNEvalu
         Ok(RPNEvaluator { ctx, rpn: rpn_expr })
     }
 
-    fn eval(&self) -> f64
+    fn eval(&'e self) -> Result<f64, Error<'e>>
     {
         let mut stack = Vec::new();
         self.rpn.eval(self.ctx, &mut stack)

@@ -37,7 +37,7 @@ fn evaluation(c: &mut Criterion)
         let evaluator = RPNEvaluator::new(expr, &mut context).unwrap();
 
         b.iter(|| {
-            black_box(evaluator.eval());
+            black_box(evaluator.eval().unwrap());
         });
     });
 }

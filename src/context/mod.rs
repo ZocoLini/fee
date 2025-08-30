@@ -20,12 +20,12 @@ impl<V: VarResolver, F: FnResolver> Context<V, F>
     {
         self.vars.get_var(name)
     }
-    
+
     pub fn call_fn(&self, name: &str, args: &[f64]) -> Option<f64>
     {
         self.fns.call_fn(name, args)
     }
-    
+
     pub fn vars_mut(&mut self) -> &mut V
     {
         &mut self.vars

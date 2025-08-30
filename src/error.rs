@@ -2,6 +2,8 @@ use std::borrow::Cow;
 
 use thiserror::Error;
 
+use crate::{error, token::Token};
+
 #[derive(Debug, Error, PartialEq)]
 pub enum Error<'a>
 {
@@ -29,8 +31,14 @@ pub enum ParseError<'a>
 pub enum EvalError<'a>
 {
     #[error("unknown variable '{0}'")]
-    UnknownVariable(Cow<'a, str>),
+    UnknownVar(Cow<'a, str>),
 
     #[error("unknown function '{0}'")]
-    UnknownFunction(Cow<'a, str>),
+    UnknownFn(Cow<'a, str>),
+
+    #[error("RPN stack underflow")]
+    RPNStackUnderflow,
+
+    #[error("malformed expression")]
+    MalformedExpression,
 }
