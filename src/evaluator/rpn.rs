@@ -260,31 +260,4 @@ mod tests
             ]
         );
     }
-
-    #[test]
-    fn test_errors()
-    {
-        // TODO: The indices of the errors are relative to the start of the functions due
-        //  to the recursion used to convert the expression
-
-        let infix_expr = Expr::new(
-            vec![
-                Token::Number(2.0),
-                Token::Operator(Operator::Sub),
-                Token::Number(4.0),
-                Token::FunctionCall("asd", 3),
-            ],
-            Infix,
-        );
-
-        let result: Result<Expr<RPN>, Error> = infix_expr.try_into();
-
-        assert_eq!(
-            result,
-            Err(Error::UnexpectedToken(
-                Cow::Borrowed("FunctionCall(\"asd\", 3)"),
-                3
-            ))
-        );
-    }
 }

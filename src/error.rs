@@ -7,9 +7,6 @@ use crate::{error, token::Token};
 #[derive(Debug, Error, PartialEq)]
 pub enum Error<'a>
 {
-    #[error("unexpected token '{0}' at {1}")]
-    UnexpectedToken(Cow<'a, str>, usize),
-
     #[error("parse error: {0}")]
     ParseError(ParseError<'a>),
 
