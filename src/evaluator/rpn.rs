@@ -1,7 +1,8 @@
 use crate::lexer::{Expr, Infix};
 use crate::token::{Operator, Token};
 use crate::{Error, EvalError, prelude::*};
-use std::sync::{Arc, RwLock};
+use std::cell::UnsafeCell;
+use std::sync::{Arc, Mutex, RwLock};
 use std::{borrow::Cow, ops::Deref};
 
 #[derive(Debug, PartialEq)]
@@ -9,11 +10,7 @@ struct RPN;
 
 impl Expr<'_, RPN>
 {
-    fn eval<'e>(
-        &'e self,
-        ctx: &impl Context,
-        stack: &mut Vec<f64>,
-    ) -> Result<f64, Error<'e>>
+    fn eval<'e>(&'e self, ctx: &impl Context, stack: &mut Vec<f64>) -> Result<f64, Error<'e>>
     {
         for tok in self.iter() {
             match tok {
@@ -32,10 +29,12 @@ impl Expr<'_, RPN>
                     let val = match ctx.call_fn(name, args) {
                         Some(value) => value,
                         None => {
-                            return Err(Error::EvalError(EvalError::UnknownFn(Cow::Borrowed(name))));
+                            return Err(Error::EvalError(EvalError::UnknownFn(Cow::Borrowed(
+                                name,
+                            ))));
                         }
                     };
-                    
+
                     stack.truncate(start);
                     stack.push(val);
                 }
@@ -134,8 +133,8 @@ impl<'e> TryFrom<Expr<'e, Infix>> for Expr<'e, RPN>
 pub struct RPNEvaluator<'e>
 {
     rpn: Expr<'e, RPN>,
-    
-    stack: Vec<f64>
+
+    stack: Mutex<Vec<f64>>,
 }
 
 impl<'e> Evaluator<'e> for RPNEvaluator<'e>
@@ -145,14 +144,27 @@ impl<'e> Evaluator<'e> for RPNEvaluator<'e>
         let infix_expr = Expr::try_from(expr)?;
         let rpn_expr = Expr::try_from(infix_expr)?;
 
-        let stack = Vec::with_capacity(rpn_expr.len());
+        let stack = Mutex::new(Vec::with_capacity(rpn_expr.len() / 2));
 
-        Ok(RPNEvaluator { rpn: rpn_expr, stack })
+        Ok(RPNEvaluator {
+            rpn: rpn_expr,
+            stack,
+        })
     }
 
     fn eval(&'e self, ctx: &impl Context) -> Result<f64, Error<'e>>
     {
-        self.rpn.eval(ctx, &mut Vec::new())
+        match self.stack.try_lock() {
+            Ok(mut guard) => {
+                guard.clear();
+                self.rpn.eval(ctx, &mut guard)
+            }
+            Err(_) => {
+                // contención -> uso stack temporal en el heap
+                let mut local_stack = Vec::with_capacity(self.rpn.len() / 2);
+                self.rpn.eval(ctx, &mut local_stack)
+            }
+        }
     }
 }
 
