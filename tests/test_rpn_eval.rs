@@ -1,3 +1,5 @@
+use std::{sync::{Arc}, thread};
+
 use fee::{prelude::*, *};
 
 #[test]
@@ -56,4 +58,40 @@ fn test_rpn_eval_with_vars_and_fn()
     let evaluator = RPNEvaluator::new(expr).unwrap();
     let result = evaluator.eval(&context).unwrap();
     assert_eq!(result, 385.0);
+}
+
+#[test]
+fn test_rpn_eval_multi_threaded() {
+    let expr = "abs((2 * 21) + 3 - 35 - ((5 * 80) + 5) + p0)";
+    
+    let mut var_resolver = DefaultVarResolver::new();
+    var_resolver.add_var("p0".to_string(), 10.0);
+    var_resolver.add_var("p1".to_string(), 4.0);
+
+    let mut fn_resolver = DefaultFnResolver::new();
+    fn_resolver.add_fn("abs".to_string(), |args| {
+        let x = args[0];
+        x.abs()
+    });
+    
+    let evaluator = Arc::new(RPNEvaluator::new(expr).unwrap());
+    let context = Arc::new(DefaultContext::new(var_resolver, fn_resolver));
+
+    let mut handles = vec![];
+
+    for _ in 0..100 {
+        let evaluator_clone = evaluator.clone();
+        let context_clone = context.clone();
+
+        let handle = thread::spawn(move || {
+            let result = evaluator_clone.eval(context_clone.as_ref()).unwrap();
+            assert_eq!(result, 385.0);
+        });
+
+        handles.push(handle);
+    }
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
 }
