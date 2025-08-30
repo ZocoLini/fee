@@ -61,11 +61,10 @@ impl Expr<'_, RPN>
             }
         }
 
-        if stack.len() != 1 {
-            return Err(Error::EvalError(EvalError::MalformedExpression));
+        match stack.pop() {
+            Some(result) if stack.is_empty() => Ok(result),
+            _ => Err(Error::EvalError(EvalError::MalformedExpression)),
         }
-
-        Ok(stack.pop().unwrap()) // TODO: Remove this unwrap
     }
 }
 
