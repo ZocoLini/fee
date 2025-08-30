@@ -7,7 +7,7 @@ use std::sync::{Arc, Mutex, RwLock};
 use std::{borrow::Cow, ops::Deref};
 
 #[derive(Debug, PartialEq)]
-struct RPN;
+pub struct RPN;
 
 impl Expr<'_, RPN>
 {

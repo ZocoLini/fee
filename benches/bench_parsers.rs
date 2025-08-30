@@ -1,32 +1,38 @@
-#[cfg(feature = "bench-internal")]
 use criterion::{Criterion, criterion_group, criterion_main};
 
-#[cfg(feature = "bench-internal")]
 mod internal
 {
+    use fee::benches;
+
     use super::*;
     use std::hint::black_box;
 
     fn parsers(c: &mut Criterion)
     {
-        c.bench_function("parse/infix", |b| {
-            let expr = "(2 * 21)
-                + abs((2 + 3) * 4, sqrt(5))
-                + 3 - 35 - ((5 * 80) + 5)
-                + 10
-                - abs((2 + 3) * 4, sqrt(5))";
+        let expr = "(2 * 21)
+            + abs((2 + 3) * 4, sqrt(5))
+            + 3 - 35 - ((5 * 80) + 5)
+            + 10
+            - abs((2 + 3) * 4, sqrt(5))";
 
+        c.bench_function("parse/infix", |b| {
             b.iter(|| {
-                black_box(fee::lexer::Expr::try_from(expr).unwrap());
+                black_box(benches::parse_infix(expr).unwrap());
             });
+        });
+
+        c.bench_function("parse/rpn", |b| {
+            b.iter_batched(
+                || benches::parse_infix(expr).unwrap(),
+                |expr| {
+                    black_box(benches::parse_rpn(expr).unwrap());
+                },
+                criterion::BatchSize::SmallInput,
+            );
         });
     }
 
     criterion_group!(benches, parsers);
 }
 
-#[cfg(feature = "bench-internal")]
 criterion_main!(internal::benches);
-
-#[cfg(not(feature = "bench-internal"))]
-fn main() {}
