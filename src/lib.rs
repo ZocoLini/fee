@@ -5,6 +5,7 @@ mod evaluator;
 mod function;
 mod token;
 mod variable;
+mod context;
 
 #[cfg(feature = "bench-internal")]
 pub mod lexer;

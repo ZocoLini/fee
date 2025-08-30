@@ -1,6 +1,8 @@
 pub use crate::{Locked, Unlocked};
 
-pub use crate::evaluator::{Context, Evaluator};
+pub use crate::context::Context;
+
+pub use crate::evaluator::{Evaluator};
 
 pub use crate::function::FnResolver;
 
