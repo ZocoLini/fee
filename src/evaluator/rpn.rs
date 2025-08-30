@@ -2,6 +2,7 @@ use crate::lexer::{Expr, Infix};
 use crate::token::{Operator, Token};
 use crate::{Error, EvalError, prelude::*};
 use std::cell::UnsafeCell;
+use std::panic;
 use std::sync::{Arc, Mutex, RwLock};
 use std::{borrow::Cow, ops::Deref};
 
@@ -71,10 +72,17 @@ impl<'e> TryFrom<Expr<'e, Infix>> for Expr<'e, RPN>
         let mut output: Vec<Token> = Vec::with_capacity(expr.len());
         let mut ops: Vec<Token> = Vec::new();
 
+        let mut num_count = 0;
+
         for (i, tok) in expr.into_iter().enumerate() {
             match tok {
-                Token::Number(_) | Token::Variable(_) => {
+                Token::Number(_) => {
                     output.push(tok);
+                    num_count += 1;
+                }
+                Token::Variable(_) => {
+                    output.push(tok);
+                    num_count = 0;
                 }
                 Token::Operator(op) => {
                     while let Some(Token::Operator(top)) = ops.last() {
@@ -85,7 +93,8 @@ impl<'e> TryFrom<Expr<'e, Infix>> for Expr<'e, RPN>
                         };
 
                         if should_pop {
-                            output.push(ops.pop().unwrap());
+                            let op_token = ops.pop().unwrap();
+                            pre_evaluate(&mut output, op_token, &mut num_count);
                         } else {
                             break;
                         }
@@ -95,10 +104,13 @@ impl<'e> TryFrom<Expr<'e, Infix>> for Expr<'e, RPN>
                 Token::LParen => ops.push(tok),
                 Token::RParen => {
                     while let Some(top) = ops.pop() {
-                        if let Token::LParen = top {
-                            break;
-                        } else {
-                            output.push(top);
+                        match top {
+                            Token::LParen => break,
+                            Token::Operator(op) => pre_evaluate(&mut output, top, &mut num_count),
+                            _ => {
+                                output.push(top);
+                                num_count = 0;
+                            }
                         }
                     }
                 }
@@ -117,16 +129,51 @@ impl<'e> TryFrom<Expr<'e, Infix>> for Expr<'e, RPN>
                         .for_each(|rpn_arg| output.extend_from_slice(&rpn_arg));
 
                     output.push(fun_call_token);
+                    num_count = 0;
                 }
                 _ => {}
             }
         }
 
-        while let Some(op) = ops.pop() {
-            output.push(op);
+        while let Some(top) = ops.pop() {
+            if let Token::Operator(op) = top {
+                pre_evaluate(&mut output, top, &mut num_count);
+            } else {
+                output.push(top);
+                num_count = 0;
+            }
         }
 
-        Ok(Expr::new(output, RPN))
+        return Ok(Expr::new(output, RPN));
+
+        #[inline(always)]
+        fn pre_evaluate<'t>(output: &mut Vec<Token<'t>>, op_token: Token<'t>, num_count: &mut usize)
+        {
+            let op = if let Token::Operator(op) = op_token {
+                op
+            } else {
+                panic!("expected an operator token")
+            };
+
+            // Each operand may have a different number of arguments
+            if *num_count >= 2 {
+                let b = if let Token::Number(value) = output.pop().unwrap() {
+                    value
+                } else {
+                    panic!("expected a number");
+                };
+                let a = if let Token::Number(value) = output.pop().unwrap() {
+                    value
+                } else {
+                    panic!("expected a number");
+                };
+                output.push(Token::Number(op.apply(a, b)));
+                *num_count -= 1;
+            } else {
+                output.push(op_token);
+                *num_count = 0;
+            }
+        }
     }
 }
 
@@ -251,15 +298,20 @@ mod tests
         assert_eq!(
             *rpn_expr,
             vec![
-                Token::Number(2.0),
-                Token::Number(3.0),
-                Token::Operator(Operator::Add),
-                Token::Number(4.0),
-                Token::Operator(Operator::Mul),
+                Token::Number(20.0),
                 Token::Number(5.0),
                 Token::FunctionCall("sqrt", 1),
                 Token::FunctionCall("abs", 2),
             ]
         );
+    }
+
+    #[test]
+    fn test_str_to_rpn()
+    {
+        let expr = "(2 * 21) + 3 - 35 - ((5 * 80) + 5) + 10";
+        let infix_expr: Expr<'_, Infix> = Expr::try_from(expr).unwrap();
+        let rpn_expr: Expr<RPN> = infix_expr.try_into().unwrap();
+        assert_eq!(*rpn_expr, vec![Token::Number(-385.0),]);
     }
 }

@@ -1,7 +1,7 @@
 use std::hint::black_box;
 
 use criterion::{Criterion, criterion_group, criterion_main};
-use fee::{prelude::*, DefaultContext, DefaultFnResolver, DefaultVarResolver, RPNEvaluator};
+use fee::{DefaultContext, DefaultFnResolver, DefaultVarResolver, RPNEvaluator, prelude::*};
 
 fn evaluation(c: &mut Criterion)
 {

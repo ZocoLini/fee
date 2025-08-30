@@ -1,9 +1,9 @@
 use crate::prelude::{FnResolver, VarResolver};
 
-pub trait Context 
+pub trait Context
 {
     fn get_var(&self, name: &str) -> Option<&f64>;
-    fn call_fn(&self, name: &str, args: &[f64]) -> Option<f64>;    
+    fn call_fn(&self, name: &str, args: &[f64]) -> Option<f64>;
 }
 
 pub struct DefaultContext<V: VarResolver, F: FnResolver>

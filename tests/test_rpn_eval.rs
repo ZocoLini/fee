@@ -1,4 +1,4 @@
-use std::{sync::{Arc}, thread};
+use std::{sync::Arc, thread};
 
 use fee::{prelude::*, *};
 
@@ -17,7 +17,7 @@ fn test_rpn_eval_with_indexed_var_resolver()
     let evaluator = RPNEvaluator::new(expr).unwrap();
     let result = evaluator.eval(&context).unwrap();
     assert_eq!(result, 6.0);
-    
+
     let expr = "2 - (4 + (p19 - 2) * (p19 + 2))";
     let evaluator = RPNEvaluator::new(expr).unwrap();
     let result = evaluator.eval(&context).unwrap();
@@ -61,9 +61,10 @@ fn test_rpn_eval_with_vars_and_fn()
 }
 
 #[test]
-fn test_rpn_eval_multi_threaded() {
+fn test_rpn_eval_multi_threaded()
+{
     let expr = "abs((2 * 21) + 3 - 35 - ((5 * 80) + 5) + p0)";
-    
+
     let mut var_resolver = DefaultVarResolver::new();
     var_resolver.add_var("p0".to_string(), 10.0);
     var_resolver.add_var("p1".to_string(), 4.0);
@@ -73,7 +74,7 @@ fn test_rpn_eval_multi_threaded() {
         let x = args[0];
         x.abs()
     });
-    
+
     let evaluator = Arc::new(RPNEvaluator::new(expr).unwrap());
     let context = Arc::new(DefaultContext::new(var_resolver, fn_resolver));
 
