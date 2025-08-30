@@ -93,7 +93,9 @@ impl<'e> TryFrom<Expr<'e, Infix>> for Expr<'e, RPN>
                         };
 
                         if should_pop {
-                            let op_token = ops.pop().unwrap();
+                            let op_token = ops
+                                .pop()
+                                .expect("stack already checked to contain an operator token");
                             pre_evaluate(&mut output, op_token, &mut num_count);
                         } else {
                             break;
@@ -157,12 +159,12 @@ impl<'e> TryFrom<Expr<'e, Infix>> for Expr<'e, RPN>
 
             // Each operand may have a different number of arguments
             if *num_count >= 2 {
-                let b = if let Token::Number(value) = output.pop().unwrap() {
+                let b = if let Some(Token::Number(value)) = output.pop() {
                     value
                 } else {
                     panic!("expected a number");
                 };
-                let a = if let Token::Number(value) = output.pop().unwrap() {
+                let a = if let Some(Token::Number(value)) = output.pop() {
                     value
                 } else {
                     panic!("expected a number");
