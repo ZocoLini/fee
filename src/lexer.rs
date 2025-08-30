@@ -289,7 +289,7 @@ impl State
 
                         break Token::Variable(&input[start_index..i]);
                     } else {
-                        break Token::Variable(&input[start_index..i]);
+                        break Token::Variable(&input[start_index..end_index]);
                     }
                 };
 
@@ -315,7 +315,7 @@ mod tests
     #[test]
     fn test_str_to_infix()
     {
-        let expr = "2-4-2.4*5+6/7";
+        let expr = "2-4-2.4*5+6/p0";
         let infix_expr = Expr::try_from(expr).unwrap();
         assert_eq!(
             *infix_expr,
@@ -330,7 +330,7 @@ mod tests
                 Token::Operator(Operator::Add),
                 Token::Number(6.0),
                 Token::Operator(Operator::Div),
-                Token::Number(7.0),
+                Token::Variable("p0"),
             ]
         );
 
@@ -391,6 +391,27 @@ mod tests
                 ]
             ),]
         );
+
+        let expr = "abs((2 * 21) + p0)";
+        let infix_expr = Expr::try_from(expr).unwrap();
+        assert_eq!(
+            *infix_expr,
+            vec![Token::Function(
+                "abs",
+                vec![Expr {
+                    tokens: vec![
+                        Token::LParen,
+                        Token::Number(2.0),
+                        Token::Operator(Operator::Mul),
+                        Token::Number(21.0),
+                        Token::RParen,
+                        Token::Operator(Operator::Add),
+                        Token::Variable("p0")
+                    ],
+                    type_: Infix
+                }]
+            )]
+        )
     }
 
     #[test]
