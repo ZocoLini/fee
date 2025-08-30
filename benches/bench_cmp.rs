@@ -17,7 +17,7 @@ fn evaluation(c: &mut Criterion)
 
     c.bench_function("cmp/meval/eval", |b| {
         let expr: meval::Expr = expr.parse().unwrap();
-        
+
         b.iter(|| {
             black_box(expr.eval().unwrap());
         });

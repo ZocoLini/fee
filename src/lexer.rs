@@ -57,251 +57,252 @@ impl<'e> TryFrom<&'e str> for Expr<'e, Infix>
             tokens.push(token);
         }
 
-        return Ok(Expr {
+        Ok(Expr {
             tokens,
             type_: Infix,
-        });
+        })
+    }
+}
 
-        struct Lexer<'e>
-        {
-            input: &'e str,
-            chars: Peekable<CharIndices<'e>>,
-            state: Box<dyn State>,
-        };
-        
-        impl<'e> Lexer<'e>
-        {
-            fn new(expr: &'e str) -> Self
-            {
-                Lexer {
-                    input: expr,
-                    chars: expr.char_indices().peekable(),
-                    state: Box::new(ExpectingNumberProducer),
-                }
-            }
+struct Lexer<'e>
+{
+    input: &'e str,
+    chars: Peekable<CharIndices<'e>>,
+    state: State,
+}
 
-            fn next_token(&mut self) -> Result<Option<Token<'e>>, Error<'e>>
-            {
-                let chars = &mut self.chars;
-                let input = self.input;
-
-                while let Some(&(i, c)) = chars.peek() {
-                    match c {
-                        ' ' | '\t' | '\n' => {
-                            chars.next();
-                        }
-                        '(' | '[' => {
-                            chars.next();
-                            return Ok(Some(Token::LParen));
-                        }
-                        ')' | ']' => {
-                            chars.next();
-                            return Ok(Some(Token::RParen));
-                        }
-                        _ => {
-                            let (result, next_state) =
-                                self.state.next_token(self.input, &mut self.chars);
-                            self.state = next_state;
-                            return result.map(|tok| Some(tok));
-                        }
-                    }
-                }
-
-                Ok(None)
-            }
+impl<'e> Lexer<'e>
+{
+    fn new(expr: &'e str) -> Self
+    {
+        Lexer {
+            input: expr,
+            chars: expr.char_indices().peekable(),
+            state: State::ExpectingNumberProducer,
         }
+    }
 
-        trait State
-        {
-            fn next_token<'e>(
-                &mut self,
-                input: &'e str,
-                chars: &mut Peekable<CharIndices<'e>>,
-            ) -> (Result<Token<'e>, Error<'e>>, Box<dyn State>);
-        }
+    fn next_token(&mut self) -> Result<Option<Token<'e>>, Error<'e>>
+    {
+        let chars = &mut self.chars;
+        let input = self.input;
 
-        // number itself, variable or function
-        struct ExpectingOperator;
-
-        impl State for ExpectingOperator
-        {
-            fn next_token<'e>(
-                &mut self,
-                input: &'e str,
-                chars: &mut Peekable<CharIndices<'e>>,
-            ) -> (Result<Token<'e>, Error<'e>>, Box<dyn State>)
-            {
-                let &(i, c) = chars.peek().expect("Already peeked");
-
-                match c {
-                    '+' => {
-                        chars.next();
-                        return (Ok(Token::Operator(Operator::Add)), Box::new(ExpectingNumberProducer));
-                    }
-                    '*' => {
-                        chars.next();
-                        return (Ok(Token::Operator(Operator::Mul)), Box::new(ExpectingNumberProducer));
-                    }
-                    '/' => {
-                        chars.next();
-                        return (Ok(Token::Operator(Operator::Div)), Box::new(ExpectingNumberProducer));
-                    }
-                    '^' => {
-                        chars.next();
-                        return (Ok(Token::Operator(Operator::Pow)), Box::new(ExpectingNumberProducer));
-                    }
-                    '-' => {
-                        chars.next();
-                        return (Ok(Token::Operator(Operator::Sub)), Box::new(ExpectingNumberProducer));
-                    }
-                    _ => (
-                        Err(Error::ParseError(ParseError::UnexpectedChar(
-                            Cow::Owned(c),
-                            i,
-                        ))),
-                        Box::new(AfterError),
-                    ),
+        while let Some(&(i, c)) = chars.peek() {
+            match c {
+                ' ' | '\t' | '\n' => {
+                    chars.next();
+                }
+                '(' | '[' => {
+                    chars.next();
+                    return Ok(Some(Token::LParen));
+                }
+                ')' | ']' => {
+                    chars.next();
+                    return Ok(Some(Token::RParen));
+                }
+                _ => {
+                    let (result, next_state) = self.state.next_token(self.input, &mut self.chars);
+                    self.state = next_state;
+                    return result.map(|tok| Some(tok));
                 }
             }
         }
-        struct ExpectingNumberProducer;
 
-        impl State for ExpectingNumberProducer
-        {
-            fn next_token<'e>(
-                &mut self,
-                input: &'e str,
-                chars: &mut Peekable<CharIndices<'e>>,
-            ) -> (Result<Token<'e>, Error<'e>>, Box<dyn State>)
-            {
-                let &(i, c) = chars.peek().expect("Already peeked");
+        Ok(None)
+    }
+}
 
-                match c {
-                    // if a minus sign is read after an operator, it is a negative number
-                    '0'..='9' | '.' | '-' => {
+enum State
+{
+    ExpectingOperator,
+    ExpectingNumberProducer,
+    AfterError,
+}
+
+impl State
+{
+    fn next_token<'e>(
+        &mut self,
+        input: &'e str,
+        chars: &mut Peekable<CharIndices<'e>>,
+    ) -> (Result<Token<'e>, Error<'e>>, State)
+    {
+        match self {
+            State::ExpectingOperator => Self::handle_expecting_operator(input, chars),
+            State::ExpectingNumberProducer => Self::handle_number_or_ident(input, chars),
+            State::AfterError => panic!("tried to continue parsing after error"),
+        }
+    }
+
+    fn handle_expecting_operator<'e>(
+        _input: &'e str,
+        chars: &mut Peekable<CharIndices<'e>>,
+    ) -> (Result<Token<'e>, Error<'e>>, State)
+    {
+        let &(i, c) = chars.peek().expect("Already peeked");
+        match c {
+            '+' => {
+                chars.next();
+                (
+                    Ok(Token::Operator(Operator::Add)),
+                    State::ExpectingNumberProducer,
+                )
+            }
+            '-' => {
+                chars.next();
+                (
+                    Ok(Token::Operator(Operator::Sub)),
+                    State::ExpectingNumberProducer,
+                )
+            }
+            '*' => {
+                chars.next();
+                (
+                    Ok(Token::Operator(Operator::Mul)),
+                    State::ExpectingNumberProducer,
+                )
+            }
+            '/' => {
+                chars.next();
+                (
+                    Ok(Token::Operator(Operator::Div)),
+                    State::ExpectingNumberProducer,
+                )
+            }
+            '^' => {
+                chars.next();
+                (
+                    Ok(Token::Operator(Operator::Pow)),
+                    State::ExpectingNumberProducer,
+                )
+            }
+            _ => (
+                Err(Error::ParseError(ParseError::UnexpectedChar(
+                    Cow::Owned(c),
+                    i,
+                ))),
+                State::AfterError,
+            ),
+        }
+    }
+
+    fn handle_number_or_ident<'e>(
+        input: &'e str,
+        chars: &mut Peekable<CharIndices<'e>>,
+    ) -> (Result<Token<'e>, Error<'e>>, State)
+    {
+        let &(i, c) = chars.peek().expect("Already peeked");
+
+        match c {
+            // numbers
+            '0'..='9' | '.' | '-' => {
+                chars.next();
+                let multiplier = if c == '-' { -1.0 } else { 1.0 };
+
+                let start_index = i;
+                let mut end_index = input.len();
+
+                while let Some(&(i, d)) = chars.peek() {
+                    if d.is_ascii_digit() || d == '.' {
                         chars.next();
+                    } else {
+                        end_index = i;
+                        break;
+                    }
+                }
 
-                        let multiplier = if c == '-' { -1.0 } else { 1.0 };
+                let num_str = &input[start_index..end_index];
+                let value: f64 = match num_str.parse() {
+                    Ok(v) => v,
+                    Err(_) => {
+                        return (
+                            Err(Error::ParseError(ParseError::InvalidNumber(
+                                Cow::Borrowed(num_str),
+                                i,
+                            ))),
+                            State::AfterError,
+                        );
+                    }
+                };
 
-                        let start_index = i;
-                        let mut end_index = input.len();
+                (
+                    Ok(Token::Number(value * multiplier)),
+                    State::ExpectingOperator,
+                )
+            }
 
-                        while let Some(&(i, d)) = chars.peek() {
-                            if d.is_ascii_digit() || d == '.' {
-                                chars.next();
-                            } else {
-                                end_index = i;
-                                break;
-                            }
+            // identifiers (variables or functions)
+            'a'..='z' | 'A'..='Z' | '_' => {
+                let start_index = i;
+                let mut end_index = input.len();
+
+                let token = loop {
+                    if let Some(&(i, d)) = chars.peek() {
+                        if d.is_alphanumeric() || d == '_' {
+                            chars.next();
+                            continue;
                         }
 
-                        let num_str = &input[start_index..end_index];
-                        let value: f64 = match num_str.parse() {
-                            Ok(value) => value,
-                            Err(_) => {
-                                return (
-                                    Err(Error::ParseError(ParseError::InvalidNumber(
-                                        Cow::Borrowed(num_str),
-                                        i,
-                                    ))),
-                                    Box::new(AfterError),
-                                );
-                            }
-                        };
+                        // function found
+                        if d == '(' || d == '[' {
+                            let fn_name = &input[start_index..i];
+                            chars.next();
 
-                        (
-                            Ok(Token::Number(value * multiplier)),
-                            Box::new(ExpectingOperator),
-                        )
-                    }
-                    // variables or functions
-                    'a'..='z' | 'A'..='Z' | '_' => {
-                        let start_index = i;
-                        let mut end_index = input.len();
+                            let mut params = Vec::new();
 
-                        let token = loop {
-                            if let Some(&(i, d)) = chars.peek() {
-                                if d.is_alphanumeric() || d == '_' {
-                                    chars.next();
-                                    continue;
-                                }
+                            let mut depth = 1;
+                            let mut start_index = i + 1; // Skipping the opening bracket of the function call
+                            let mut end_index = input.len();
 
-                                // function found
-                                if d == '(' || d == '[' {
-                                    let fn_name = &input[start_index..i];
-                                    chars.next();
-
-                                    let mut params = Vec::new();
-
-                                    let mut depth = 1;
-                                    let mut start_index = i + 1; // Skipping the opening bracket of the function call
-                                    let mut end_index = input.len();
-
-                                    while let Some((i, d)) = chars.next() {
-                                        match d {
-                                            '(' | '[' => depth += 1,
-                                            ')' | ']' => depth -= 1,
-                                            ',' => {
-                                                let param_expr =
-                                                    match Expr::try_from(&input[start_index..i]) {
-                                                        Ok(expr) => expr,
-                                                        Err(err) => {
-                                                            return (Err(err), Box::new(AfterError));
-                                                        }
-                                                    };
-                                                params.push(param_expr);
-                                                start_index = i + 1;
-                                            }
-                                            _ => {}
-                                        }
-
-                                        if depth == 0 {
-                                            end_index = i;
-                                            break;
-                                        }
+                            while let Some((i, d)) = chars.next() {
+                                match d {
+                                    '(' | '[' => depth += 1,
+                                    ')' | ']' => depth -= 1,
+                                    ',' => {
+                                        let param_expr =
+                                            match Expr::try_from(&input[start_index..i]) {
+                                                Ok(expr) => expr,
+                                                Err(err) => {
+                                                    return (Err(err), State::AfterError);
+                                                }
+                                            };
+                                        params.push(param_expr);
+                                        start_index = i + 1;
                                     }
-
-                                    let param_expr =
-                                        match Expr::try_from(&input[start_index..end_index]) {
-                                            Ok(expr) => expr,
-                                            Err(err) => return (Err(err), Box::new(AfterError)),
-                                        };
-                                    params.push(param_expr);
-
-                                    break Token::Function(fn_name, params);
+                                    _ => {}
                                 }
 
-                                break Token::Variable(&input[start_index..i]);
-                            } else {
-                                break Token::Variable(&input[start_index..i]);
+                                if depth == 0 {
+                                    end_index = i;
+                                    break;
+                                }
                             }
-                        };
 
-                        (Ok(token), Box::new(ExpectingOperator))
+                            let param_expr = match Expr::try_from(&input[start_index..end_index]) {
+                                Ok(expr) => expr,
+                                Err(err) => return (Err(err), State::AfterError),
+                            };
+                            params.push(param_expr);
+
+                            break Token::Function(fn_name, params);
+                        }
+
+                        break Token::Variable(&input[start_index..i]);
+                    } else {
+                        break Token::Variable(&input[start_index..i]);
                     }
-                    _ => (
-                        Err(Error::ParseError(ParseError::UnexpectedChar(
-                            Cow::Owned(c),
-                            i,
-                        ))),
-                        Box::new(AfterError),
-                    ),
-                }
-            }
-        }
+                };
 
-        struct AfterError;
-
-        impl State for AfterError
-        {
-            fn next_token<'e>(
-                &mut self,
-                input: &'e str,
-                chars: &mut Peekable<CharIndices<'e>>,
-            ) -> (Result<Token<'e>, Error<'e>>, Box<dyn State>)
-            {
-                panic!("tried to continue parsing after error");
+                (Ok(token), State::ExpectingOperator)
             }
+
+            _ => (
+                Err(Error::ParseError(ParseError::UnexpectedChar(
+                    Cow::Owned(c),
+                    i,
+                ))),
+                State::AfterError,
+            ),
         }
     }
 }
