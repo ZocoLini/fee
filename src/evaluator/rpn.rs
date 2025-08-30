@@ -27,22 +27,16 @@ impl Expr<'_, RPN>
                         return Err(Error::EvalError(EvalError::RPNStackUnderflow));
                     }
 
-                    let start_index = stack.len() - argc;
-
-                    let val = {
-                        let args = stack.drain(start_index..stack.len());
-                        let args = args.as_slice();
-
-                        match ctx.call_fn(name, args) {
-                            Some(value) => value,
-                            None => {
-                                return Err(Error::EvalError(EvalError::UnknownFn(Cow::Borrowed(
-                                    name,
-                                ))));
-                            }
+                    let start = stack.len() - argc;
+                    let args = &stack[start..];
+                    let val = match ctx.call_fn(name, args) {
+                        Some(value) => value,
+                        None => {
+                            return Err(Error::EvalError(EvalError::UnknownFn(Cow::Borrowed(name))));
                         }
                     };
-
+                    
+                    stack.truncate(start);
                     stack.push(val);
                 }
                 Token::Operator(op) => {
