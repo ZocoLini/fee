@@ -9,9 +9,8 @@ use crate::{Error, ParseError, prelude::*};
 mod rpn;
 pub use rpn::RPNEvaluator;
 
-pub trait Evaluator<'e, 'c, V: VarResolver, F: FnResolver>: Sized
+pub trait Evaluator<'e>: Sized
 {
-    fn new(expr: &'e str, ctx: &'c mut Context<V, F>) -> Result<Self, crate::Error<'e>>;
-    fn eval(&'e self) -> Result<f64, Error<'e>>;
-    fn context_mut(&mut self) -> &mut Context<V, F>;
+    fn new(expr: &'e str) -> Result<Self, crate::Error<'e>>;
+    fn eval(&'e self, ctx: &impl Context) -> Result<f64, Error<'e>>;
 }

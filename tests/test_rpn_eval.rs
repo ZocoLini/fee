@@ -9,22 +9,21 @@ fn test_rpn_eval_with_indexed_var_resolver()
 
     let fn_resolver = DefaultFnResolver::new();
 
-    let mut context = Context::new(var_resolver, fn_resolver);
+    let mut context = DefaultContext::new(var_resolver, fn_resolver);
 
     let expr = "(2 + 4) * 6 / (p19 + 2)";
-    let evaluator = RPNEvaluator::new(expr, &mut context).unwrap();
-    let result = evaluator.eval().unwrap();
+    let evaluator = RPNEvaluator::new(expr).unwrap();
+    let result = evaluator.eval(&context).unwrap();
     assert_eq!(result, 6.0);
-
+    
     let expr = "2 - (4 + (p19 - 2) * (p19 + 2))";
-    let mut evaluator = RPNEvaluator::new(expr, &mut context).unwrap();
-    let result = evaluator.eval().unwrap();
+    let evaluator = RPNEvaluator::new(expr).unwrap();
+    let result = evaluator.eval(&context).unwrap();
     assert_eq!(result, -14.0);
 
-    let context = evaluator.context_mut();
     context.vars_mut().set('p', 19, 0.0);
 
-    let result = evaluator.eval().unwrap();
+    let result = evaluator.eval(&context).unwrap();
     assert_eq!(result, 2.0);
 }
 
@@ -41,20 +40,20 @@ fn test_rpn_eval_with_vars_and_fn()
         x.abs()
     });
 
-    let mut context = Context::new(var_resolver, fn_resolver);
+    let context = DefaultContext::new(var_resolver, fn_resolver);
 
     let expr = "abs((2 + 4) * 6 / (p1 + 2)) + abs(-2)";
-    let evaluator = RPNEvaluator::new(expr, &mut context).unwrap();
-    let result = evaluator.eval().unwrap();
+    let evaluator = RPNEvaluator::new(expr).unwrap();
+    let result = evaluator.eval(&context).unwrap();
     assert_eq!(result, 8.0);
 
     let expr = "abs((2 + 4) * 6 / (p1 + 2))";
-    let evaluator = RPNEvaluator::new(expr, &mut context).unwrap();
-    let result = evaluator.eval().unwrap();
+    let evaluator = RPNEvaluator::new(expr).unwrap();
+    let result = evaluator.eval(&context).unwrap();
     assert_eq!(result, 6.0);
 
     let expr = "abs((2 * 21) + 3 - 35 - ((5 * 80) + 5) + p0)";
-    let evaluator = RPNEvaluator::new(expr, &mut context).unwrap();
-    let result = evaluator.eval().unwrap();
+    let evaluator = RPNEvaluator::new(expr).unwrap();
+    let result = evaluator.eval(&context).unwrap();
     assert_eq!(result, 385.0);
 }

@@ -11,7 +11,7 @@ impl Expr<'_, RPN>
 {
     fn eval<'e>(
         &'e self,
-        ctx: &Context<impl VarResolver, impl FnResolver>,
+        ctx: &impl Context,
         stack: &mut Vec<f64>,
     ) -> Result<f64, Error<'e>>
     {
@@ -131,31 +131,28 @@ impl<'e> TryFrom<Expr<'e, Infix>> for Expr<'e, RPN>
     }
 }
 
-pub struct RPNEvaluator<'e, 'c, V: VarResolver, F: FnResolver>
+pub struct RPNEvaluator<'e>
 {
-    ctx: &'c mut Context<V, F>,
     rpn: Expr<'e, RPN>,
+    
+    stack: Vec<f64>
 }
 
-impl<'e, 'c, V: VarResolver, F: FnResolver> Evaluator<'e, 'c, V, F> for RPNEvaluator<'e, 'c, V, F>
+impl<'e> Evaluator<'e> for RPNEvaluator<'e>
 {
-    fn new(expr: &'e str, ctx: &'c mut Context<V, F>) -> Result<Self, crate::Error<'e>>
+    fn new(expr: &'e str) -> Result<Self, crate::Error<'e>>
     {
         let infix_expr = Expr::try_from(expr)?;
         let rpn_expr = Expr::try_from(infix_expr)?;
 
-        Ok(RPNEvaluator { ctx, rpn: rpn_expr })
+        let stack = Vec::with_capacity(rpn_expr.len());
+
+        Ok(RPNEvaluator { rpn: rpn_expr, stack })
     }
 
-    fn eval(&'e self) -> Result<f64, Error<'e>>
+    fn eval(&'e self, ctx: &impl Context) -> Result<f64, Error<'e>>
     {
-        let mut stack = Vec::new();
-        self.rpn.eval(self.ctx, &mut stack)
-    }
-
-    fn context_mut(&mut self) -> &mut Context<V, F>
-    {
-        self.ctx
+        self.rpn.eval(ctx, &mut Vec::new())
     }
 }
 

@@ -1,7 +1,7 @@
 use std::hint::black_box;
 
 use criterion::{Criterion, criterion_group, criterion_main};
-use fee::{DefaultFnResolver, DefaultVarResolver, IndexedVarResolver, RPNEvaluator, prelude::*};
+use fee::{prelude::*, DefaultContext, DefaultFnResolver, DefaultVarResolver, IndexedVarResolver, RPNEvaluator};
 
 fn rpn_evaluator(c: &mut Criterion)
 {
@@ -14,11 +14,11 @@ fn rpn_evaluator(c: &mut Criterion)
         let mut fn_resolver = DefaultFnResolver::new();
         fn_resolver.add_fn("abs".to_string(), |x| x[0].abs());
 
-        let mut context = Context::new(var_resolver, fn_resolver);
-        let evaluator = RPNEvaluator::new(expr, &mut context).unwrap();
-
+        let context = DefaultContext::new(var_resolver, fn_resolver);
+        let evaluator = RPNEvaluator::new(expr).unwrap();
+        
         b.iter(|| {
-            black_box(evaluator.eval().unwrap());
+            black_box(evaluator.eval(&context).unwrap());
         });
     });
 
@@ -30,11 +30,11 @@ fn rpn_evaluator(c: &mut Criterion)
         let mut fn_resolver = DefaultFnResolver::new();
         fn_resolver.add_fn("abs".to_string(), |x| x[0].abs());
 
-        let mut context = Context::new(var_resolver, fn_resolver);
-        let evaluator = RPNEvaluator::new(expr, &mut context).unwrap();
+        let context = DefaultContext::new(var_resolver, fn_resolver);
+        let evaluator = RPNEvaluator::new(expr).unwrap();
 
         b.iter(|| {
-            black_box(evaluator.eval().unwrap());
+            black_box(evaluator.eval(&context).unwrap());
         });
     });
 

@@ -17,6 +17,8 @@ pub mod prelude;
 
 pub use crate::error::*;
 
+pub use crate::context::DefaultContext;
+
 pub use crate::function::DefaultFnResolver;
 
 pub use crate::variable::{DefaultVarResolver, IndexedVarResolver};
