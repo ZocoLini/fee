@@ -33,8 +33,8 @@ fn evaluation(c: &mut Criterion)
         let var_resolver = DefaultVarResolver::new();
         let fn_resolver = DefaultFnResolver::new();
 
-        let context = Context::new(var_resolver, fn_resolver);
-        let evaluator = RPNEvaluator::new(expr, &context).unwrap();
+        let mut context = Context::new(var_resolver, fn_resolver);
+        let evaluator = RPNEvaluator::new(expr, &mut context).unwrap();
 
         b.iter(|| {
             black_box(evaluator.eval());

@@ -1,6 +1,7 @@
 use crate::lexer::{Expr, Infix};
 use crate::token::{Operator, Token};
 use crate::{Error, prelude::*};
+use std::sync::{Arc, RwLock};
 use std::{borrow::Cow, ops::Deref};
 
 #[derive(Debug, PartialEq)]
@@ -14,7 +15,7 @@ impl Expr<'_, RPN>
             match tok {
                 Token::Number(num) => stack.push(*num),
                 Token::Variable(name) => {
-                    stack.push(*ctx.vals.get_var(name).expect("Missing variable"))
+                    stack.push(*ctx.vars.get_var(name).expect("Missing variable"))
                 }
                 Token::FunctionCall(name, argc) => {
                     if *argc > stack.len() {
@@ -27,7 +28,7 @@ impl Expr<'_, RPN>
                         let args = stack.drain(start_index..stack.len());
                         let args = args.as_slice();
 
-                        ctx.funcs
+                        ctx.fns
                             .call_fn(name, &args)
                             .unwrap_or_else(|| panic!("Unknown function: {}", name))
                     };
@@ -125,27 +126,29 @@ impl<'e> TryFrom<Expr<'e, Infix>> for Expr<'e, RPN>
 
 pub struct RPNEvaluator<'e, 'c, V: VarResolver, F: FnResolver>
 {
-    ctx: &'c Context<V, F>,
+    ctx: &'c mut Context<V, F>,
     rpn: Expr<'e, RPN>,
 }
 
-impl<'e, 'c, V: VarResolver, F: FnResolver> RPNEvaluator<'e, 'c, V, F>
+impl<'e, 'c, V: VarResolver, F: FnResolver> Evaluator<'e, 'c, V, F> for RPNEvaluator<'e, 'c, V, F>
 {
-    pub fn new(expr: &'e str, ctx: &'c Context<V, F>) -> Result<Self, crate::Error<'e>>
+    fn new(expr: &'e str, ctx: &'c mut Context<V, F>) -> Result<Self, crate::Error<'e>>
     {
         let infix_expr = Expr::try_from(expr)?;
         let rpn_expr = Expr::try_from(infix_expr)?;
 
         Ok(RPNEvaluator { ctx, rpn: rpn_expr })
     }
-}
 
-impl<'e, 'c, V: VarResolver, F: FnResolver> Evaluator for RPNEvaluator<'e, 'c, V, F>
-{
     fn eval(&self) -> f64
     {
         let mut stack = Vec::new();
         self.rpn.eval(self.ctx, &mut stack)
+    }
+
+    fn context_mut(&mut self) -> &mut Context<V, F>
+    {
+        self.ctx
     }
 }
 

@@ -10,8 +10,8 @@ fn rpn_evaluator(c: &mut Criterion)
         let fn_resolver = DefaultFnResolver::new();
 
         let expr = "(2 * 21) + 3 - 35 - ((5 * 80) + 5) + 10";
-        let context = Context::new(var_resolver, fn_resolver);
-        let evaluator = RPNEvaluator::new(expr, &context).unwrap();
+        let mut context = Context::new(var_resolver, fn_resolver);
+        let evaluator = RPNEvaluator::new(expr, &mut context).unwrap();
 
         b.iter(|| {
             black_box(evaluator.eval());
