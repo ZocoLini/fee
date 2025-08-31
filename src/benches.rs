@@ -1,7 +1,9 @@
 #![cfg(feature = "bench-internal")]
 
 use crate::{
-    evaluator::rpn::RpnExpr, lexer::{Infix, InfixExpr}, Error
+    Error,
+    evaluator::rpn::RpnExpr,
+    lexer::{Infix, InfixExpr},
 };
 
 pub fn parse_infix<'e>(expr: &'e str) -> Result<InfixExpr<'e>, Error<'e>>

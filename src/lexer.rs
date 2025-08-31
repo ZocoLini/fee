@@ -1,7 +1,7 @@
 use std::{borrow::Cow, iter::Peekable, ops::Deref, str::CharIndices};
 
 use crate::{
-    token::{Op, InfixToken},
+    token::{InfixToken, Op},
     *,
 };
 
@@ -56,9 +56,7 @@ impl<'e> TryFrom<&'e str> for InfixExpr<'e>
             tokens.push(token);
         }
 
-        Ok(InfixExpr {
-            tokens,
-        })
+        Ok(InfixExpr { tokens })
     }
 }
 
@@ -223,10 +221,11 @@ impl State
                                 }
                             }
 
-                            let param_expr = match InfixExpr::try_from(&input[start_index..end_index]) {
-                                Ok(expr) => expr,
-                                Err(err) => return (Err(err), State::AfterError),
-                            };
+                            let param_expr =
+                                match InfixExpr::try_from(&input[start_index..end_index]) {
+                                    Ok(expr) => expr,
+                                    Err(err) => return (Err(err), State::AfterError),
+                                };
                             params.push(param_expr);
 
                             break InfixToken::Fn(fn_name, params);

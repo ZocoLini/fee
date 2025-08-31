@@ -15,7 +15,7 @@ impl SmallVarResolver
             cache: Vec::with_capacity(CACHE_SIZE),
         }
     }
-    
+
     pub fn add_var(&mut self, name: String, value: f64)
     {
         self.cache.push((name, value));
