@@ -142,35 +142,24 @@ impl State
         c: char,
     ) -> (Result<Token<'e>, Error<'e>>, State)
     {
-        match c {
-            '+' => (
-                Ok(Token::Operator(Operator::Add)),
-                State::ExpectingNumberProducer,
-            ),
-            '-' => (
-                Ok(Token::Operator(Operator::Sub)),
-                State::ExpectingNumberProducer,
-            ),
-            '*' => (
-                Ok(Token::Operator(Operator::Mul)),
-                State::ExpectingNumberProducer,
-            ),
-            '/' => (
-                Ok(Token::Operator(Operator::Div)),
-                State::ExpectingNumberProducer,
-            ),
-            '^' => (
-                Ok(Token::Operator(Operator::Pow)),
-                State::ExpectingNumberProducer,
-            ),
-            _ => (
-                Err(Error::ParseError(ParseError::UnexpectedChar(
-                    Cow::Owned(c),
-                    i,
-                ))),
-                State::AfterError,
-            ),
-        }
+        let token = match c {
+            '+' => Ok(Token::Operator(Operator::Add)),
+            '-' => Ok(Token::Operator(Operator::Sub)),
+            '*' => Ok(Token::Operator(Operator::Mul)),
+            '/' => Ok(Token::Operator(Operator::Div)),
+            '^' => Ok(Token::Operator(Operator::Pow)),
+            _ => {
+                return (
+                    Err(Error::ParseError(ParseError::UnexpectedChar(
+                        Cow::Owned(c),
+                        i,
+                    ))),
+                    State::AfterError,
+                );
+            }
+        };
+
+        (token, State::ExpectingNumberProducer)
     }
 
     fn handle_number_or_ident<'e>(
