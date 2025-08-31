@@ -1,7 +1,7 @@
 //! Fast Expression Evaluators
 //!
 //! This Rust crate provides ways to evaluate mathematical expressions efficiently.
-//! Each evaluator, function and variable resolvers have their own pros, cons and capabilities.
+//! Each evaluator and resolver has his own pros, cons and capabilities.
 //!
 //! ## Introduction
 //!
@@ -30,14 +30,9 @@
 //! ## Evaluators
 //!
 //! Trait implemented by all the structs that can evaluate expressions.
-//! Right now the trait is implemented by the RpnEvaluator struct.
-//! It needs the expression and a context object to do the evaluation.
-//!
-//! ## Contexts
-//!
-//! The context trait defines the interface for a context object that can be used to evaluate expressions.
-//! It provides methods for resolving variables and functions.
-//! Right now, the trait is implemented by the DefaultContext struct.
+//! It needs the expression and a context struct to do the evaluation.
+//! The current available Evaluators are:
+//! - RpnEvaluator
 //!
 //! ## Resolvers
 //!
@@ -47,8 +42,11 @@
 //! - IndexedResolver
 //! - SmallResolver
 //! - ConstantResolver
+//! - EmptyResolver
 //!
 //! Each of which has its own pros and cons.
+
+#![forbid(clippy::unwrap_used)]
 
 mod context;
 mod error;
@@ -70,6 +68,7 @@ pub use crate::resolver::{
 
 pub use crate::evaluator::RpnEvaluator;
 
+/// Type alias for the functions that can be called from expressions.
 pub type ExprFn = fn(&[f64]) -> f64;
 
 pub struct Locked;
