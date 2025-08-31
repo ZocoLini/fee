@@ -19,7 +19,7 @@ pub use crate::context::DefaultContext;
 
 pub use crate::function::DefaultFnResolver;
 
-pub use crate::variable::{DefaultVarResolver, IndexedVarResolver};
+pub use crate::variable::{DefaultVarResolver, IndexedVarResolver, SmallVarResolver};
 
 pub use crate::evaluator::RPNEvaluator;
 

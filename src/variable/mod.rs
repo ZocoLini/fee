@@ -2,9 +2,11 @@ use std::collections::HashMap;
 
 mod default;
 mod indexed;
+mod small;
 
 pub use default::DefaultVarResolver;
 pub use indexed::IndexedVarResolver;
+pub use small::SmallVarResolver;
 
 pub trait VarResolver
 {
