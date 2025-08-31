@@ -5,7 +5,7 @@ const CACHE_SIZE: usize = 10; // 30 is the 'limit'
 pub struct SmallResolver<State, T>
 {
     cache: Vec<(String, T)>,
-    _state: State
+    _state: State,
 }
 
 impl<State, T> Resolver<T> for SmallResolver<State, T>
@@ -39,10 +39,10 @@ impl<T> SmallResolver<Unlocked, T>
                 return;
             }
         }
-        
+
         self.cache.push((name, value));
     }
-    
+
     pub fn lock(self) -> SmallResolver<Locked, T>
     {
         SmallResolver {
@@ -54,11 +54,11 @@ impl<T> SmallResolver<Unlocked, T>
 
 impl SmallResolver<Locked, f64>
 {
-    pub fn get_var_mut(&mut self, name: &str) -> Option<&mut f64>
+    pub fn get_var_pointer(&mut self, name: &str) -> Option<*mut f64>
     {
         for (key, value) in &mut self.cache {
             if key == name {
-                return Some(value);
+                return Some(value as *mut f64);
             }
         }
         None

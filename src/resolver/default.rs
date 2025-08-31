@@ -61,9 +61,9 @@ impl DefaultResolver<Unlocked, f64>
 
 impl DefaultResolver<Locked, f64>
 {
-    pub fn get_var_mut(&mut self, name: &str) -> Option<&mut f64>
+    pub fn get_var_pointer(&mut self, name: &str) -> Option<*mut f64>
     {
-        self.vars.get_mut(name)
+        self.vars.get_mut(name).map(|v| v as *mut f64)
     }
 }
 
@@ -96,8 +96,8 @@ mod tests
 
         let mut resolver = var_resolver.lock();
 
-        let x = resolver.get_var_mut("x").unwrap();
-        *x = 20.0;
+        let x = resolver.get_var_pointer("x").unwrap();
+        unsafe { *x = 20.0 };
 
         assert_eq!(resolver.resolve("x"), Some(&20.0));
     }

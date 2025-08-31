@@ -9,7 +9,7 @@ fn test_rpn_eval_with_indexed_var_resolver()
     var_resolver.add_var_identifier('p', 20);
     var_resolver.set('p', 19, 4.0);
 
-    let fn_resolver = DefaultResolver::new_empty();
+    let fn_resolver = EmptyResolver::new();
 
     let mut context = Context::new(var_resolver, fn_resolver);
 
