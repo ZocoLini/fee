@@ -23,6 +23,8 @@ mexe = "0.2.0"
 opt-level = 3
 debug = false
 lto = "fat"
+overflow-checks = false
+incremental = false
 
 [[bench]]
 name = "bench_var_resolvers"
