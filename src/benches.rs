@@ -1,17 +1,15 @@
 #![cfg(feature = "bench-internal")]
 
-use crate::evaluator::rpn::RPN;
 use crate::{
-    Error,
-    lexer::{Expr, Infix},
+    evaluator::rpn::RpnExpr, lexer::{Infix, InfixExpr}, Error
 };
 
-pub fn parse_infix<'e>(expr: &'e str) -> Result<Expr<'e, Infix>, Error<'e>>
+pub fn parse_infix<'e>(expr: &'e str) -> Result<InfixExpr<'e>, Error<'e>>
 {
-    Expr::try_from(expr)
+    InfixExpr::try_from(expr)
 }
 
-pub fn parse_rpn<'e>(expr: Expr<'e, Infix>) -> Result<Expr<'e, RPN>, Error<'e>>
+pub fn parse_rpn<'e>(expr: InfixExpr<'e>) -> Result<RpnExpr<'e>, Error<'e>>
 {
-    Expr::try_from(expr)
+    RpnExpr::try_from(expr)
 }

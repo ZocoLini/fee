@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use thiserror::Error;
 
-use crate::{error, token::Token};
+use crate::{error};
 
 #[derive(Debug, Error, PartialEq)]
 pub enum Error<'a>

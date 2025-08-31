@@ -1,31 +1,30 @@
 use std::{borrow::Cow, iter::Peekable, ops::Deref, str::CharIndices};
 
 use crate::{
-    token::{Operator, Token},
+    token::{Op, InfixToken},
     *,
 };
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, PartialEq)]
 pub struct Infix;
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct Expr<'e, Type>
+#[derive(Debug, PartialEq)]
+pub struct InfixExpr<'e>
 {
-    tokens: Vec<Token<'e>>,
-    type_: Type,
+    tokens: Vec<InfixToken<'e>>,
 }
 
-impl<'e, T> Expr<'e, T>
+impl<'e> InfixExpr<'e>
 {
-    pub fn new(tokens: Vec<Token<'e>>, type_: T) -> Self
+    pub fn new(tokens: Vec<InfixToken<'e>>) -> Self
     {
-        Self { tokens, type_ }
+        Self { tokens }
     }
 }
 
-impl<'e, T> Deref for Expr<'e, T>
+impl<'e> Deref for InfixExpr<'e>
 {
-    type Target = Vec<Token<'e>>;
+    type Target = Vec<InfixToken<'e>>;
 
     fn deref(&self) -> &Self::Target
     {
@@ -33,10 +32,10 @@ impl<'e, T> Deref for Expr<'e, T>
     }
 }
 
-impl<'e, T> IntoIterator for Expr<'e, T>
+impl<'e> IntoIterator for InfixExpr<'e>
 {
-    type Item = Token<'e>;
-    type IntoIter = std::vec::IntoIter<Token<'e>>;
+    type Item = InfixToken<'e>;
+    type IntoIter = std::vec::IntoIter<InfixToken<'e>>;
 
     fn into_iter(self) -> Self::IntoIter
     {
@@ -44,22 +43,21 @@ impl<'e, T> IntoIterator for Expr<'e, T>
     }
 }
 
-impl<'e> TryFrom<&'e str> for Expr<'e, Infix>
+impl<'e> TryFrom<&'e str> for InfixExpr<'e>
 {
     type Error = crate::Error<'e>;
 
     fn try_from(input: &'e str) -> Result<Self, Self::Error>
     {
-        let mut tokens: Vec<Token<'e>> = Vec::new();
+        let mut tokens: Vec<InfixToken<'e>> = Vec::new();
         let mut lexer = Lexer::new(input);
 
         while let Some(token) = lexer.next_token()? {
             tokens.push(token);
         }
 
-        Ok(Expr {
+        Ok(InfixExpr {
             tokens,
-            type_: Infix,
         })
     }
 }
@@ -82,7 +80,7 @@ impl<'e> Lexer<'e>
         }
     }
 
-    fn next_token(&mut self) -> Result<Option<Token<'e>>, Error<'e>>
+    fn next_token(&mut self) -> Result<Option<InfixToken<'e>>, Error<'e>>
     {
         let chars = &mut self.chars;
         let input = self.input;
@@ -93,10 +91,10 @@ impl<'e> Lexer<'e>
                     // Ignore whitespace
                 }
                 '(' | '[' => {
-                    return Ok(Some(Token::LParen));
+                    return Ok(Some(InfixToken::LParen));
                 }
                 ')' | ']' => {
-                    return Ok(Some(Token::RParen));
+                    return Ok(Some(InfixToken::RParen));
                 }
                 _ => {
                     let (result, next_state) =
@@ -126,7 +124,7 @@ impl State
         chars: &mut Peekable<CharIndices<'e>>,
         i: usize,
         c: char,
-    ) -> (Result<Token<'e>, Error<'e>>, State)
+    ) -> (Result<InfixToken<'e>, Error<'e>>, State)
     {
         match self {
             State::ExpectingOperator => Self::handle_expecting_operator(input, chars, i, c),
@@ -140,14 +138,14 @@ impl State
         chars: &mut Peekable<CharIndices<'e>>,
         i: usize,
         c: char,
-    ) -> (Result<Token<'e>, Error<'e>>, State)
+    ) -> (Result<InfixToken<'e>, Error<'e>>, State)
     {
         let token = match c {
-            '+' => Ok(Token::Operator(Operator::Add)),
-            '-' => Ok(Token::Operator(Operator::Sub)),
-            '*' => Ok(Token::Operator(Operator::Mul)),
-            '/' => Ok(Token::Operator(Operator::Div)),
-            '^' => Ok(Token::Operator(Operator::Pow)),
+            '+' => Ok(InfixToken::Op(Op::Add)),
+            '-' => Ok(InfixToken::Op(Op::Sub)),
+            '*' => Ok(InfixToken::Op(Op::Mul)),
+            '/' => Ok(InfixToken::Op(Op::Div)),
+            '^' => Ok(InfixToken::Op(Op::Pow)),
             _ => {
                 return (
                     Err(Error::ParseError(ParseError::UnexpectedChar(
@@ -167,14 +165,14 @@ impl State
         chars: &mut Peekable<CharIndices<'e>>,
         i: usize,
         c: char,
-    ) -> (Result<Token<'e>, Error<'e>>, State)
+    ) -> (Result<InfixToken<'e>, Error<'e>>, State)
     {
         return match c {
             // numbers
             '0'..='9' | '.' | '-' => {
                 let value = fast_parse_f64(c, chars);
 
-                (Ok(Token::Number(value)), State::ExpectingOperator)
+                (Ok(InfixToken::Num(value)), State::ExpectingOperator)
             }
 
             // identifiers (variables or functions)
@@ -207,7 +205,7 @@ impl State
                                     ')' | ']' => depth -= 1,
                                     ',' => {
                                         let param_expr =
-                                            match Expr::try_from(&input[start_index..i]) {
+                                            match InfixExpr::try_from(&input[start_index..i]) {
                                                 Ok(expr) => expr,
                                                 Err(err) => {
                                                     return (Err(err), State::AfterError);
@@ -225,18 +223,18 @@ impl State
                                 }
                             }
 
-                            let param_expr = match Expr::try_from(&input[start_index..end_index]) {
+                            let param_expr = match InfixExpr::try_from(&input[start_index..end_index]) {
                                 Ok(expr) => expr,
                                 Err(err) => return (Err(err), State::AfterError),
                             };
                             params.push(param_expr);
 
-                            break Token::Function(fn_name, params);
+                            break InfixToken::Fn(fn_name, params);
                         }
 
-                        break Token::Variable(&input[start_index..i]);
+                        break InfixToken::Var(&input[start_index..i]);
                     } else {
-                        break Token::Variable(&input[start_index..end_index]);
+                        break InfixToken::Var(&input[start_index..end_index]);
                     }
                 };
 
@@ -312,99 +310,95 @@ mod tests
     fn test_str_to_infix()
     {
         let expr = "2-4-2.4*5+6/p0";
-        let infix_expr = Expr::try_from(expr).unwrap();
+        let infix_expr = InfixExpr::try_from(expr).unwrap();
         assert_eq!(
             *infix_expr,
             vec![
-                Token::Number(2.0),
-                Token::Operator(Operator::Sub),
-                Token::Number(4.0),
-                Token::Operator(Operator::Sub),
-                Token::Number(2.4),
-                Token::Operator(Operator::Mul),
-                Token::Number(5.0),
-                Token::Operator(Operator::Add),
-                Token::Number(6.0),
-                Token::Operator(Operator::Div),
-                Token::Variable("p0"),
+                InfixToken::Num(2.0),
+                InfixToken::Op(Op::Sub),
+                InfixToken::Num(4.0),
+                InfixToken::Op(Op::Sub),
+                InfixToken::Num(2.4),
+                InfixToken::Op(Op::Mul),
+                InfixToken::Num(5.0),
+                InfixToken::Op(Op::Add),
+                InfixToken::Num(6.0),
+                InfixToken::Op(Op::Div),
+                InfixToken::Var("p0"),
             ]
         );
 
         let expr = "2 - (4 + (p19 - 2) * (p19 + 2))";
-        let infix_expr = Expr::try_from(expr).unwrap();
+        let infix_expr = InfixExpr::try_from(expr).unwrap();
         assert_eq!(
             *infix_expr,
             vec![
-                Token::Number(2.0),
-                Token::Operator(Operator::Sub),
-                Token::LParen,
-                Token::Number(4.0),
-                Token::Operator(Operator::Add),
-                Token::LParen,
-                Token::Variable("p19"),
-                Token::Operator(Operator::Sub),
-                Token::Number(2.0),
-                Token::RParen,
-                Token::Operator(Operator::Mul),
-                Token::LParen,
-                Token::Variable("p19"),
-                Token::Operator(Operator::Add),
-                Token::Number(2.0),
-                Token::RParen,
-                Token::RParen,
+                InfixToken::Num(2.0),
+                InfixToken::Op(Op::Sub),
+                InfixToken::LParen,
+                InfixToken::Num(4.0),
+                InfixToken::Op(Op::Add),
+                InfixToken::LParen,
+                InfixToken::Var("p19"),
+                InfixToken::Op(Op::Sub),
+                InfixToken::Num(2.0),
+                InfixToken::RParen,
+                InfixToken::Op(Op::Mul),
+                InfixToken::LParen,
+                InfixToken::Var("p19"),
+                InfixToken::Op(Op::Add),
+                InfixToken::Num(2.0),
+                InfixToken::RParen,
+                InfixToken::RParen,
             ]
         );
 
         let expr = "abs((2 + 3) * 4, sqrt(5))";
-        let infix_expr = Expr::try_from(expr).unwrap();
+        let infix_expr = InfixExpr::try_from(expr).unwrap();
         assert_eq!(
             *infix_expr,
-            vec![Token::Function(
+            vec![InfixToken::Fn(
                 "abs",
                 vec![
-                    Expr {
+                    InfixExpr {
                         tokens: vec![
-                            Token::LParen,
-                            Token::Number(2.0),
-                            Token::Operator(Operator::Add),
-                            Token::Number(3.0),
-                            Token::RParen,
-                            Token::Operator(Operator::Mul),
-                            Token::Number(4.0)
-                        ],
-                        type_: Infix
+                            InfixToken::LParen,
+                            InfixToken::Num(2.0),
+                            InfixToken::Op(Op::Add),
+                            InfixToken::Num(3.0),
+                            InfixToken::RParen,
+                            InfixToken::Op(Op::Mul),
+                            InfixToken::Num(4.0)
+                        ]
                     },
-                    Expr {
-                        tokens: vec![Token::Function(
+                    InfixExpr {
+                        tokens: vec![InfixToken::Fn(
                             "sqrt",
-                            vec![Expr {
-                                tokens: vec![Token::Number(5.0)],
-                                type_: Infix
+                            vec![InfixExpr {
+                                tokens: vec![InfixToken::Num(5.0)]
                             }]
-                        )],
-                        type_: Infix
+                        )]
                     }
                 ]
             ),]
         );
 
         let expr = "abs((2 * 21) + p0)";
-        let infix_expr = Expr::try_from(expr).unwrap();
+        let infix_expr = InfixExpr::try_from(expr).unwrap();
         assert_eq!(
             *infix_expr,
-            vec![Token::Function(
+            vec![InfixToken::Fn(
                 "abs",
-                vec![Expr {
+                vec![InfixExpr {
                     tokens: vec![
-                        Token::LParen,
-                        Token::Number(2.0),
-                        Token::Operator(Operator::Mul),
-                        Token::Number(21.0),
-                        Token::RParen,
-                        Token::Operator(Operator::Add),
-                        Token::Variable("p0")
-                    ],
-                    type_: Infix
+                        InfixToken::LParen,
+                        InfixToken::Num(2.0),
+                        InfixToken::Op(Op::Mul),
+                        InfixToken::Num(21.0),
+                        InfixToken::RParen,
+                        InfixToken::Op(Op::Add),
+                        InfixToken::Var("p0")
+                    ]
                 }]
             )]
         )
@@ -417,7 +411,7 @@ mod tests
         //  to the recursion used to parse the expression
 
         let expr = "abs((2.0.0 + 3) * 4, sqrt(5))";
-        let result = Expr::try_from(expr);
+        let result = InfixExpr::try_from(expr);
 
         assert_eq!(
             result,
@@ -428,7 +422,7 @@ mod tests
         );
 
         let expr = "abs((2 + 3) &* 4, sqrt(5))";
-        let result = Expr::try_from(expr);
+        let result = InfixExpr::try_from(expr);
 
         assert_eq!(
             result,

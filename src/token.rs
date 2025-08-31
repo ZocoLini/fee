@@ -1,9 +1,9 @@
 use core::fmt;
 
-use crate::lexer::{Expr, Infix};
+use crate::lexer::{InfixExpr, Infix};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Operator
+#[derive(Debug, PartialEq, Eq)]
+pub enum Op
 {
     Add,
     Sub,
@@ -12,42 +12,41 @@ pub enum Operator
     Pow,
 }
 
-impl Operator
+impl Op
 {
     pub fn precedence(&self) -> u8
     {
         match self {
-            Operator::Add | Operator::Sub => 1,
-            Operator::Mul | Operator::Div => 2,
-            Operator::Pow => 3,
+            Op::Add | Op::Sub => 1,
+            Op::Mul | Op::Div => 2,
+            Op::Pow => 3,
         }
     }
 
     pub fn is_right_associative(&self) -> bool
     {
-        matches!(self, Operator::Pow)
+        matches!(self, Op::Pow)
     }
 
     pub fn apply(&self, lhs: f64, rhs: f64) -> f64
     {
         match self {
-            Operator::Add => lhs + rhs,
-            Operator::Sub => lhs - rhs,
-            Operator::Mul => lhs * rhs,
-            Operator::Div => lhs / rhs,
-            Operator::Pow => lhs.powf(rhs),
+            Op::Add => lhs + rhs,
+            Op::Sub => lhs - rhs,
+            Op::Mul => lhs * rhs,
+            Op::Div => lhs / rhs,
+            Op::Pow => lhs.powf(rhs),
         }
     }
 }
 
-#[derive(Debug, Clone, PartialEq)]
-pub enum Token<'e>
+#[derive(Debug, PartialEq)]
+pub enum InfixToken<'e>
 {
-    Number(f64),
-    Variable(&'e str),
-    FunctionCall(&'e str, usize),
-    Function(&'e str, Vec<Expr<'e, Infix>>),
-    Operator(Operator),
+    Num(f64),
+    Var(&'e str),
+    Fn(&'e str, Vec<InfixExpr<'e>>),
+    Op(Op),
     LParen,
     RParen,
 }
