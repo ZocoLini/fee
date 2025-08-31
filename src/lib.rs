@@ -64,9 +64,7 @@ pub mod prelude;
 
 pub use crate::error::*;
 
-pub use crate::context::Context;
-
-pub use crate::resolver::{ConstantResolver, DefaultResolver, IndexedResolver, SmallResolver};
+pub use crate::resolver::{ConstantResolver, DefaultResolver, IndexedResolver, SmallResolver, EmptyResolver};
 
 pub use crate::evaluator::RpnEvaluator;
 

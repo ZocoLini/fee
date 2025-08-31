@@ -4,11 +4,13 @@ mod constant;
 mod default;
 mod indexed;
 mod small;
+mod empty;
 
 pub use constant::ConstantResolver;
 pub use default::DefaultResolver;
 pub use indexed::IndexedResolver;
 pub use small::SmallResolver;
+pub use empty::EmptyResolver;
 
 pub trait Resolver<T>
 {

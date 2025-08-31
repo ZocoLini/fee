@@ -2,7 +2,7 @@ use std::hint::black_box;
 
 use criterion::{Criterion, criterion_group, criterion_main};
 use fee::{
-    ConstantResolver, Context, DefaultResolver, ExprFn, IndexedResolver, RpnEvaluator,
+    ConstantResolver, DefaultResolver, ExprFn, IndexedResolver, RpnEvaluator,
     SmallResolver, prelude::*,
 };
 

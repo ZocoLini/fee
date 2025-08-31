@@ -2,7 +2,7 @@ use std::hint::black_box;
 
 use criterion::{Criterion, criterion_group, criterion_main};
 use evalexpr::{DefaultNumericTypes, build_operator_tree};
-use fee::{Context, DefaultResolver, RpnEvaluator, prelude::*};
+use fee::{DefaultResolver, RpnEvaluator, prelude::*};
 
 fn evaluation(c: &mut Criterion)
 {
