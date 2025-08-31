@@ -190,14 +190,14 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
     }
 }
 
-pub struct RPNEvaluator<'e>
+pub struct RpnEvaluator<'e>
 {
     rpn: RpnExpr<'e>,
 
     stack: Mutex<Vec<f64>>,
 }
 
-impl<'e> Evaluator<'e> for RPNEvaluator<'e>
+impl<'e> Evaluator<'e> for RpnEvaluator<'e>
 {
     fn new(expr: &'e str) -> Result<Self, crate::Error<'e>>
     {
@@ -206,7 +206,7 @@ impl<'e> Evaluator<'e> for RPNEvaluator<'e>
 
         let stack = Mutex::new(Vec::with_capacity(rpn_expr.tokens.len() / 2));
 
-        Ok(RPNEvaluator {
+        Ok(RpnEvaluator {
             rpn: rpn_expr,
             stack,
         })

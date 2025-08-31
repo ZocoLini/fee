@@ -7,7 +7,7 @@ use std::{
 use crate::{Error, ParseError, prelude::*};
 
 pub(crate) mod rpn;
-pub use rpn::RPNEvaluator;
+pub use rpn::RpnEvaluator;
 
 pub trait Evaluator<'e>: Sized
 {

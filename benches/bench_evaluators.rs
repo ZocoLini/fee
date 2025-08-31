@@ -2,7 +2,7 @@ use std::hint::black_box;
 
 use criterion::{Criterion, criterion_group, criterion_main};
 use fee::{
-    DefaultContext, DefaultFnResolver, DefaultVarResolver, IndexedVarResolver, RPNEvaluator,
+    DefaultContext, DefaultFnResolver, DefaultVarResolver, IndexedVarResolver, RpnEvaluator,
     prelude::*,
 };
 
@@ -18,7 +18,7 @@ fn rpn_evaluator(c: &mut Criterion)
         fn_resolver.add_fn("abs".to_string(), |x| x[0].abs());
 
         let context = DefaultContext::new(var_resolver, fn_resolver);
-        let evaluator = RPNEvaluator::new(expr).unwrap();
+        let evaluator = RpnEvaluator::new(expr).unwrap();
 
         b.iter(|| {
             black_box(evaluator.eval(&context).unwrap());
@@ -34,7 +34,7 @@ fn rpn_evaluator(c: &mut Criterion)
         fn_resolver.add_fn("abs".to_string(), |x| x[0].abs());
 
         let context = DefaultContext::new(var_resolver, fn_resolver);
-        let evaluator = RPNEvaluator::new(expr).unwrap();
+        let evaluator = RpnEvaluator::new(expr).unwrap();
 
         b.iter(|| {
             black_box(evaluator.eval(&context).unwrap());
