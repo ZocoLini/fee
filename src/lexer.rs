@@ -49,14 +49,11 @@ impl<'e> TryFrom<&'e str> for InfixExpr<'e>
 
     fn try_from(input: &'e str) -> Result<Self, Self::Error>
     {
-        let mut tokens: Vec<InfixToken<'e>> = Vec::with_capacity(input.len() / 2);
         let mut lexer = Lexer::new(input);
 
-        while let Some(token) = lexer.next_token()? {
-            tokens.push(token);
-        }
-
-        Ok(InfixExpr { tokens })
+        Ok(InfixExpr {
+            tokens: lexer.lex()?,
+        })
     }
 }
 
@@ -78,8 +75,10 @@ impl<'e> Lexer<'e>
         }
     }
 
-    fn next_token(&mut self) -> Result<Option<InfixToken<'e>>, Error<'e>>
+    fn lex(&mut self) -> Result<Vec<InfixToken<'e>>, Error<'e>>
     {
+        let mut tokens: Vec<InfixToken<'e>> = Vec::with_capacity(self.input.len() / 2);
+
         let chars = &mut self.chars;
         let input = self.input;
 
@@ -89,21 +88,19 @@ impl<'e> Lexer<'e>
                     // Ignore whitespace
                 }
                 '(' | '[' => {
-                    return Ok(Some(InfixToken::LParen));
+                    tokens.push(InfixToken::LParen);
                 }
                 ')' | ']' => {
-                    return Ok(Some(InfixToken::RParen));
+                    tokens.push(InfixToken::RParen);
                 }
                 _ => {
-                    let (result, next_state) =
-                        self.state.next_token(self.input, &mut self.chars, i, c);
+                    let next_state = self.state.lex(self.input, &mut tokens, chars, i, c)?;
                     self.state = next_state;
-                    return result.map(|tok| Some(tok));
                 }
             }
         }
 
-        Ok(None)
+        Ok(tokens)
     }
 }
 
@@ -116,61 +113,67 @@ enum State
 
 impl State
 {
-    fn next_token<'e>(
+    #[inline(always)]
+    fn lex<'e>(
         &mut self,
         input: &'e str,
+        output: &mut Vec<InfixToken<'e>>,
         chars: &mut Peekable<CharIndices<'e>>,
         i: usize,
         c: char,
-    ) -> (Result<InfixToken<'e>, Error<'e>>, State)
+    ) -> Result<State, Error<'e>>
     {
         match self {
-            State::ExpectingOperator => Self::handle_expecting_operator(input, chars, i, c),
-            State::ExpectingNumberProducer => Self::handle_number_or_ident(input, chars, i, c),
+            State::ExpectingOperator => Self::handle_expecting_operator(input, output, chars, i, c),
+            State::ExpectingNumberProducer => {
+                Self::handle_number_or_ident(input, output, chars, i, c)
+            }
             State::AfterError => panic!("tried to continue parsing after error"),
         }
     }
 
+    #[inline(always)]
     fn handle_expecting_operator<'e>(
         _input: &'e str,
+        output: &mut Vec<InfixToken<'e>>,
         chars: &mut Peekable<CharIndices<'e>>,
         i: usize,
         c: char,
-    ) -> (Result<InfixToken<'e>, Error<'e>>, State)
+    ) -> Result<State, Error<'e>>
     {
         let token = match c {
-            '+' => Ok(InfixToken::Op(Op::Add)),
-            '-' => Ok(InfixToken::Op(Op::Sub)),
-            '*' => Ok(InfixToken::Op(Op::Mul)),
-            '/' => Ok(InfixToken::Op(Op::Div)),
-            '^' => Ok(InfixToken::Op(Op::Pow)),
+            '+' => output.push(InfixToken::Op(Op::Add)),
+            '-' => output.push(InfixToken::Op(Op::Sub)),
+            '*' => output.push(InfixToken::Op(Op::Mul)),
+            '/' => output.push(InfixToken::Op(Op::Div)),
+            '^' => output.push(InfixToken::Op(Op::Pow)),
             _ => {
-                return (
-                    Err(Error::ParseError(ParseError::UnexpectedChar(
-                        Cow::Owned(c),
-                        i,
-                    ))),
-                    State::AfterError,
-                );
+                return Err(Error::ParseError(ParseError::UnexpectedChar(
+                    Cow::Owned(c),
+                    i,
+                )));
             }
         };
 
-        (token, State::ExpectingNumberProducer)
+        Ok(State::ExpectingNumberProducer)
     }
 
+    #[inline(always)]
     fn handle_number_or_ident<'e>(
         input: &'e str,
+        output: &mut Vec<InfixToken<'e>>,
         chars: &mut Peekable<CharIndices<'e>>,
         i: usize,
         c: char,
-    ) -> (Result<InfixToken<'e>, Error<'e>>, State)
+    ) -> Result<State, Error<'e>>
     {
         return match c {
             // numbers
             '0'..='9' | '.' | '-' => {
                 let value = fast_parse_f64(c, chars);
+                output.push(InfixToken::Num(value));
 
-                (Ok(InfixToken::Num(value)), State::ExpectingOperator)
+                Ok(State::ExpectingOperator)
             }
 
             // identifiers (variables or functions)
@@ -206,7 +209,7 @@ impl State
                                             match InfixExpr::try_from(&input[start_index..i]) {
                                                 Ok(expr) => expr,
                                                 Err(err) => {
-                                                    return (Err(err), State::AfterError);
+                                                    return Err(err);
                                                 }
                                             };
                                         params.push(param_expr);
@@ -221,11 +224,7 @@ impl State
                                 }
                             }
 
-                            let param_expr =
-                                match InfixExpr::try_from(&input[start_index..end_index]) {
-                                    Ok(expr) => expr,
-                                    Err(err) => return (Err(err), State::AfterError),
-                                };
+                            let param_expr = InfixExpr::try_from(&input[start_index..end_index])?;
                             params.push(param_expr);
 
                             break InfixToken::Fn(fn_name, params);
@@ -237,16 +236,14 @@ impl State
                     }
                 };
 
-                (Ok(token), State::ExpectingOperator)
+                output.push(token);
+                Ok(State::ExpectingOperator)
             }
 
-            _ => (
-                Err(Error::ParseError(ParseError::UnexpectedChar(
-                    Cow::Owned(c),
-                    i,
-                ))),
-                State::AfterError,
-            ),
+            _ => Err(Error::ParseError(ParseError::UnexpectedChar(
+                Cow::Owned(c),
+                i,
+            ))),
         };
 
         fn fast_parse_f64(c: char, chars: &mut Peekable<CharIndices>) -> f64
