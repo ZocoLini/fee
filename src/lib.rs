@@ -2,13 +2,14 @@
 
 mod context;
 mod error;
+mod evaluator;
 mod function;
+mod lexer;
 mod token;
 mod variable;
-mod evaluator;
-mod lexer;
 
-#[cfg(feature = "bench-internal")] pub mod benches;
+#[cfg(feature = "bench-internal")]
+pub mod benches;
 
 pub mod prelude;
 

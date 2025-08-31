@@ -87,21 +87,20 @@ impl<'e> Lexer<'e>
         let chars = &mut self.chars;
         let input = self.input;
 
-        while let Some(&(i, c)) = chars.peek() {
+        while let Some((i, c)) = chars.next() {
             match c {
                 ' ' | '\t' | '\n' => {
-                    chars.next();
+                    // Ignore whitespace
                 }
                 '(' | '[' => {
-                    chars.next();
                     return Ok(Some(Token::LParen));
                 }
                 ')' | ']' => {
-                    chars.next();
                     return Ok(Some(Token::RParen));
                 }
                 _ => {
-                    let (result, next_state) = self.state.next_token(self.input, &mut self.chars);
+                    let (result, next_state) =
+                        self.state.next_token(self.input, &mut self.chars, i, c);
                     self.state = next_state;
                     return result.map(|tok| Some(tok));
                 }
@@ -125,11 +124,13 @@ impl State
         &mut self,
         input: &'e str,
         chars: &mut Peekable<CharIndices<'e>>,
+        i: usize,
+        c: char,
     ) -> (Result<Token<'e>, Error<'e>>, State)
     {
         match self {
-            State::ExpectingOperator => Self::handle_expecting_operator(input, chars),
-            State::ExpectingNumberProducer => Self::handle_number_or_ident(input, chars),
+            State::ExpectingOperator => Self::handle_expecting_operator(input, chars, i, c),
+            State::ExpectingNumberProducer => Self::handle_number_or_ident(input, chars, i, c),
             State::AfterError => panic!("tried to continue parsing after error"),
         }
     }
@@ -137,45 +138,31 @@ impl State
     fn handle_expecting_operator<'e>(
         _input: &'e str,
         chars: &mut Peekable<CharIndices<'e>>,
+        i: usize,
+        c: char,
     ) -> (Result<Token<'e>, Error<'e>>, State)
     {
-        let &(i, c) = chars.peek().expect("Already peeked");
         match c {
-            '+' => {
-                chars.next();
-                (
-                    Ok(Token::Operator(Operator::Add)),
-                    State::ExpectingNumberProducer,
-                )
-            }
-            '-' => {
-                chars.next();
-                (
-                    Ok(Token::Operator(Operator::Sub)),
-                    State::ExpectingNumberProducer,
-                )
-            }
-            '*' => {
-                chars.next();
-                (
-                    Ok(Token::Operator(Operator::Mul)),
-                    State::ExpectingNumberProducer,
-                )
-            }
-            '/' => {
-                chars.next();
-                (
-                    Ok(Token::Operator(Operator::Div)),
-                    State::ExpectingNumberProducer,
-                )
-            }
-            '^' => {
-                chars.next();
-                (
-                    Ok(Token::Operator(Operator::Pow)),
-                    State::ExpectingNumberProducer,
-                )
-            }
+            '+' => (
+                Ok(Token::Operator(Operator::Add)),
+                State::ExpectingNumberProducer,
+            ),
+            '-' => (
+                Ok(Token::Operator(Operator::Sub)),
+                State::ExpectingNumberProducer,
+            ),
+            '*' => (
+                Ok(Token::Operator(Operator::Mul)),
+                State::ExpectingNumberProducer,
+            ),
+            '/' => (
+                Ok(Token::Operator(Operator::Div)),
+                State::ExpectingNumberProducer,
+            ),
+            '^' => (
+                Ok(Token::Operator(Operator::Pow)),
+                State::ExpectingNumberProducer,
+            ),
             _ => (
                 Err(Error::ParseError(ParseError::UnexpectedChar(
                     Cow::Owned(c),
@@ -189,14 +176,13 @@ impl State
     fn handle_number_or_ident<'e>(
         input: &'e str,
         chars: &mut Peekable<CharIndices<'e>>,
+        i: usize,
+        c: char,
     ) -> (Result<Token<'e>, Error<'e>>, State)
     {
-        let &(i, c) = chars.peek().expect("Already peeked");
-
         match c {
             // numbers
             '0'..='9' | '.' | '-' => {
-                chars.next();
                 let multiplier = if c == '-' { -1.0 } else { 1.0 };
 
                 let start_index = i;
