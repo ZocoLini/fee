@@ -8,31 +8,38 @@ fn test_lockeable_resolvers()
 {
     let expr = "p0";
 
-    let mut var_resolver = SmallResolver::new();
-    var_resolver.insert("p0".to_string(), 10.0);
-    let mut var_resolver = var_resolver.lock();
+    let mut var_resolver_1 = SmallResolver::new();
+    var_resolver_1.insert("p0".to_string(), 10.0);
+    let mut var_resolver_1 = var_resolver_1.lock();
 
-    let p0_ref = var_resolver.get_var_pointer("p0").unwrap();
+    let mut var_resolver_2 = SmallResolver::new();
+    var_resolver_2.insert("p0".to_string(), 10.0);
+    let mut var_resolver_2 = var_resolver_2.lock();
 
-    let fn_resolver = EmptyResolver::new();
+    let p0_ref_1 = var_resolver_1.get_var_pointer("p0").unwrap();
+    let p0_ref_2 = var_resolver_2.get_var_pointer("p0").unwrap();
 
-    let context = Context::new(var_resolver, fn_resolver);
+    let fn_resolver_1 = EmptyResolver::new();
+    let fn_resolver_2 = EmptyResolver::new();
+
+    let context_1 = Context::new(var_resolver_1, fn_resolver_1);
+    let context_2 = Context::new(var_resolver_2, fn_resolver_2);
+
     let evaluator = RpnEvaluator::new(expr).unwrap();
 
-    let result = evaluator.eval(&context);
-    assert_eq!(result, Ok(10.0));
+    assert_eq!(evaluator.eval(&context_1), evaluator.eval(&context_2));
 
     unsafe {
-        *p0_ref = 20.0;
+        *p0_ref_1 = 20.0;
+        *p0_ref_2 = 20.0;
     }
 
-    let result = evaluator.eval(&context);
-    assert_eq!(result, Ok(20.0));
+    assert_eq!(evaluator.eval(&context_1), evaluator.eval(&context_2));
 
     unsafe {
-        *p0_ref = 30.0;
+        *p0_ref_1 = 30.0;
+        *p0_ref_2 = 40.0;
     }
 
-    let result = evaluator.eval(&context);
-    assert_eq!(result, Ok(30.0));
+    assert_ne!(evaluator.eval(&context_1), evaluator.eval(&context_2));
 }
