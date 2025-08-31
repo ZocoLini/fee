@@ -169,41 +169,12 @@ impl State
         c: char,
     ) -> (Result<Token<'e>, Error<'e>>, State)
     {
-        match c {
+        return match c {
             // numbers
             '0'..='9' | '.' | '-' => {
-                let multiplier = if c == '-' { -1.0 } else { 1.0 };
+                let value = fast_parse_f64(c, chars);
 
-                let start_index = i;
-                let mut end_index = input.len();
-
-                while let Some(&(i, d)) = chars.peek() {
-                    if d.is_ascii_digit() || d == '.' {
-                        chars.next();
-                    } else {
-                        end_index = i;
-                        break;
-                    }
-                }
-
-                let num_str = &input[start_index..end_index];
-                let value: f64 = match num_str.parse() {
-                    Ok(v) => v,
-                    Err(_) => {
-                        return (
-                            Err(Error::ParseError(ParseError::InvalidNumber(
-                                Cow::Borrowed(num_str),
-                                i,
-                            ))),
-                            State::AfterError,
-                        );
-                    }
-                };
-
-                (
-                    Ok(Token::Number(value * multiplier)),
-                    State::ExpectingOperator,
-                )
+                (Ok(Token::Number(value)), State::ExpectingOperator)
             }
 
             // identifiers (variables or functions)
@@ -279,6 +250,55 @@ impl State
                 ))),
                 State::AfterError,
             ),
+        };
+
+        fn fast_parse_f64(c: char, chars: &mut Peekable<CharIndices>) -> f64
+        {
+            let mut value: f64 = 0.0;
+            let mut frac = 0.1;
+            let mut is_fraction = false;
+
+            let multiplier = if c == '-' {
+                -1.0
+            } else {
+                match c {
+                    '0'..='9' => {
+                        if is_fraction {
+                            value += (c as u8 - b'0') as f64 * frac;
+                            frac *= 0.1;
+                        } else {
+                            value = value * 10.0 + (c as u8 - b'0') as f64;
+                        }
+                    }
+                    '.' if !is_fraction => {
+                        is_fraction = true;
+                    }
+                    _ => unreachable!("can't happend"),
+                }
+
+                1.0
+            };
+
+            while let Some(&(i, d)) = chars.peek() {
+                match d {
+                    '0'..='9' => {
+                        chars.next();
+                        if is_fraction {
+                            value += (d as u8 - b'0') as f64 * frac;
+                            frac *= 0.1;
+                        } else {
+                            value = value * 10.0 + (d as u8 - b'0') as f64;
+                        }
+                    }
+                    '.' if !is_fraction => {
+                        chars.next();
+                        is_fraction = true;
+                    }
+                    _ => break,
+                }
+            }
+
+            value
         }
     }
 }
@@ -401,9 +421,9 @@ mod tests
 
         assert_eq!(
             result,
-            Err(Error::ParseError(ParseError::InvalidNumber(
-                Cow::Borrowed("2.0.0"),
-                1
+            Err(Error::ParseError(ParseError::UnexpectedChar(
+                Cow::Owned('.'),
+                4
             )))
         );
 

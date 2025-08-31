@@ -19,6 +19,11 @@ evalexpr = "12.0.2"
 meval = "0.2.0"
 mexe = "0.2.0"
 
+[profile.bench]
+opt-level = 3
+debug = false
+lto = "fat"
+
 [[bench]]
 name = "bench_var_resolvers"
 harness = false

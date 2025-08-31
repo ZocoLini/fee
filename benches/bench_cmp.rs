@@ -30,7 +30,7 @@ fn evaluation(c: &mut Criterion)
         });
     });
 
-    c.bench_function("cmp/fee/eval", |b| {
+    c.bench_function("cmp/eval/fee", |b| {
         let var_resolver = DefaultVarResolver::new();
         let fn_resolver = DefaultFnResolver::new();
 
