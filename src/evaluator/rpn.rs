@@ -148,7 +148,7 @@ impl<'e> TryFrom<Expr<'e, Infix>> for Expr<'e, RPN>
             let op = if let Token::Operator(op) = op_token {
                 op
             } else {
-                panic!("expected an operator token")
+                unreachable!("expected an operator token")
             };
 
             // Each operand may have a different number of arguments
@@ -156,12 +156,12 @@ impl<'e> TryFrom<Expr<'e, Infix>> for Expr<'e, RPN>
                 let b = if let Some(Token::Number(value)) = output.pop() {
                     value
                 } else {
-                    panic!("expected a number");
+                    unreachable!("expected a number");
                 };
                 let a = if let Some(Token::Number(value)) = output.pop() {
                     value
                 } else {
-                    panic!("expected a number");
+                    unreachable!("expected a number");
                 };
                 output.push(Token::Number(op.apply(a, b)));
                 *num_count -= 1;
