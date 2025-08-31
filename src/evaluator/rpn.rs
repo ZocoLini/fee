@@ -119,16 +119,10 @@ impl<'e> TryFrom<Expr<'e, Infix>> for Expr<'e, RPN>
                 Token::Function(name, args) => {
                     let fun_call_token = Token::FunctionCall(name, args.len());
 
-                    let rpn_args: Result<Vec<Expr<RPN>>, _> = args
-                        .into_iter()
-                        .map(|arg_tokens| arg_tokens.try_into())
-                        .collect();
-
-                    let rpn_args = rpn_args?;
-
-                    rpn_args
-                        .iter()
-                        .for_each(|rpn_arg| output.extend_from_slice(&rpn_arg));
+                    for arg_tokens in args {
+                        let rpn_arg: Expr<RPN> = arg_tokens.try_into()?;
+                        output.extend(rpn_arg);
+                    }
 
                     output.push(fun_call_token);
                     num_count = 0;
