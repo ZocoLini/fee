@@ -203,7 +203,6 @@ impl<'e> Evaluator<'e> for RPNEvaluator<'e>
                 self.rpn.eval(ctx, &mut guard)
             }
             Err(_) => {
-                // contención -> uso stack temporal en el heap
                 let mut local_stack = Vec::with_capacity(self.rpn.len() / 2);
                 self.rpn.eval(ctx, &mut local_stack)
             }
