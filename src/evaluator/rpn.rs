@@ -74,7 +74,7 @@ impl<'e> TryFrom<Expr<'e, Infix>> for Expr<'e, RPN>
 
         let mut num_count = 0;
 
-        for (i, tok) in expr.into_iter().enumerate() {
+        for tok in expr.into_iter() {
             match tok {
                 Token::Number(_) => {
                     output.push(tok);
