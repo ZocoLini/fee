@@ -1,10 +1,8 @@
-use crate::lexer::{Infix, InfixExpr};
+use crate::lexer::InfixExpr;
 use crate::token::{InfixToken, Op};
-use crate::{Error, EvalError, ParseError, prelude::*};
-use std::cell::UnsafeCell;
-use std::panic;
-use std::sync::{Arc, Mutex, RwLock};
-use std::{borrow::Cow, ops::Deref};
+use crate::{Error, EvalError, prelude::*};
+use std::borrow::Cow;
+use std::sync::Mutex;
 
 #[derive(Debug, PartialEq)]
 pub enum RpnToken<'e>

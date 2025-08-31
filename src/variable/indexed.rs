@@ -15,7 +15,7 @@ impl VarResolver for IndexedVarResolver
     {
         let name_bytes = name.as_bytes();
 
-        let letter = (name_bytes[0] as usize - ALPHABET_START_USIZE);
+        let letter = name_bytes[0] as usize - ALPHABET_START_USIZE;
         let idx = str_to_usize(&name_bytes[1..]);
         Some(&self.vars[letter][idx])
     }

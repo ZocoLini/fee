@@ -6,14 +6,12 @@ use crate::{
 };
 
 #[derive(Debug, PartialEq)]
-pub struct Infix;
-
-#[derive(Debug, PartialEq)]
 pub struct InfixExpr<'e>
 {
     tokens: Vec<InfixToken<'e>>,
 }
 
+#[cfg(test)]
 impl<'e> InfixExpr<'e>
 {
     pub fn new(tokens: Vec<InfixToken<'e>>) -> Self
@@ -94,7 +92,7 @@ impl<'e> Lexer<'e>
                     tokens.push(InfixToken::RParen);
                 }
                 _ => {
-                    let next_state = self.state.lex(self.input, &mut tokens, chars, i, c)?;
+                    let next_state = self.state.lex(input, &mut tokens, chars, i, c)?;
                     self.state = next_state;
                 }
             }
@@ -108,7 +106,6 @@ enum State
 {
     ExpectingOperator,
     ExpectingNumberProducer,
-    AfterError,
 }
 
 impl State
@@ -128,7 +125,6 @@ impl State
             State::ExpectingNumberProducer => {
                 Self::handle_number_or_ident(input, output, chars, i, c)
             }
-            State::AfterError => panic!("tried to continue parsing after error"),
         }
     }
 
@@ -136,12 +132,12 @@ impl State
     fn handle_expecting_operator<'e>(
         _input: &'e str,
         output: &mut Vec<InfixToken<'e>>,
-        chars: &mut Peekable<CharIndices<'e>>,
+        _chars: &mut Peekable<CharIndices<'e>>,
         i: usize,
         c: char,
     ) -> Result<State, Error<'e>>
     {
-        let token = match c {
+        match c {
             '+' => output.push(InfixToken::Op(Op::Add)),
             '-' => output.push(InfixToken::Op(Op::Sub)),
             '*' => output.push(InfixToken::Op(Op::Mul)),
@@ -179,7 +175,7 @@ impl State
             // identifiers (variables or functions)
             'a'..='z' | 'A'..='Z' | '_' => {
                 let start_index = i;
-                let mut end_index = input.len();
+                let end_index = input.len();
 
                 let token = loop {
                     if let Some(&(i, d)) = chars.peek() {
@@ -273,7 +269,7 @@ impl State
                 1.0
             };
 
-            while let Some(&(i, d)) = chars.peek() {
+            while let Some(&(_, d)) = chars.peek() {
                 match d {
                     '0'..='9' => {
                         chars.next();
@@ -292,7 +288,7 @@ impl State
                 }
             }
 
-            value
+            value * multiplier
         }
     }
 }

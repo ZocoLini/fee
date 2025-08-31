@@ -1,6 +1,4 @@
-use core::fmt;
-
-use crate::lexer::{Infix, InfixExpr};
+use crate::lexer::InfixExpr;
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Op

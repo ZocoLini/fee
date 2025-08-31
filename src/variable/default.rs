@@ -5,7 +5,7 @@ use crate::prelude::*;
 pub struct DefaultVarResolver<State>
 {
     vars: HashMap<String, f64>,
-    state: State,
+    _state: State,
 }
 
 impl<State> VarResolver for DefaultVarResolver<State>
@@ -29,7 +29,7 @@ impl DefaultVarResolver<Unlocked>
 
         DefaultVarResolver {
             vars: hashmap,
-            state: Unlocked,
+            _state: Unlocked,
         }
     }
 
@@ -37,7 +37,7 @@ impl DefaultVarResolver<Unlocked>
     {
         DefaultVarResolver {
             vars: HashMap::new(),
-            state: Unlocked,
+            _state: Unlocked,
         }
     }
 
@@ -50,7 +50,7 @@ impl DefaultVarResolver<Unlocked>
     {
         DefaultVarResolver {
             vars: self.vars,
-            state: Locked,
+            _state: Locked,
         }
     }
 }
@@ -76,7 +76,7 @@ mod tests
 
         let mut resolver = resolver.lock();
 
-        let mut x = resolver.get_var_mut("x").unwrap();
+        let x = resolver.get_var_mut("x").unwrap();
         *x = 20.0;
 
         assert_eq!(resolver.get_var("x"), Some(&20.0));

@@ -1,10 +1,4 @@
-use std::{
-    borrow::Cow,
-    ops::Deref,
-    sync::{Arc, RwLock},
-};
-
-use crate::{Error, ParseError, prelude::*};
+use crate::{Error, prelude::*};
 
 pub(crate) mod rpn;
 pub use rpn::RpnEvaluator;
