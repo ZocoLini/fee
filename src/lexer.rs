@@ -223,12 +223,13 @@ impl State
                             let fn_name = &input[start_index..i];
                             chars.next();
 
-                            let mut params = Vec::new();
+                            let mut params = Vec::with_capacity(2);
 
                             let mut depth = 1;
                             let mut start_index = i + 1; // Skipping the opening bracket of the function call
                             let mut end_index = input.len();
 
+                            // TODO:: Avoid this, token FunctionStart, Comma ...
                             while let Some((i, d)) = chars.next() {
                                 match d {
                                     '(' | '[' => depth += 1,
