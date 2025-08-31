@@ -49,7 +49,7 @@ impl<'e> TryFrom<&'e str> for InfixExpr<'e>
 
     fn try_from(input: &'e str) -> Result<Self, Self::Error>
     {
-        let mut tokens: Vec<InfixToken<'e>> = Vec::new();
+        let mut tokens: Vec<InfixToken<'e>> = Vec::with_capacity(input.len() / 2);
         let mut lexer = Lexer::new(input);
 
         while let Some(token) = lexer.next_token()? {
