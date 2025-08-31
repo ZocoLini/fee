@@ -1,38 +1,29 @@
-use crate::prelude::{FnResolver, VarResolver};
+use crate::{ExprFn, prelude::Resolver};
 
-pub trait Context
-{
-    fn get_var(&self, name: &str) -> Option<&f64>;
-    fn call_fn(&self, name: &str, args: &[f64]) -> Option<f64>;
-}
-
-pub struct DefaultContext<V: VarResolver, F: FnResolver>
+pub struct Context<V: Resolver<f64>, F: Resolver<ExprFn>>
 {
     vars: V,
     fns: F,
 }
 
-impl<V: VarResolver, F: FnResolver> Context for DefaultContext<V, F>
-{
-    fn get_var(&self, name: &str) -> Option<&f64>
-    {
-        self.vars.get_var(name)
-    }
-
-    fn call_fn(&self, name: &str, args: &[f64]) -> Option<f64>
-    {
-        self.fns.call_fn(name, args)
-    }
-}
-
-impl<V: VarResolver, F: FnResolver> DefaultContext<V, F>
+impl<V: Resolver<f64>, F: Resolver<ExprFn>> Context<V, F>
 {
     pub fn new(vals: V, funcs: F) -> Self
     {
-        DefaultContext {
+        Context {
             vars: vals,
             fns: funcs,
         }
+    }
+
+    pub fn get_var(&self, name: &str) -> Option<&f64>
+    {
+        self.vars.resolve(name)
+    }
+
+    pub fn call_fn(&self, name: &str, args: &[f64]) -> Option<f64>
+    {
+        Some(self.fns.resolve(name)?(args))
     }
 
     pub fn vars_mut(&mut self) -> &mut V

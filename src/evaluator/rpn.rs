@@ -1,6 +1,6 @@
 use crate::lexer::InfixExpr;
 use crate::token::{InfixToken, Op};
-use crate::{Error, EvalError, prelude::*};
+use crate::{Error, EvalError, ExprFn, prelude::*};
 use std::borrow::Cow;
 use std::sync::Mutex;
 
@@ -35,7 +35,11 @@ pub struct RpnExpr<'e>
 
 impl<'e> RpnExpr<'e>
 {
-    fn eval(&'e self, ctx: &impl Context, stack: &mut Vec<f64>) -> Result<f64, Error<'e>>
+    fn eval<V: Resolver<f64>, F: Resolver<ExprFn>>(
+        &'e self,
+        ctx: &Context<V, F>,
+        stack: &mut Vec<f64>,
+    ) -> Result<f64, Error<'e>>
     {
         for tok in self.tokens.iter() {
             match tok {
@@ -210,7 +214,10 @@ impl<'e> Evaluator<'e> for RpnEvaluator<'e>
         })
     }
 
-    fn eval(&'e self, ctx: &impl Context) -> Result<f64, Error<'e>>
+    fn eval<V: Resolver<f64>, F: Resolver<ExprFn>>(
+        &'e self,
+        ctx: &Context<V, F>,
+    ) -> Result<f64, Error<'e>>
     {
         match self.stack.try_lock() {
             Ok(mut guard) => {

@@ -2,7 +2,7 @@ use std::hint::black_box;
 
 use criterion::{Criterion, criterion_group, criterion_main};
 use evalexpr::{DefaultNumericTypes, build_operator_tree};
-use fee::{DefaultContext, DefaultFnResolver, DefaultVarResolver, RpnEvaluator, prelude::*};
+use fee::{Context, DefaultResolver, RpnEvaluator, prelude::*};
 
 fn evaluation(c: &mut Criterion)
 {
@@ -31,10 +31,10 @@ fn evaluation(c: &mut Criterion)
     });
 
     c.bench_function("cmp/eval/fee", |b| {
-        let var_resolver = DefaultVarResolver::new();
-        let fn_resolver = DefaultFnResolver::new();
+        let var_resolver = DefaultResolver::new_var_resolver();
+        let fn_resolver = DefaultResolver::new_fn_resolver();
 
-        let context = DefaultContext::new(var_resolver, fn_resolver);
+        let context = Context::new(var_resolver, fn_resolver);
         let evaluator = RpnEvaluator::new(expr).unwrap();
 
         b.iter(|| {

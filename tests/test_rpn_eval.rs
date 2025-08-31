@@ -5,13 +5,13 @@ use fee::{prelude::*, *};
 #[test]
 fn test_rpn_eval_with_indexed_var_resolver()
 {
-    let mut var_resolver = IndexedVarResolver::new();
-    var_resolver.add_identifier('p', 20);
+    let mut var_resolver = IndexedResolver::new_var_resolver();
+    var_resolver.add_var_identifier('p', 20);
     var_resolver.set('p', 19, 4.0);
 
-    let fn_resolver = DefaultFnResolver::new();
+    let fn_resolver = DefaultResolver::new_empty();
 
-    let mut context = DefaultContext::new(var_resolver, fn_resolver);
+    let mut context = Context::new(var_resolver, fn_resolver);
 
     let expr = "(2 + 4) * 6 / (p19 + 2)";
     let evaluator = RpnEvaluator::new(expr).unwrap();
@@ -32,17 +32,17 @@ fn test_rpn_eval_with_indexed_var_resolver()
 #[test]
 fn test_rpn_eval_with_vars_and_fn()
 {
-    let mut var_resolver = DefaultVarResolver::new();
-    var_resolver.add_var("p0".to_string(), 10.0);
-    var_resolver.add_var("p1".to_string(), 4.0);
+    let mut var_resolver = DefaultResolver::new_var_resolver();
+    var_resolver.insert("p0".to_string(), 10.0);
+    var_resolver.insert("p1".to_string(), 4.0);
 
-    let mut fn_resolver = DefaultFnResolver::new();
-    fn_resolver.add_fn("abs".to_string(), |args| {
+    let mut fn_resolver = DefaultResolver::new_fn_resolver();
+    fn_resolver.insert("abs".to_string(), |args| {
         let x = args[0];
         x.abs()
     });
 
-    let context = DefaultContext::new(var_resolver, fn_resolver);
+    let context = Context::new(var_resolver, fn_resolver);
 
     let expr = "abs((2 + 4) * 6 / (p1 + 2)) + abs(-2)";
     let evaluator = RpnEvaluator::new(expr).unwrap();
@@ -65,18 +65,18 @@ fn test_rpn_eval_multi_threaded()
 {
     let expr = "abs((2 * 21) + 3 - 35 - ((5 * 80) + 5) + p0)";
 
-    let mut var_resolver = DefaultVarResolver::new();
-    var_resolver.add_var("p0".to_string(), 10.0);
-    var_resolver.add_var("p1".to_string(), 4.0);
+    let mut var_resolver = DefaultResolver::new_var_resolver();
+    var_resolver.insert("p0".to_string(), 10.0);
+    var_resolver.insert("p1".to_string(), 4.0);
 
-    let mut fn_resolver = DefaultFnResolver::new();
-    fn_resolver.add_fn("abs".to_string(), |args| {
+    let mut fn_resolver = DefaultResolver::new_fn_resolver();
+    fn_resolver.insert("abs".to_string(), |args| {
         let x = args[0];
         x.abs()
     });
 
     let evaluator = Arc::new(RpnEvaluator::new(expr).unwrap());
-    let context = Arc::new(DefaultContext::new(var_resolver, fn_resolver));
+    let context = Arc::new(Context::new(var_resolver, fn_resolver));
 
     let mut handles = vec![];
 
