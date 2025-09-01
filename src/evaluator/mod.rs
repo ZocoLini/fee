@@ -1,4 +1,4 @@
-use crate::{EmptyResolver};
+use crate::EmptyResolver;
 use crate::{Error, ExprFn, prelude::*};
 
 pub(crate) mod rpn;
@@ -14,13 +14,13 @@ pub use rpn::RpnEvaluator;
 /// use std::borrow::Cow;
 /// use fee::{ParseError, Error};
 /// use fee::prelude::*;
-/// 
-/// 
+///
+///
 /// struct CustomEvaluator
 /// {
 ///     value: f64,
 /// }
-/// 
+///
 /// impl<'e> Evaluator<'e> for CustomEvaluator
 /// {
 ///     fn new(expr: &'e str) -> Result<Self, Error<'e>>
@@ -31,7 +31,7 @@ pub use rpn::RpnEvaluator;
 ///             })?,
 ///         })
 ///     }
-/// 
+///
 ///     fn eval<V: Resolver<f64>, F: Resolver<ExprFn>>(
 ///         &'e self,
 ///         _ctx: &Context<V, F>,
@@ -40,7 +40,7 @@ pub use rpn::RpnEvaluator;
 ///         Ok(self.value)
 ///     }
 /// }
-/// 
+///
 /// let eval = CustomEvaluator::new("42").unwrap();
 /// assert_eq!(eval.eval_without_context().unwrap(), 42.0);
 /// ```

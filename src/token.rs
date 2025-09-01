@@ -8,6 +8,7 @@ pub enum Op
     Mul,
     Div,
     Pow,
+    Neg,
 }
 
 impl Op
@@ -18,6 +19,15 @@ impl Op
             Op::Add | Op::Sub => 1,
             Op::Mul | Op::Div => 2,
             Op::Pow => 3,
+            Op::Neg => 4,
+        }
+    }
+
+    pub fn num_operands(&self) -> usize
+    {
+        match self {
+            Op::Add | Op::Sub | Op::Mul | Op::Div | Op::Pow => 2,
+            Op::Neg => 1,
         }
     }
 
@@ -26,14 +36,16 @@ impl Op
         matches!(self, Op::Pow)
     }
 
-    pub fn apply(&self, lhs: f64, rhs: f64) -> f64
+    // TODO: Receive and slice
+    pub fn apply(&self, x: &[f64]) -> f64
     {
         match self {
-            Op::Add => lhs + rhs,
-            Op::Sub => lhs - rhs,
-            Op::Mul => lhs * rhs,
-            Op::Div => lhs / rhs,
-            Op::Pow => lhs.powf(rhs),
+            Op::Add => x[0] + x[1],
+            Op::Sub => x[0] - x[1],
+            Op::Mul => x[0] * x[1],
+            Op::Div => x[0] / x[1],
+            Op::Pow => x[0].powf(x[1]),
+            Op::Neg => -x[0],
         }
     }
 }

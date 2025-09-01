@@ -12,30 +12,30 @@ use crate::{ExprFn, prelude::*};
 /// # Advantages
 /// - No restrictions on variable or function names.
 /// - Performance remains stable even with a large number of items.
-/// 
+///
 /// # Disadvantages
 /// - Slow resolving names due to the hashing algorithm.
 ///
 /// # Locking
 /// This resolver can be locked to prevent further modifications to the cache.
-/// When locked a method .get_var_pointer() is available to retrieve a pointer to a variable, 
-/// allowing modifications to the variable's value without having to search for it 
+/// When locked a method .get_var_pointer() is available to retrieve a pointer to a variable,
+/// allowing modifications to the variable's value without having to search for it
 /// in the cache.
-/// 
+///
 /// ```rust
 /// use fee::DefaultResolver;
 /// use fee::prelude::*;
-/// 
+///
 /// let mut var_resolver = DefaultResolver::new_empty();
 /// var_resolver.insert("p0".to_string(), 10.0);
 /// let mut var_resolver = var_resolver.lock();
-/// 
+///
 /// let p0_ref = var_resolver.get_var_pointer("p0").unwrap();
-/// 
+///
 /// unsafe {
 ///     *p0_ref = 20.0;
 /// }
-/// 
+///
 /// assert_eq!(*var_resolver.resolve("p0").unwrap(), 20.0);
 /// ```
 pub struct DefaultResolver<State, T>

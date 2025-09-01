@@ -106,7 +106,7 @@ enum State
 {
     ExpectingOperator,
     ExpectingNumberProducer,
-    ExpectingNegativeElement,
+    ExpectingNegativeElement, // TODO: save the negative as a unary oeprator
 }
 
 impl State

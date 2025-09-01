@@ -29,11 +29,11 @@ use super::Resolver;
 /// ```
 /// use fee::prelude::*;
 /// use fee::{EmptyResolver, IndexedResolver, RpnEvaluator};
-/// 
+///
 /// // Lotka-Volterra model
 /// let y0_dot_expr = "y0 * (p0 - p1*y1)";
 /// let y1_dot_expr = "-y1 * (p2 - p3*y0)";
-/// 
+///
 /// let mut var_resolver = IndexedResolver::new_var_resolver();
 /// var_resolver.add_var_identifier('y', 2);
 /// var_resolver.set('y', 0, 1.0);
@@ -43,11 +43,11 @@ use super::Resolver;
 /// var_resolver.set('p', 1, 0.0);
 /// var_resolver.set('p', 2, 1.0);
 /// var_resolver.set('p', 3, 0.0);
-/// 
+///
 /// let context = Context::new(var_resolver, EmptyResolver::new());
 /// let y0_eval = RpnEvaluator::new(y0_dot_expr).unwrap();
 /// let y1_eval = RpnEvaluator::new(y1_dot_expr).unwrap();
-/// 
+///
 /// assert_eq!(y0_eval.eval(&context), Ok(1.0));
 /// assert_eq!(y1_eval.eval(&context), Ok(-2.0));
 /// ```

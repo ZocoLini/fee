@@ -23,13 +23,13 @@ pub use small::SmallResolver;
 /// - Using a `HashMap` or a small cache.
 /// - Providing a custom storage mechanism.
 /// - Or using a trivial resolver like `EmptyResolver`.
-/// 
+///
 /// # Examples
 /// ```rust
 /// use fee::prelude::*;
-/// 
+///
 /// pub struct ExampleResolver;
-/// 
+///
 /// impl Resolver<f64> for ExampleResolver {
 ///     fn resolve(&self, _name: &str) -> Option<&f64> {
 ///         Some(&50.0)

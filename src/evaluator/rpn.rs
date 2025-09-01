@@ -51,7 +51,8 @@ impl<'e> RpnExpr<'e>
                         .ok_or(Error::EvalError(EvalError::UnknownVar(Cow::Borrowed(name))))?,
                 ),
                 RpnToken::NegVar(name) => stack.push(
-                    -(*ctx.get_var(name)
+                    -(*ctx
+                        .get_var(name)
                         .ok_or(Error::EvalError(EvalError::UnknownVar(Cow::Borrowed(name))))?),
                 ),
                 RpnToken::Fn(name, argc) => {
@@ -74,15 +75,9 @@ impl<'e> RpnExpr<'e>
                     stack.push(val);
                 }
                 RpnToken::Op(op) => {
-                    let b = match stack.pop() {
-                        Some(value) => value,
-                        None => return Err(Error::EvalError(EvalError::RPNStackUnderflow)),
-                    };
-                    let a = match stack.pop() {
-                        Some(value) => value,
-                        None => return Err(Error::EvalError(EvalError::RPNStackUnderflow)),
-                    };
-                    let res = op.apply(a, b);
+                    let start = stack.len() - 2;
+                    let res = op.apply(&stack[start..]);
+                    stack.truncate(start);
                     stack.push(res);
                 }
             }
@@ -120,7 +115,7 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
                 InfixToken::NegVar(name) => {
                     output.push(RpnToken::NegVar(name));
                     num_count = 0;
-                },
+                }
                 InfixToken::Op(op) => {
                     while let Some(InfixToken::Op(top)) = ops.last() {
                         let should_pop = if op.is_right_associative() {
@@ -180,7 +175,7 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
         #[inline(always)]
         fn pre_evaluate<'t>(output: &mut Vec<RpnToken<'t>>, op: Op, num_count: &mut usize)
         {
-            // Each operand may have a different number of arguments
+            // TODO: Each operand may have a different number of arguments
             if *num_count >= 2 {
                 let b = if let Some(RpnToken::Num(value)) = output.pop() {
                     value
@@ -192,7 +187,9 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
                 } else {
                     unreachable!("expected a number");
                 };
-                output.push(RpnToken::Num(op.apply(a, b)));
+                let token = RpnToken::Num(op.apply(&[a, b]));
+                output.push(token);
+
                 *num_count -= 1;
             } else {
                 output.push(RpnToken::Op(op));
