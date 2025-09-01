@@ -69,7 +69,7 @@ impl<'e> Lexer<'e>
         Lexer {
             input: expr,
             chars: expr.char_indices().peekable(),
-            state: State::ExpectingNumberProducer,
+            state: State::Default,
         }
     }
 
@@ -104,9 +104,8 @@ impl<'e> Lexer<'e>
 
 enum State
 {
+    Default,
     ExpectingOperator,
-    ExpectingNumberProducer,
-    ExpectingNegativeElement, // TODO: save the negative as a unary oeprator
 }
 
 impl State
@@ -123,12 +122,7 @@ impl State
     {
         match self {
             State::ExpectingOperator => Self::handle_expecting_operator(input, output, chars, i, c),
-            State::ExpectingNumberProducer => {
-                Self::handle_number_var_fn(input, output, chars, i, c)
-            }
-            State::ExpectingNegativeElement => {
-                Self::handle_negative_element(input, output, chars, i, c)
-            }
+            State::Default => Self::handle_default(input, output, chars, i, c),
         }
     }
 
@@ -155,11 +149,11 @@ impl State
             }
         };
 
-        Ok(State::ExpectingNumberProducer)
+        Ok(State::Default)
     }
 
     #[inline(always)]
-    fn handle_number_var_fn<'e>(
+    fn handle_default<'e>(
         input: &'e str,
         output: &mut Vec<InfixToken<'e>>,
         chars: &mut Peekable<CharIndices<'e>>,
@@ -168,7 +162,10 @@ impl State
     ) -> Result<State, Error<'e>>
     {
         return match c {
-            '-' => Ok(State::ExpectingNegativeElement),
+            '-' => {
+                output.push(InfixToken::Op(Op::Neg));
+                Ok(State::Default)
+            }
             // numbers
             '0'..='9' | '.' => {
                 let value = State::fast_parse_uf64(c, chars);
@@ -234,52 +231,6 @@ impl State
                         break InfixToken::Var(&input[start_index..i]);
                     } else {
                         break InfixToken::Var(&input[start_index..end_index]);
-                    }
-                };
-
-                output.push(token);
-                Ok(State::ExpectingOperator)
-            }
-
-            _ => Err(Error::ParseError(ParseError::UnexpectedChar(
-                Cow::Owned(c),
-                i,
-            ))),
-        };
-    }
-
-    #[inline(always)]
-    fn handle_negative_element<'e>(
-        input: &'e str,
-        output: &mut Vec<InfixToken<'e>>,
-        chars: &mut Peekable<CharIndices<'e>>,
-        i: usize,
-        c: char,
-    ) -> Result<State, Error<'e>>
-    {
-        return match c {
-            // numbers
-            '0'..='9' | '.' => {
-                let value = State::fast_parse_uf64(c, chars);
-                output.push(InfixToken::Num(-value));
-                Ok(State::ExpectingOperator)
-            }
-
-            // identifiers (variables or functions)
-            'a'..='z' | 'A'..='Z' | '_' => {
-                let start_index = i;
-                let end_index = input.len();
-
-                let token = loop {
-                    if let Some(&(i, d)) = chars.peek() {
-                        if d.is_alphanumeric() || d == '_' {
-                            chars.next();
-                            continue;
-                        } else {
-                            break InfixToken::NegVar(&input[start_index..i]);
-                        }
-                    } else {
-                        break InfixToken::NegVar(&input[start_index..end_index]);
                     }
                 };
 
@@ -382,7 +333,8 @@ mod tests
                 InfixToken::RParen,
                 InfixToken::Op(Op::Mul),
                 InfixToken::LParen,
-                InfixToken::NegVar("p19"),
+                InfixToken::Op(Op::Neg),
+                InfixToken::Var("p19"),
                 InfixToken::Op(Op::Add),
                 InfixToken::Num(2.0),
                 InfixToken::RParen,

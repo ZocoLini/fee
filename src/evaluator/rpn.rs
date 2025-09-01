@@ -9,7 +9,6 @@ pub enum RpnToken<'e>
 {
     Num(f64),
     Var(&'e str),
-    NegVar(&'e str),
     Fn(&'e str, usize),
     Op(Op),
 }
@@ -21,7 +20,6 @@ impl<'e> From<InfixToken<'e>> for RpnToken<'e>
         match token {
             InfixToken::Num(num) => RpnToken::Num(num),
             InfixToken::Var(name) => RpnToken::Var(name),
-            InfixToken::NegVar(name) => RpnToken::NegVar(name),
             InfixToken::Fn(name, argc) => RpnToken::Fn(name, argc.len()),
             InfixToken::Op(op) => RpnToken::Op(op),
             _ => unreachable!("logic bug found"),
@@ -50,11 +48,6 @@ impl<'e> RpnExpr<'e>
                     *ctx.get_var(name)
                         .ok_or(Error::EvalError(EvalError::UnknownVar(Cow::Borrowed(name))))?,
                 ),
-                RpnToken::NegVar(name) => stack.push(
-                    -(*ctx
-                        .get_var(name)
-                        .ok_or(Error::EvalError(EvalError::UnknownVar(Cow::Borrowed(name))))?),
-                ),
                 RpnToken::Fn(name, argc) => {
                     if *argc > stack.len() {
                         return Err(Error::EvalError(EvalError::RPNStackUnderflow));
@@ -75,7 +68,7 @@ impl<'e> RpnExpr<'e>
                     stack.push(val);
                 }
                 RpnToken::Op(op) => {
-                    let start = stack.len() - 2;
+                    let start = stack.len() - op.num_operands();
                     let res = op.apply(&stack[start..]);
                     stack.truncate(start);
                     stack.push(res);
@@ -110,10 +103,6 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
                 }
                 InfixToken::Var(var) => {
                     output.push(RpnToken::Var(var));
-                    num_count = 0;
-                }
-                InfixToken::NegVar(name) => {
-                    output.push(RpnToken::NegVar(name));
                     num_count = 0;
                 }
                 InfixToken::Op(op) => {
@@ -175,22 +164,23 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
         #[inline(always)]
         fn pre_evaluate<'t>(output: &mut Vec<RpnToken<'t>>, op: Op, num_count: &mut usize)
         {
-            // TODO: Each operand may have a different number of arguments
-            if *num_count >= 2 {
-                let b = if let Some(RpnToken::Num(value)) = output.pop() {
-                    value
-                } else {
-                    unreachable!("expected a number");
-                };
-                let a = if let Some(RpnToken::Num(value)) = output.pop() {
-                    value
-                } else {
-                    unreachable!("expected a number");
-                };
-                let token = RpnToken::Num(op.apply(&[a, b]));
+            // TODO: Recicling vector + removing reverse call
+            if *num_count >= op.num_operands() {
+                let mut operands = Vec::with_capacity(op.num_operands());
+
+                for _ in 0..op.num_operands() {
+                    operands.push(if let Some(RpnToken::Num(value)) = output.pop() {
+                        value
+                    } else {
+                        unreachable!("expected a number");
+                    });
+                }
+
+                operands.reverse();
+                let token = RpnToken::Num(op.apply(&operands));
                 output.push(token);
 
-                *num_count -= 1;
+                *num_count -= op.num_operands() - 1;
             } else {
                 output.push(RpnToken::Op(op));
                 *num_count = 0;
@@ -358,9 +348,34 @@ mod tests
     #[test]
     fn test_str_to_rpn()
     {
-        let expr = "(2 * 21) + 3 - 35 - ((5 * 80) + 5) + 10";
+        let expr = "(2 * 21) + 3 + -35 - ((5 * 80) + 5) + 10 + -p0";
         let infix_expr: InfixExpr = InfixExpr::try_from(expr).unwrap();
         let rpn_expr: RpnExpr = infix_expr.try_into().unwrap();
-        assert_eq!(rpn_expr.tokens, vec![RpnToken::Num(-385.0),]);
+        assert_eq!(
+            rpn_expr.tokens,
+            vec![
+                RpnToken::Num(-385.0),
+                RpnToken::Var("p0"),
+                RpnToken::Op(Op::Neg),
+                RpnToken::Op(Op::Add),
+            ]
+        );
+
+        let expr = "-y1 * (p2 - p3*y0)";
+        let infix_expr: InfixExpr = InfixExpr::try_from(expr).unwrap();
+        let rpn_expr: RpnExpr = infix_expr.try_into().unwrap();
+        assert_eq!(
+            rpn_expr.tokens,
+            vec![
+                RpnToken::Var("y1"),
+                RpnToken::Op(Op::Neg),
+                RpnToken::Var("p2"),
+                RpnToken::Var("p3"),
+                RpnToken::Var("y0"),
+                RpnToken::Op(Op::Mul),
+                RpnToken::Op(Op::Sub),
+                RpnToken::Op(Op::Mul),
+            ]
+        );
     }
 }

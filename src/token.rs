@@ -36,7 +36,6 @@ impl Op
         matches!(self, Op::Pow)
     }
 
-    // TODO: Receive and slice
     pub fn apply(&self, x: &[f64]) -> f64
     {
         match self {
@@ -55,7 +54,6 @@ pub enum InfixToken<'e>
 {
     Num(f64),
     Var(&'e str),
-    NegVar(&'e str),
     Fn(&'e str, Vec<InfixExpr<'e>>),
     Op(Op),
     LParen,

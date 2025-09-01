@@ -26,7 +26,7 @@ use super::Resolver;
 /// - The letter or index is out of bounds of the internal storage.
 ///
 /// # Examples
-/// ```
+/// ```rust
 /// use fee::prelude::*;
 /// use fee::{EmptyResolver, IndexedResolver, RpnEvaluator};
 ///
