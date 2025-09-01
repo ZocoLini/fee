@@ -204,8 +204,8 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
 ///
 /// ## Evaluation
 /// The RPN evaluator internally uses a stack to evaluate Reverse Polish Notation expressions.
-/// The struct saves the stack for reuse behind a mutex, saving time when expressions are evaluated 
-/// more than once avoiding reallocations. 
+/// The struct saves the stack for reuse behind a mutex, saving time when expressions are evaluated
+/// more than once avoiding reallocations.
 /// Internally, if different threads are using the evaluator and the stack is being used, a temporary
 /// stack is created.
 ///
@@ -215,6 +215,9 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
 ///
 /// ## Support
 /// This evaluator supports f64 operations and the operators +. -. *. /, ^.
+///
+/// ## Errors
+/// Will return an fee::ParseError if parsing fails and a fee::EvalError if evaluation fails.
 ///
 /// ## Examples
 /// ```
