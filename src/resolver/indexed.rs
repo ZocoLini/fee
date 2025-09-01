@@ -32,7 +32,7 @@ use super::Resolver;
 /// 
 /// // Lotka-Volterra model
 /// let y0_dot_expr = "y0 * (p0 - p1*y1)";
-/// let y1_dot_expr = "y1 * (-p2 + p3*y0)";
+/// let y1_dot_expr = "-y1 * (p2 - p3*y0)";
 /// 
 /// let mut var_resolver = IndexedResolver::new_var_resolver();
 /// var_resolver.add_var_identifier('y', 2);

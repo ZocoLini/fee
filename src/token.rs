@@ -43,6 +43,7 @@ pub enum InfixToken<'e>
 {
     Num(f64),
     Var(&'e str),
+    NegVar(&'e str),
     Fn(&'e str, Vec<InfixExpr<'e>>),
     Op(Op),
     LParen,

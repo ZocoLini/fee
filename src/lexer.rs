@@ -106,6 +106,7 @@ enum State
 {
     ExpectingOperator,
     ExpectingNumberProducer,
+    ExpectingNegativeElement,
 }
 
 impl State
@@ -123,7 +124,10 @@ impl State
         match self {
             State::ExpectingOperator => Self::handle_expecting_operator(input, output, chars, i, c),
             State::ExpectingNumberProducer => {
-                Self::handle_number_or_ident(input, output, chars, i, c)
+                Self::handle_number_var_fn(input, output, chars, i, c)
+            }
+            State::ExpectingNegativeElement => {
+                Self::handle_negative_element(input, output, chars, i, c)
             }
         }
     }
@@ -155,7 +159,7 @@ impl State
     }
 
     #[inline(always)]
-    fn handle_number_or_ident<'e>(
+    fn handle_number_var_fn<'e>(
         input: &'e str,
         output: &mut Vec<InfixToken<'e>>,
         chars: &mut Peekable<CharIndices<'e>>,
@@ -164,9 +168,10 @@ impl State
     ) -> Result<State, Error<'e>>
     {
         return match c {
+            '-' => Ok(State::ExpectingNegativeElement),
             // numbers
-            '0'..='9' | '.' | '-' => {
-                let value = fast_parse_f64(c, chars);
+            '0'..='9' | '.' => {
+                let value = State::fast_parse_uf64(c, chars);
                 output.push(InfixToken::Num(value));
 
                 Ok(State::ExpectingOperator)
@@ -241,55 +246,95 @@ impl State
                 i,
             ))),
         };
+    }
 
-        fn fast_parse_f64(c: char, chars: &mut Peekable<CharIndices>) -> f64
-        {
-            let mut value: f64 = 0.0;
-            let mut frac = 0.1;
-            let mut is_fraction = false;
-
-            let multiplier = if c == '-' {
-                -1.0
-            } else {
-                match c {
-                    '0'..='9' => {
-                        if is_fraction {
-                            value += (c as u8 - b'0') as f64 * frac;
-                            frac *= 0.1;
-                        } else {
-                            value = value * 10.0 + (c as u8 - b'0') as f64;
-                        }
-                    }
-                    '.' if !is_fraction => {
-                        is_fraction = true;
-                    }
-                    _ => unreachable!("can't happend"),
-                }
-
-                1.0
-            };
-
-            while let Some(&(_, d)) = chars.peek() {
-                match d {
-                    '0'..='9' => {
-                        chars.next();
-                        if is_fraction {
-                            value += (d as u8 - b'0') as f64 * frac;
-                            frac *= 0.1;
-                        } else {
-                            value = value * 10.0 + (d as u8 - b'0') as f64;
-                        }
-                    }
-                    '.' if !is_fraction => {
-                        chars.next();
-                        is_fraction = true;
-                    }
-                    _ => break,
-                }
+    #[inline(always)]
+    fn handle_negative_element<'e>(
+        input: &'e str,
+        output: &mut Vec<InfixToken<'e>>,
+        chars: &mut Peekable<CharIndices<'e>>,
+        i: usize,
+        c: char,
+    ) -> Result<State, Error<'e>>
+    {
+        return match c {
+            // numbers
+            '0'..='9' | '.' => {
+                let value = State::fast_parse_uf64(c, chars);
+                output.push(InfixToken::Num(-value));
+                Ok(State::ExpectingOperator)
             }
 
-            value * multiplier
+            // identifiers (variables or functions)
+            'a'..='z' | 'A'..='Z' | '_' => {
+                let start_index = i;
+                let end_index = input.len();
+
+                let token = loop {
+                    if let Some(&(i, d)) = chars.peek() {
+                        if d.is_alphanumeric() || d == '_' {
+                            chars.next();
+                            continue;
+                        } else {
+                            break InfixToken::NegVar(&input[start_index..i]);
+                        }
+                    } else {
+                        break InfixToken::NegVar(&input[start_index..end_index]);
+                    }
+                };
+
+                output.push(token);
+                Ok(State::ExpectingOperator)
+            }
+
+            _ => Err(Error::ParseError(ParseError::UnexpectedChar(
+                Cow::Owned(c),
+                i,
+            ))),
+        };
+    }
+
+    fn fast_parse_uf64(c: char, chars: &mut Peekable<CharIndices>) -> f64
+    {
+        let mut value: f64 = 0.0;
+        let mut frac = 0.1;
+        let mut is_fraction = false;
+
+        match c {
+            '0'..='9' => {
+                if is_fraction {
+                    value += (c as u8 - b'0') as f64 * frac;
+                    frac *= 0.1;
+                } else {
+                    value = value * 10.0 + (c as u8 - b'0') as f64;
+                }
+            }
+            '.' if !is_fraction => {
+                is_fraction = true;
+            }
+            _ => unreachable!("can't happend"),
         }
+
+        while let Some(&(_, d)) = chars.peek() {
+            match d {
+                '0'..='9' => {
+                    chars.next();
+                    if is_fraction {
+                        value += (d as u8 - b'0') as f64 * frac;
+                        frac *= 0.1;
+                    } else {
+                        value = value * 10.0 + (d as u8 - b'0') as f64;
+                    }
+                }
+                '.' if !is_fraction => {
+                    chars.next();
+                    is_fraction = true;
+                }
+                _ => break,
+            }
+        }
+
+        value
     }
 }
 
@@ -320,7 +365,7 @@ mod tests
             ]
         );
 
-        let expr = "2 - (4 + (p19 - 2) * (p19 + 2))";
+        let expr = "2 - (4 + (p19 - 2) * (-p19 + 2))";
         let infix_expr = InfixExpr::try_from(expr).unwrap();
         assert_eq!(
             *infix_expr,
@@ -337,7 +382,7 @@ mod tests
                 InfixToken::RParen,
                 InfixToken::Op(Op::Mul),
                 InfixToken::LParen,
-                InfixToken::Var("p19"),
+                InfixToken::NegVar("p19"),
                 InfixToken::Op(Op::Add),
                 InfixToken::Num(2.0),
                 InfixToken::RParen,

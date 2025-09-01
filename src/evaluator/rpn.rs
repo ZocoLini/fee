@@ -9,6 +9,7 @@ pub enum RpnToken<'e>
 {
     Num(f64),
     Var(&'e str),
+    NegVar(&'e str),
     Fn(&'e str, usize),
     Op(Op),
 }
@@ -20,6 +21,7 @@ impl<'e> From<InfixToken<'e>> for RpnToken<'e>
         match token {
             InfixToken::Num(num) => RpnToken::Num(num),
             InfixToken::Var(name) => RpnToken::Var(name),
+            InfixToken::NegVar(name) => RpnToken::NegVar(name),
             InfixToken::Fn(name, argc) => RpnToken::Fn(name, argc.len()),
             InfixToken::Op(op) => RpnToken::Op(op),
             _ => unreachable!("logic bug found"),
@@ -47,6 +49,10 @@ impl<'e> RpnExpr<'e>
                 RpnToken::Var(name) => stack.push(
                     *ctx.get_var(name)
                         .ok_or(Error::EvalError(EvalError::UnknownVar(Cow::Borrowed(name))))?,
+                ),
+                RpnToken::NegVar(name) => stack.push(
+                    -(*ctx.get_var(name)
+                        .ok_or(Error::EvalError(EvalError::UnknownVar(Cow::Borrowed(name))))?),
                 ),
                 RpnToken::Fn(name, argc) => {
                     if *argc > stack.len() {
@@ -111,6 +117,10 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
                     output.push(RpnToken::Var(var));
                     num_count = 0;
                 }
+                InfixToken::NegVar(name) => {
+                    output.push(RpnToken::NegVar(name));
+                    num_count = 0;
+                },
                 InfixToken::Op(op) => {
                     while let Some(InfixToken::Op(top)) = ops.last() {
                         let should_pop = if op.is_right_associative() {
