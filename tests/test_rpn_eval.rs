@@ -47,14 +47,14 @@ fn test_rpn_eval_with_vars_and_fn()
     let expr = "-abs((2 + 4) * 6 / (p1 + 2)) + abs(-2)";
     let evaluator = RpnEvaluator::new(expr).unwrap();
     let result = evaluator.eval(&context).unwrap();
-    assert_eq!(result, -8.0);
+    assert_eq!(result, -4.0);
 
     let expr = "abs((2 + 4) * 6 / (p1 + 2))";
     let evaluator = RpnEvaluator::new(expr).unwrap();
     let result = evaluator.eval(&context).unwrap();
     assert_eq!(result, 6.0);
 
-    let expr = "abs((2 * 21) + 3 - 35 - ((5 * 80) + 5) + p0)";
+    let expr = "abs((2 * 21) + 3 - 35 + (-((5 * 80) + 5)) + p0)";
     let evaluator = RpnEvaluator::new(expr).unwrap();
     let result = evaluator.eval(&context).unwrap();
     assert_eq!(result, 385.0);
