@@ -1,5 +1,12 @@
 use crate::{ExprFn, prelude::Resolver};
 
+/// Container for the resolvers required to evaluate expressions containing variables or functions.
+///
+/// `Context` holds:
+/// - a variable resolver (`V`) that implements `Resolver<f64>`
+/// - a function resolver (`F`) that implements `Resolver<ExprFn>`
+///
+/// This struct is passed to evaluators to provide variable values and function implementations.
 pub struct Context<V: Resolver<f64>, F: Resolver<ExprFn>>
 {
     vars: V,

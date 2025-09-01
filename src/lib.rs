@@ -3,7 +3,7 @@
 //! This Rust crate provides ways to evaluate mathematical expressions efficiently.
 //! Each evaluator and resolver has his own pros, cons and capabilities.
 //!
-//! ## Introduction
+//! # Introduction
 //!
 //! ```rust
 //! use fee::{prelude::*, DefaultResolver, RpnEvaluator};
@@ -27,14 +27,14 @@
 //! }
 //! ```
 //!
-//! ## Evaluators
+//! # Evaluators
 //!
 //! Trait implemented by all the structs that can evaluate expressions.
 //! It needs the expression and a context struct to do the evaluation.
 //! The current available Evaluators are:
 //! - RpnEvaluator
 //!
-//! ## Resolvers
+//! # Resolvers
 //!
 //! The Resolver trait is implemented by all the objects that can resolve a variable or function name.
 //! The current available Resolvers are:

@@ -1,5 +1,28 @@
 use crate::prelude::Resolver;
 
+/// For the cases where any variable or function name should resolve for the same value
+/// we encourage the use of this resolver instead of any other one.
+/// 
+/// # Advantages
+/// - Best performance between all resolvers.
+/// 
+/// # Disadvantages
+/// - Always returns the same value regardless of the variable or function name.
+/// 
+/// # Examples
+/// ```rust
+/// use fee::prelude::*;
+/// use fee::{ RpnEvaluator, EmptyResolver, ConstantResolver };
+///
+/// let expr = "x + y";
+/// 
+/// let var_resolver = ConstantResolver::new(1.0);
+/// let context = Context::new(var_resolver, EmptyResolver::new());
+/// 
+/// let evaluator = RpnEvaluator::new(expr).unwrap();
+/// let result = evaluator.eval(&context).unwrap();
+/// assert_eq!(result, 2.0);
+/// ```
 pub struct ConstantResolver<T>
 {
     value: T,

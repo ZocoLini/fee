@@ -9,7 +9,7 @@ pub use rpn::RpnEvaluator;
 /// This trait ensures that all evaluators know how to be built from a string expression and
 /// how to evaluate expressions, with or without a context.
 ///
-/// ## Example
+/// # Example
 /// ```
 /// use std::borrow::Cow;
 /// use fee::{ParseError, Error};

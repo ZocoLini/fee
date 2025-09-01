@@ -194,7 +194,7 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
 
 /// Evaluator that internally uses a stack to evaluate Reverse Polish Notation expressions.
 ///
-/// ## Parsing
+/// # Parsing
 /// The new() method receives a string expression and first tokenizes it into a vector of Infix Tokens.
 /// If the expression was parsed successfully, it is converted into a Reverse Polish Notation expression.
 /// During the conversion to RPN, the operations that can be pre-evaluated are evaluated immediately.
@@ -202,7 +202,7 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
 /// because we pre-evaluate when possible, the expression is converted to "14" reducing evaluation time
 /// and improving performance when the RpnEvaluator is used more than once.
 ///
-/// ## Evaluation
+/// # Evaluation
 /// The RPN evaluator internally uses a stack to evaluate Reverse Polish Notation expressions.
 /// The struct saves the stack for reuse behind a mutex, saving time when expressions are evaluated
 /// more than once avoiding reallocations.
@@ -213,16 +213,16 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
 /// during the evaluation process. If no context is provided, there will not be such thing as time
 /// resolving variables or functions.
 ///
-/// ## Support
+/// # Support
 /// This evaluator supports f64 operations and the operators +. -. *. /, ^.
 ///
-/// ## Errors
+/// # Errors
 /// Will return an fee::ParseError if parsing fails and a fee::EvalError if evaluation fails.
 ///
-/// ## Examples
+/// # Examples
 /// ```
 /// use fee::prelude::*;
-/// use fee::{ RpnEvaluator, EmptyResolver };
+/// use fee::RpnEvaluator;
 ///
 /// let expr = "2 + 3 * 4";
 /// let evaluator = RpnEvaluator::new(expr).unwrap();
