@@ -24,7 +24,7 @@ First step is add the dependency to your Cargo.toml.
 
 ```toml
 [dependencies]
-fee = { version = "0.2.4" }
+fee = { version = "0.1.0" }
 ```
 
 The following code shows the default use case
