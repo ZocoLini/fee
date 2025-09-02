@@ -5,16 +5,8 @@ edition = "2024"
 
 authors = ["Borja Castellano <borjacastellano1@gmail.com>"]
 description = "Fast and flexible algebraic expression evaluators"
-keywords = [
-    "math",
-    "parser",
-    "rpn",
-    "evaluator",
-    "fast",
-    "efficient",
-    "optimized",
-]
-categories = ["mathematics", "science", "parser-implementations", ]
+keywords = ["math", "expression", "parser", "evaluator", "scientific"]
+categories = ["mathematics", "science", "parser-implementations"]
 repository = "https://github.com/ZocoLini/fee"
 documentation = "https://docs.rs/fee"
 license = "MIT OR Apache-2.0"
