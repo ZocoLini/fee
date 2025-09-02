@@ -43,7 +43,7 @@ overflow-checks = false
 incremental = false
 
 [[bench]]
-name = "bench_var_resolvers"
+name = "bench_resolvers"
 harness = false
 
 [[bench]]

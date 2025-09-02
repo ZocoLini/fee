@@ -42,6 +42,12 @@ fn evaluation(c: &mut Criterion)
         b.iter(|| black_box(compiled.eval(&slab, &mut map).unwrap()));
     });
 
+    c.bench_function("cmp/eval/rust", |b| {
+        b.iter(|| {
+            black_box((2 * 21) + 3 - 35 - ((5 * 80) + 5) + 10);
+        });
+    });
+    
     c.bench_function("cmp/eval/fee", |b| {
         let var_resolver = DefaultResolver::new_var_resolver();
         let fn_resolver = DefaultResolver::new_fn_resolver();
