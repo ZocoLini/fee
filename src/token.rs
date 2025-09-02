@@ -17,9 +17,9 @@ impl Op
     {
         match self {
             Op::Add | Op::Sub => 1,
-            Op::Mul | Op::Div => 2,
-            Op::Pow => 3,
-            Op::Neg => 4,
+            Op::Mul | Op::Div => 20,
+            Op::Neg => 30,
+            Op::Pow => 40,
         }
     }
 

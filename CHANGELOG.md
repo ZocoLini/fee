@@ -13,6 +13,7 @@ a caller-provided stack.
 - `IRpnEvaluator::new()` method for creating an evaluator optimized for the
 `IndexedResolver`.
 ### Fixed
+- Exponentiation had precedence over the unary minus operator.
 ### Changed
 - `RpnEvaluator` no longer stores its own stack. The caller can now manage
 and reuse allocated memory if desired.
@@ -32,7 +33,7 @@ and reuse allocated memory if desired.
     - Multiplication (\*)
     - Division (/)
     - Exponentiation (^)
-    - Unary negation (-)
+    - Unary minus (-)
 - Created five Resolvers, each one with different pros and cons:
     - DefaultVarResolver
     - IndexedVarResolver
