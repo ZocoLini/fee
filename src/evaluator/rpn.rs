@@ -1,3 +1,5 @@
+use smallvec::{smallvec, SmallVec};
+
 use crate::lexer::InfixExpr;
 use crate::token::{InfixToken, Op};
 use crate::{Error, EvalError, ExprFn, prelude::*};
@@ -90,32 +92,29 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
     // shunting yard algorithm
     fn try_from(expr: InfixExpr<'e>) -> Result<Self, Self::Error>
     {
+        let mut f64_cache: SmallVec<[f64; 4]> = smallvec![];
         let mut output: Vec<RpnToken> = Vec::with_capacity(expr.len());
         let mut ops: Vec<InfixToken> = Vec::new();
-
-        let mut num_count = 0;
 
         for tok in expr.into_iter() {
             match tok {
                 InfixToken::Num(num) => {
                     output.push(RpnToken::Num(num));
-                    num_count += 1;
+                    f64_cache.push(num);
                 }
                 InfixToken::Var(var) => {
                     output.push(RpnToken::Var(var));
-                    num_count = 0;
+                    f64_cache.clear();
                 }
                 InfixToken::Op(op) => {
                     while let Some(InfixToken::Op(top)) = ops.last() {
-                        let should_pop = if op.is_right_associative() {
-                            op.precedence() < top.precedence()
-                        } else {
-                            op.precedence() <= top.precedence()
-                        };
+                        let prec = op.precedence();
+                        let top_prec = top.precedence();
+                        let should_pop = top_prec > prec || (!op.is_right_associative() && top_prec == prec);
 
                         if should_pop {
                             if let Some(InfixToken::Op(op)) = ops.pop() {
-                                pre_evaluate(&mut output, op, &mut num_count);
+                                pre_evaluate(&mut output, &mut f64_cache, op);
                             }
                         } else {
                             break;
@@ -128,10 +127,10 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
                     while let Some(top) = ops.pop() {
                         match top {
                             InfixToken::LParen => break,
-                            InfixToken::Op(op) => pre_evaluate(&mut output, op, &mut num_count),
+                            InfixToken::Op(op) => pre_evaluate(&mut output, &mut f64_cache, op),
                             _ => {
                                 output.push(top.into());
-                                num_count = 0;
+                                f64_cache.clear();
                             }
                         }
                     }
@@ -145,47 +144,45 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
                     }
 
                     output.push(fun_call_token);
-                    num_count = 0;
+                    f64_cache.clear();
                 }
             }
         }
 
         while let Some(top) = ops.pop() {
             if let InfixToken::Op(op) = top {
-                pre_evaluate(&mut output, op, &mut num_count);
+                pre_evaluate(&mut output, &mut f64_cache, op);
             } else {
                 output.push(top.into());
-                num_count = 0;
+                f64_cache.clear(); // TODO: After this else the if doesn't need to be call because no operator uses 0 elements
             }
         }
 
         return Ok(RpnExpr { tokens: output });
 
-        #[inline(always)]
-        fn pre_evaluate<'t>(output: &mut Vec<RpnToken<'t>>, op: Op, num_count: &mut usize)
+        fn pre_evaluate<'t>(output: &mut Vec<RpnToken<'t>>, f64_cache: &mut SmallVec<[f64; 4]>, op: Op)
         {
-            // TODO: Recicling vector + removing reverse call
-            if *num_count >= op.num_operands() {
-                let mut operands = Vec::with_capacity(op.num_operands());
-
-                for _ in 0..op.num_operands() {
-                    operands.push(if let Some(RpnToken::Num(value)) = output.pop() {
-                        value
-                    } else {
-                        unreachable!("expected a number");
-                    });
-                }
-
-                operands.reverse();
-                let token = RpnToken::Num(op.apply(&operands));
-                output.push(token);
-
-                *num_count -= op.num_operands() - 1;
+            let n_operands = op.num_operands();
+            
+            if f64_cache.len() >= n_operands {
+                let output_len = output.len();
+                let f64_cache_len = f64_cache.len();
+        
+                let start = f64_cache_len - n_operands;
+                let num = op.apply(&f64_cache[start..]);
+                let token = RpnToken::Num(num);
+                
+                output.truncate(output_len - n_operands + 1);
+                output[output_len  - n_operands] = token;
+                
+                f64_cache.truncate(f64_cache_len - n_operands + 1);
+                f64_cache[f64_cache_len - n_operands] = num;
             } else {
                 output.push(RpnToken::Op(op));
-                *num_count = 0;
+                f64_cache.clear();
             }
         }
+       
     }
 }
 
