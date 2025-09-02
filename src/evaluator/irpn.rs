@@ -27,7 +27,7 @@ impl<'e> From<InfixToken<'e>> for IRpnToken
                 let idx = parsing::parse_usize(&name_bytes[1..]);
 
                 IRpnToken::Var(letter as usize, idx)
-            },
+            }
             InfixToken::Fn(name, args) => {
                 let name_bytes = name.as_bytes();
 
@@ -35,7 +35,7 @@ impl<'e> From<InfixToken<'e>> for IRpnToken
                 let idx = parsing::parse_usize(&name_bytes[1..]);
 
                 IRpnToken::Fn(letter as usize, idx, args.len())
-            },
+            }
             InfixToken::Op(op) => IRpnToken::Op(op),
             _ => unreachable!("logic bug found"),
         }
@@ -128,10 +128,10 @@ impl<'e> TryFrom<InfixExpr<'e>> for IRpnExpr
                 }
                 InfixToken::Var(name) => {
                     let name_bytes = name.as_bytes();
-    
+
                     let letter = name_bytes[0] - b'a';
                     let idx = parsing::parse_usize(&name_bytes[1..]);
-    
+
                     output.push(IRpnToken::Var(letter as usize, idx));
                     f64_cache.clear();
                 }
@@ -167,17 +167,17 @@ impl<'e> TryFrom<InfixExpr<'e>> for IRpnExpr
                 }
                 InfixToken::Fn(name, args) => {
                     let name_bytes = name.as_bytes();
-    
+
                     let letter = name_bytes[0] - b'a';
                     let idx = parsing::parse_usize(&name_bytes[1..]);
-                    
+
                     let token = IRpnToken::Fn(letter as usize, idx, args.len());
-                    
+
                     for arg_tokens in args {
                         let rpn_arg: IRpnExpr = arg_tokens.try_into()?;
                         output.extend(rpn_arg.tokens);
                     }
-    
+
                     output.push(token);
                     f64_cache.clear();
                 }
@@ -195,11 +195,7 @@ impl<'e> TryFrom<InfixExpr<'e>> for IRpnExpr
 
         return Ok(IRpnExpr { tokens: output });
 
-        fn pre_evaluate(
-            output: &mut Vec<IRpnToken>,
-            f64_cache: &mut SmallVec<[f64; 4]>,
-            op: Op,
-        )
+        fn pre_evaluate(output: &mut Vec<IRpnToken>, f64_cache: &mut SmallVec<[f64; 4]>, op: Op)
         {
             let n_operands = op.num_operands();
 
@@ -234,8 +230,8 @@ impl<'e> TryFrom<InfixExpr<'e>> for IRpnExpr
 /// For example, the expression "2 + 3 * 4" would be converted to "2 3 4 * +" without pre-evaluation, but
 /// because we pre-evaluate when possible, the expression is converted to "14" reducing evaluation time
 /// and improving performance when the RpnEvaluator is used more than once.
-/// 
-/// This evaluator differs from the standard RpnEvaluator in that it parses variable and function 
+///
+/// This evaluator differs from the standard RpnEvaluator in that it parses variable and function
 /// identifiers and indices before evaluation.
 ///
 /// # Evaluation
@@ -256,10 +252,10 @@ impl<'e> TryFrom<InfixExpr<'e>> for IRpnExpr
 /// use fee::{IRpnEvaluator, IndexedResolver};
 ///
 /// let expr = "2 + 3 * 4";
-/// 
+///
 /// let var_resolver = IndexedResolver::new_var_resolver();
 /// let fn_resolver = IndexedResolver::new_fn_resolver();
-/// 
+///
 /// let evaluator = IRpnEvaluator::new(expr).unwrap();
 /// let mut stack = Vec::with_capacity(3);
 /// let result = evaluator.eval_with_stack(&Context::new(var_resolver, fn_resolver), &mut stack).unwrap();
@@ -288,7 +284,7 @@ impl IRpnEvaluator
         let mut stack = Vec::with_capacity(self.rpn.tokens.len() / 2);
         self.eval_with_stack(ctx, &mut stack)
     }
-    
+
     pub fn eval_with_stack(
         &self,
         ctx: &Context<IndexedResolver<f64>, IndexedResolver<ExprFn>>,

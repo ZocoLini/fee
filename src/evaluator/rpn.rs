@@ -265,7 +265,7 @@ impl<'e> RpnEvaluator<'e>
         let mut stack = Vec::with_capacity(self.rpn.tokens.len() / 2);
         self.eval_with_stack(ctx, &mut stack)
     }
-    
+
     pub fn eval_with_stack<V: Resolver<f64>, F: Resolver<ExprFn>>(
         &'e self,
         ctx: &Context<V, F>,
@@ -274,7 +274,7 @@ impl<'e> RpnEvaluator<'e>
     {
         self.rpn.eval(ctx, stack)
     }
-    
+
     pub fn eval_without_context(&'e self) -> Result<f64, Error<'e>>
     {
         self.eval(&Context::empty())

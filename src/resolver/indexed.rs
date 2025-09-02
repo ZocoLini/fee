@@ -78,7 +78,7 @@ impl<T> IndexedResolver<T>
     {
         self.vars[identifier as usize - ALPHABET_START_USIZE][index] = value;
     }
-    
+
     pub(crate) fn get_by_index(&self, identifier: usize, index: usize) -> Option<&T>
     {
         self.vars[identifier].get(index)

@@ -1,4 +1,4 @@
-use crate::{prelude::Resolver, EmptyResolver, ExprFn, IndexedResolver};
+use crate::{EmptyResolver, ExprFn, IndexedResolver, prelude::Resolver};
 
 /// Container for the resolvers required to evaluate expressions containing variables or functions.
 ///
@@ -54,7 +54,12 @@ impl<F: Resolver<ExprFn>> Context<IndexedResolver<f64>, F>
 
 impl<V: Resolver<f64>> Context<V, IndexedResolver<ExprFn>>
 {
-    pub(crate) fn call_fn_by_index(&self, identifier: usize, index: usize, args: &[f64]) -> Option<f64>
+    pub(crate) fn call_fn_by_index(
+        &self,
+        identifier: usize,
+        index: usize,
+        args: &[f64],
+    ) -> Option<f64>
     {
         Some(self.fns.get_by_index(identifier, index)?(args))
     }

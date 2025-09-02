@@ -2,7 +2,8 @@ use std::hint::black_box;
 
 use criterion::{Criterion, criterion_group, criterion_main};
 use fee::{
-    prelude::*, ConstantResolver, DefaultResolver, ExprFn, IRpnEvaluator, IndexedResolver, RpnEvaluator, SmallResolver
+    ConstantResolver, DefaultResolver, ExprFn, IRpnEvaluator, IndexedResolver, RpnEvaluator,
+    SmallResolver, prelude::*,
 };
 
 fn rpn_evaluator(c: &mut Criterion)

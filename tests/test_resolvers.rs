@@ -1,7 +1,4 @@
-use fee::{
-    EmptyResolver, RpnEvaluator, SmallResolver,
-    prelude::{Context},
-};
+use fee::{EmptyResolver, RpnEvaluator, SmallResolver, prelude::Context};
 
 #[test]
 fn test_lockeable_resolvers()

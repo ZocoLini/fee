@@ -1,5 +1,5 @@
-pub mod rpn;
 pub mod irpn;
+pub mod rpn;
 
-pub use rpn::RpnEvaluator;
 pub use irpn::IRpnEvaluator;
+pub use rpn::RpnEvaluator;
