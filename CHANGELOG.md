@@ -17,6 +17,7 @@ a caller-provided stack.
 - `RpnEvaluator` no longer stores its own stack. The caller can now manage
 and reuse allocated memory if desired.
 ### Removed
+- Removed `Evaluator` trait
 ### Security
 ### Deprecated
 
