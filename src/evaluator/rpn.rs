@@ -4,7 +4,6 @@ use crate::lexer::InfixExpr;
 use crate::token::{InfixToken, Op};
 use crate::{Error, EvalError, ExprFn, prelude::*};
 use std::borrow::Cow;
-use std::sync::Mutex;
 
 #[derive(Debug, PartialEq)]
 pub enum RpnToken<'e>
@@ -43,6 +42,12 @@ impl<'e> RpnExpr<'e>
         stack: &mut Vec<f64>,
     ) -> Result<f64, Error<'e>>
     {
+        if self.tokens.len() == 1 {
+            if let RpnToken::Num(num) = &self.tokens[0] {
+                return Ok(*num);
+            }
+        }
+
         for tok in self.tokens.iter() {
             match tok {
                 RpnToken::Num(num) => stack.push(*num),
@@ -201,11 +206,21 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
 /// and improving performance when the RpnEvaluator is used more than once.
 ///
 /// # Evaluation
-/// The RPN evaluator internally uses a stack to evaluate Reverse Polish Notation expressions.
-/// The struct saves the stack for reuse behind a mutex, saving time when expressions are evaluated
-/// more than once avoiding reallocations.
-/// Internally, if different threads are using the evaluator and the stack is being used, a temporary
-/// stack is created.
+/// The RPN evaluator uses an internal stack to evaluate Reverse Polish Notation expressions.  
+/// By default, [`RpnEvaluator::eval()`] creates a new temporary stack on each call, which can add overhead.  
+/// If the evaluator is called multiple times, consider reusing a preallocated stack via  
+/// [`RpnEvaluator::eval_with_stack()`] to improve performance.
+/// 
+/// ```rust
+/// use fee::prelude::*;
+/// use fee::RpnEvaluator;
+///
+/// let expr = "2 + 3 * 4";
+/// let evaluator = RpnEvaluator::new(expr).unwrap();
+/// let mut stack = Vec::with_capacity(3);
+/// let result = evaluator.eval_with_stack(&Context::empty(), &mut stack).unwrap();
+/// assert_eq!(result, 14.0);
+/// ```
 ///
 /// The speed when resolving vars or functions depends on the Provider chosen when creating the context using
 /// during the evaluation process. If no context is provided, there will not be such thing as time
@@ -230,8 +245,6 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
 pub struct RpnEvaluator<'e>
 {
     rpn: RpnExpr<'e>,
-
-    stack: Mutex<Vec<f64>>,
 }
 
 impl<'e> Evaluator<'e> for RpnEvaluator<'e>
@@ -241,12 +254,7 @@ impl<'e> Evaluator<'e> for RpnEvaluator<'e>
         let infix_expr = InfixExpr::try_from(expr)?;
         let rpn_expr = RpnExpr::try_from(infix_expr)?;
 
-        let stack = Mutex::new(Vec::with_capacity(rpn_expr.tokens.len() / 2));
-
-        Ok(RpnEvaluator {
-            rpn: rpn_expr,
-            stack,
-        })
+        Ok(RpnEvaluator { rpn: rpn_expr })
     }
 
     fn eval<V: Resolver<f64>, F: Resolver<ExprFn>>(
@@ -254,16 +262,20 @@ impl<'e> Evaluator<'e> for RpnEvaluator<'e>
         ctx: &Context<V, F>,
     ) -> Result<f64, Error<'e>>
     {
-        match self.stack.try_lock() {
-            Ok(mut guard) => {
-                guard.clear();
-                self.rpn.eval(ctx, &mut guard)
-            }
-            Err(_) => {
-                let mut local_stack = Vec::with_capacity(self.rpn.tokens.len() / 2);
-                self.rpn.eval(ctx, &mut local_stack)
-            }
-        }
+        let mut stack = Vec::with_capacity(self.rpn.tokens.len() / 2);
+        self.eval_with_stack(ctx, &mut stack)
+    }
+}
+
+impl<'e> RpnEvaluator<'e>
+{
+    pub fn eval_with_stack<V: Resolver<f64>, F: Resolver<ExprFn>>(
+        &'e self,
+        ctx: &Context<V, F>,
+        stack: &mut Vec<f64>,
+    ) -> Result<f64, Error<'e>>
+    {
+        self.rpn.eval(ctx, stack)
     }
 }
 

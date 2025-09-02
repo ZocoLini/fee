@@ -89,10 +89,11 @@ fn evaluation(c: &mut Criterion)
         fn_resolver.set('f', 0, (|args| args[0]) as ExprFn);
 
         let context = Context::new(var_resolver, fn_resolver);
+        let mut stack = Vec::with_capacity(expr.len() / 2);
         let evaluator = RpnEvaluator::new(expr).unwrap();
 
         b.iter(|| {
-            black_box(evaluator.eval(&context).unwrap());
+            black_box(evaluator.eval_with_stack(&context, &mut stack).unwrap());
         });
     });
 }
@@ -143,10 +144,11 @@ fn evaluation2(c: &mut Criterion)
         let fn_resolver = EmptyResolver;
 
         let context = Context::new(var_resolver, fn_resolver);
+        let mut stack = Vec::with_capacity(expr.len() / 2);
         let evaluator = RpnEvaluator::new(expr).unwrap();
 
         b.iter(|| {
-            black_box(evaluator.eval(&context).unwrap());
+            black_box(evaluator.eval_with_stack(&context, &mut stack).unwrap());
         });
     });
 }

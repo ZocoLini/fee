@@ -18,10 +18,11 @@ fn rpn_evaluator(c: &mut Criterion)
         fn_resolver.insert("abs".to_string(), abs as ExprFn);
 
         let context = Context::new(var_resolver, fn_resolver);
+        let mut stack = Vec::with_capacity(expr.len() / 2);
         let evaluator = RpnEvaluator::new(expr).unwrap();
 
         b.iter(|| {
-            black_box(evaluator.eval(&context).unwrap());
+            black_box(evaluator.eval_with_stack(&context, &mut stack).unwrap());
         });
     });
 
@@ -30,10 +31,11 @@ fn rpn_evaluator(c: &mut Criterion)
         let fn_resolver = ConstantResolver::new(abs as ExprFn);
 
         let context = Context::new(var_resolver, fn_resolver);
+        let mut stack = Vec::with_capacity(expr.len() / 2);
         let evaluator = RpnEvaluator::new(expr).unwrap();
 
         b.iter(|| {
-            black_box(evaluator.eval(&context).unwrap());
+            black_box(evaluator.eval_with_stack(&context, &mut stack).unwrap());
         });
     });
 
@@ -49,10 +51,11 @@ fn rpn_evaluator(c: &mut Criterion)
         fn_resolver.set('p', 0, abs as ExprFn);
 
         let context = Context::new(var_resolver, fn_resolver);
+        let mut stack = Vec::with_capacity(expr.len() / 2);
         let evaluator = RpnEvaluator::new(expr).unwrap();
 
         b.iter(|| {
-            black_box(evaluator.eval(&context).unwrap());
+            black_box(evaluator.eval_with_stack(&context, &mut stack).unwrap());
         });
     });
 
@@ -64,10 +67,11 @@ fn rpn_evaluator(c: &mut Criterion)
         fn_resolver.insert("abs".to_string(), abs as ExprFn);
 
         let context = Context::new(var_resolver, fn_resolver);
+        let mut stack = Vec::with_capacity(expr.len() / 2);
         let evaluator = RpnEvaluator::new(expr).unwrap();
 
         b.iter(|| {
-            black_box(evaluator.eval(&context).unwrap());
+            black_box(evaluator.eval_with_stack(&context, &mut stack).unwrap());
         });
     });
 }
