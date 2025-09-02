@@ -111,6 +111,6 @@ CORES=0-12
 taskset -c $CORES cargo bench --features bench-internal cmp
 ```
 
-Right now, comparissions are being made against `evalexpr`, `meval`, `mexe` and `fasteval`.
+Right now, comparissions are being made against `evalexpr`, `meval`, and `fasteval`.
 It is planned to generate comparison plots to easily to visialize the speed difference,
 as well as a table with pros and cons of each crate.
