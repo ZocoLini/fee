@@ -52,6 +52,7 @@ mod context;
 mod error;
 mod evaluator;
 mod lexer;
+mod parsing;
 mod resolver;
 mod token;
 

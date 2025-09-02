@@ -1,4 +1,4 @@
-use crate::ExprFn;
+use crate::{ExprFn, parsing};
 
 use super::Resolver;
 
@@ -67,7 +67,7 @@ impl<T> Resolver<T> for IndexedResolver<T>
         let name_bytes = name.as_bytes();
 
         let letter = name_bytes[0] as usize - ALPHABET_START_USIZE;
-        let idx = str_to_usize(&name_bytes[1..]);
+        let idx = parsing::parse_usize(&name_bytes[1..]);
         Some(&self.vars[letter][idx])
     }
 }
@@ -108,15 +108,4 @@ impl IndexedResolver<ExprFn>
     {
         self.vars[identifier as usize - ALPHABET_START_USIZE] = vec![|_| { 0.0 }; len]
     }
-}
-
-fn str_to_usize(s: &[u8]) -> usize
-{
-    let mut result = 0;
-
-    for &byte in s {
-        result = result * 10 + (byte - b'0');
-    }
-
-    result as usize
 }

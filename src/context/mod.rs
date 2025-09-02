@@ -1,4 +1,4 @@
-use crate::{prelude::Resolver, EmptyResolver, ExprFn};
+use crate::{EmptyResolver, ExprFn, prelude::Resolver};
 
 /// Container for the resolvers required to evaluate expressions containing variables or functions.
 ///

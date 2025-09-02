@@ -210,7 +210,7 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
 /// By default, [`RpnEvaluator::eval()`] creates a new temporary stack on each call, which can add overhead.  
 /// If the evaluator is called multiple times, consider reusing a preallocated stack via  
 /// [`RpnEvaluator::eval_with_stack()`] to improve performance.
-/// 
+///
 /// ```rust
 /// use fee::prelude::*;
 /// use fee::RpnEvaluator;
