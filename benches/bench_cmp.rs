@@ -3,7 +3,7 @@ use std::hint::black_box;
 use criterion::{Criterion, criterion_group, criterion_main};
 use evalexpr::{DefaultNumericTypes, build_operator_tree};
 use fasteval::{CachedCallbackNamespace, Compiler, EmptyNamespace, Evaler};
-use fee::{EmptyResolver, IndexedResolver, RpnEvaluator, prelude::*};
+use fee::{EmptyResolver, IRpnEvaluator, IndexedResolver, RpnEvaluator, prelude::*};
 
 fn evaluation(c: &mut Criterion)
 {
@@ -90,7 +90,7 @@ fn evaluation(c: &mut Criterion)
 
         let context = Context::new(var_resolver, fn_resolver);
         let mut stack = Vec::with_capacity(expr.len() / 2);
-        let evaluator = RpnEvaluator::new(expr).unwrap();
+        let evaluator = IRpnEvaluator::new(expr).unwrap();
 
         b.iter(|| {
             black_box(evaluator.eval_with_stack(&context, &mut stack).unwrap());
@@ -180,9 +180,15 @@ fn parse(c: &mut Criterion)
         );
     });
 
-    c.bench_function("cmp/parse/fee", |b| {
+    c.bench_function("cmp/parse/fee/rpn", |b| {
         b.iter(|| {
             black_box(RpnEvaluator::new(expr).unwrap());
+        });
+    });
+
+    c.bench_function("cmp/parse/fee/irpn", |b| {
+        b.iter(|| {
+            black_box(IRpnEvaluator::new(expr).unwrap());
         });
     });
 }

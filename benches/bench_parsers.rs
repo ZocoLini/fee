@@ -1,7 +1,14 @@
+#[cfg(not(feature = "bench-internal"))]
+fn main() {}
+
+#[cfg(feature = "bench-internal")]
 use criterion::{Criterion, criterion_group, criterion_main};
+#[cfg(feature = "bench-internal")]
 use fee::benches;
+#[cfg(feature = "bench-internal")]
 use std::hint::black_box;
 
+#[cfg(feature = "bench-internal")]
 fn parsers(c: &mut Criterion)
 {
     let expr = "(2 * 21)
@@ -27,5 +34,7 @@ fn parsers(c: &mut Criterion)
     });
 }
 
+#[cfg(feature = "bench-internal")]
 criterion_group!(benches, parsers);
+#[cfg(feature = "bench-internal")]
 criterion_main!(benches);

@@ -2,8 +2,7 @@ use std::hint::black_box;
 
 use criterion::{Criterion, criterion_group, criterion_main};
 use fee::{
-    ConstantResolver, DefaultResolver, ExprFn, IndexedResolver, RpnEvaluator, SmallResolver,
-    prelude::*,
+    prelude::*, ConstantResolver, DefaultResolver, ExprFn, IRpnEvaluator, IndexedResolver, RpnEvaluator, SmallResolver
 };
 
 fn rpn_evaluator(c: &mut Criterion)
@@ -76,10 +75,33 @@ fn rpn_evaluator(c: &mut Criterion)
     });
 }
 
+fn irpn_evaluator(c: &mut Criterion)
+{
+    c.bench_function("internal/eval/irpn/indexed_r", |b| {
+        let expr = "p0((2 * 21) + 3 - 35 - ((5 * 80) + 5) + p0)";
+
+        let mut var_resolver = IndexedResolver::new_var_resolver();
+        var_resolver.add_var_identifier('p', 1);
+        var_resolver.set('p', 0, 10.0);
+
+        let mut fn_resolver = IndexedResolver::new_fn_resolver();
+        fn_resolver.add_fn_identifier('p', 1);
+        fn_resolver.set('p', 0, abs as ExprFn);
+
+        let context = Context::new(var_resolver, fn_resolver);
+        let mut stack = Vec::with_capacity(expr.len() / 2);
+        let evaluator = IRpnEvaluator::new(expr).unwrap();
+
+        b.iter(|| {
+            black_box(evaluator.eval_with_stack(&context, &mut stack).unwrap());
+        });
+    });
+}
+
 fn abs(x: &[f64]) -> f64
 {
     x[0].abs()
 }
 
-criterion_group!(benches, rpn_evaluator,);
+criterion_group!(benches, rpn_evaluator, irpn_evaluator);
 criterion_main!(benches);
