@@ -1,4 +1,4 @@
-use crate::{ExprFn, prelude::Resolver};
+use crate::{prelude::Resolver, EmptyResolver, ExprFn};
 
 /// Container for the resolvers required to evaluate expressions containing variables or functions.
 ///
@@ -41,5 +41,16 @@ impl<V: Resolver<f64>, F: Resolver<ExprFn>> Context<V, F>
     pub fn fns_mut(&mut self) -> &mut F
     {
         &mut self.fns
+    }
+}
+
+impl Context<EmptyResolver, EmptyResolver>
+{
+    pub fn empty() -> Self
+    {
+        Context {
+            vars: EmptyResolver,
+            fns: EmptyResolver,
+        }
     }
 }

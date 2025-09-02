@@ -7,6 +7,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- .empty() method in Context that returns a context with EmptyResolvers
 ### Fixed
 ### Changed
 ### Removed
