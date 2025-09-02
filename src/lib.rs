@@ -67,7 +67,7 @@ pub use crate::resolver::{
     ConstantResolver, DefaultResolver, EmptyResolver, IndexedResolver, SmallResolver,
 };
 
-pub use crate::evaluator::RpnEvaluator;
+pub use crate::evaluator::{RpnEvaluator, IRpnEvaluator};
 
 /// Type alias for the functions that can be called from expressions.
 pub type ExprFn = fn(&[f64]) -> f64;

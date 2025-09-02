@@ -2,71 +2,90 @@ use smallvec::{SmallVec, smallvec};
 
 use crate::lexer::InfixExpr;
 use crate::token::{InfixToken, Op};
-use crate::{Error, EvalError, ExprFn, prelude::*};
+use crate::{Error, EvalError, ExprFn, IndexedResolver, parsing, prelude::*};
 use std::borrow::Cow;
 
 #[derive(Debug, PartialEq)]
-pub enum RpnToken<'e>
+pub enum IRpnToken
 {
     Num(f64),
-    Var(&'e str),
-    Fn(&'e str, usize),
+    Var(usize, usize),
+    Fn(usize, usize, usize),
     Op(Op),
 }
 
-impl<'e> From<InfixToken<'e>> for RpnToken<'e>
+impl<'e> From<InfixToken<'e>> for IRpnToken
 {
     fn from(token: InfixToken<'e>) -> Self
     {
         match token {
-            InfixToken::Num(num) => RpnToken::Num(num),
-            InfixToken::Var(name) => RpnToken::Var(name),
-            InfixToken::Fn(name, argc) => RpnToken::Fn(name, argc.len()),
-            InfixToken::Op(op) => RpnToken::Op(op),
+            InfixToken::Num(num) => IRpnToken::Num(num),
+            InfixToken::Var(name) => {
+                let name_bytes = name.as_bytes();
+
+                let letter = name_bytes[0] - b'a';
+                let idx = parsing::parse_usize(&name_bytes[1..]);
+
+                IRpnToken::Var(letter as usize, idx)
+            },
+            InfixToken::Fn(name, args) => {
+                let name_bytes = name.as_bytes();
+
+                let letter = name_bytes[0] - b'a';
+                let idx = parsing::parse_usize(&name_bytes[1..]);
+
+                IRpnToken::Fn(letter as usize, idx, args.len())
+            },
+            InfixToken::Op(op) => IRpnToken::Op(op),
             _ => unreachable!("logic bug found"),
         }
     }
 }
 
 #[derive(Debug, PartialEq)]
-pub struct RpnExpr<'e>
+pub struct IRpnExpr
 {
-    tokens: Vec<RpnToken<'e>>,
+    tokens: Vec<IRpnToken>,
 }
 
-impl<'e> RpnExpr<'e>
+impl IRpnExpr
 {
-    fn eval<V: Resolver<f64>, F: Resolver<ExprFn>>(
-        &'e self,
-        ctx: &Context<V, F>,
+    fn eval(
+        &self,
+        ctx: &Context<IndexedResolver<f64>, IndexedResolver<ExprFn>>,
         stack: &mut Vec<f64>,
-    ) -> Result<f64, Error<'e>>
+    ) -> Result<f64, Error<'_>>
     {
         if self.tokens.len() == 1 {
-            if let RpnToken::Num(num) = &self.tokens[0] {
+            if let IRpnToken::Num(num) = &self.tokens[0] {
                 return Ok(*num);
             }
         }
 
         for tok in self.tokens.iter() {
             match tok {
-                RpnToken::Num(num) => stack.push(*num),
-                RpnToken::Var(name) => stack.push(
-                    *ctx.get_var(name)
-                        .ok_or(Error::EvalError(EvalError::UnknownVar(Cow::Borrowed(name))))?,
-                ),
-                RpnToken::Fn(name, argc) => {
+                IRpnToken::Num(num) => stack.push(*num),
+                IRpnToken::Var(id, idx) => {
+                    stack.push(*ctx.get_var_by_index(*id, *idx).ok_or_else(|| {
+                        Error::EvalError(EvalError::UnknownVar(Cow::Owned(format!(
+                            "{}{}",
+                            (*id as u8 + b'a') as char,
+                            idx
+                        ))))
+                    })?)
+                }
+                IRpnToken::Fn(id, idx, argc) => {
                     if *argc > stack.len() {
                         return Err(Error::EvalError(EvalError::RPNStackUnderflow));
                     }
 
                     let start = stack.len() - argc;
                     let args = &stack[start..];
-                    let val = match ctx.call_fn(name, args) {
+                    let val = match ctx.call_fn_by_index(*id, *idx, args) {
                         Some(value) => value,
                         None => {
-                            return Err(Error::EvalError(EvalError::UnknownFn(Cow::Borrowed(
-                                name,
+                            return Err(Error::EvalError(EvalError::UnknownFn(Cow::Owned(
+                                format!("{}{}", (*id as u8 + b'a') as char, idx),
                             ))));
                         }
                     };
@@ -74,7 +93,7 @@ impl<'e> RpnExpr<'e>
                     stack.truncate(start);
                     stack.push(val);
                 }
-                RpnToken::Op(op) => {
+                IRpnToken::Op(op) => {
                     let start = stack.len() - op.num_operands();
                     let res = op.apply(&stack[start..]);
                     stack.truncate(start);
@@ -90,7 +109,7 @@ impl<'e> RpnExpr<'e>
     }
 }
 
-impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
+impl<'e> TryFrom<InfixExpr<'e>> for IRpnExpr
 {
     type Error = crate::Error<'e>;
 
@@ -98,17 +117,22 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
     fn try_from(expr: InfixExpr<'e>) -> Result<Self, Self::Error>
     {
         let mut f64_cache: SmallVec<[f64; 4]> = smallvec![];
-        let mut output: Vec<RpnToken> = Vec::with_capacity(expr.len());
+        let mut output: Vec<IRpnToken> = Vec::with_capacity(expr.len());
         let mut ops: Vec<InfixToken> = Vec::new();
 
         for tok in expr.into_iter() {
             match tok {
                 InfixToken::Num(num) => {
-                    output.push(RpnToken::Num(num));
+                    output.push(IRpnToken::Num(num));
                     f64_cache.push(num);
                 }
-                InfixToken::Var(var) => {
-                    output.push(RpnToken::Var(var));
+                InfixToken::Var(name) => {
+                    let name_bytes = name.as_bytes();
+    
+                    let letter = name_bytes[0] - b'a';
+                    let idx = parsing::parse_usize(&name_bytes[1..]);
+    
+                    output.push(IRpnToken::Var(letter as usize, idx));
                     f64_cache.clear();
                 }
                 InfixToken::Op(op) => {
@@ -142,14 +166,19 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
                     }
                 }
                 InfixToken::Fn(name, args) => {
-                    let fun_call_token = RpnToken::Fn(name, args.len());
-
+                    let name_bytes = name.as_bytes();
+    
+                    let letter = name_bytes[0] - b'a';
+                    let idx = parsing::parse_usize(&name_bytes[1..]);
+                    
+                    let token = IRpnToken::Fn(letter as usize, idx, args.len());
+                    
                     for arg_tokens in args {
-                        let rpn_arg: RpnExpr = arg_tokens.try_into()?;
+                        let rpn_arg: IRpnExpr = arg_tokens.try_into()?;
                         output.extend(rpn_arg.tokens);
                     }
-
-                    output.push(fun_call_token);
+    
+                    output.push(token);
                     f64_cache.clear();
                 }
             }
@@ -164,10 +193,10 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
             }
         }
 
-        return Ok(RpnExpr { tokens: output });
+        return Ok(IRpnExpr { tokens: output });
 
-        fn pre_evaluate<'t>(
-            output: &mut Vec<RpnToken<'t>>,
+        fn pre_evaluate(
+            output: &mut Vec<IRpnToken>,
             f64_cache: &mut SmallVec<[f64; 4]>,
             op: Op,
         )
@@ -180,7 +209,7 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
 
                 let start = f64_cache_len - n_operands;
                 let num = op.apply(&f64_cache[start..]);
-                let token = RpnToken::Num(num);
+                let token = IRpnToken::Num(num);
 
                 output.truncate(output_len - n_operands + 1);
                 output[output_len - n_operands] = token;
@@ -188,14 +217,15 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
                 f64_cache.truncate(f64_cache_len - n_operands + 1);
                 f64_cache[f64_cache_len - n_operands] = num;
             } else {
-                output.push(RpnToken::Op(op));
+                output.push(IRpnToken::Op(op));
                 f64_cache.clear();
             }
         }
     }
 }
 
-/// Evaluator that internally uses a stack to evaluate Reverse Polish Notation expressions.
+/// Evaluator that internally uses a stack to evaluate Reverse Polish Notation expressions
+/// optimized for IndexedResolvers.
 ///
 /// # Parsing
 /// The new() method receives a string expression and first tokenizes it into a vector of Infix Tokens.
@@ -204,27 +234,15 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
 /// For example, the expression "2 + 3 * 4" would be converted to "2 3 4 * +" without pre-evaluation, but
 /// because we pre-evaluate when possible, the expression is converted to "14" reducing evaluation time
 /// and improving performance when the RpnEvaluator is used more than once.
+/// 
+/// This evaluator differs from the standard RpnEvaluator in that it parses variable and function 
+/// identifiers and indices before evaluation.
 ///
 /// # Evaluation
-/// The RPN evaluator uses an stack to evaluate Reverse Polish Notation expressions.  
-/// By default, [`RpnEvaluator::eval()`] creates a new temporary stack on each call, which can add overhead.  
-/// If the evaluator is called multiple times, consider reusing a preallocated stack via  
-/// [`RpnEvaluator::eval_with_stack()`] to improve performance.
-///
-/// ```rust
-/// use fee::prelude::*;
-/// use fee::RpnEvaluator;
-///
-/// let expr = "2 + 3 * 4";
-/// let evaluator = RpnEvaluator::new(expr).unwrap();
-/// let mut stack = Vec::with_capacity(3);
-/// let result = evaluator.eval_with_stack(&Context::empty(), &mut stack).unwrap();
-/// assert_eq!(result, 14.0);
-/// ```
-///
-/// The speed when resolving vars or functions depends on the Provider chosen when creating the context using
-/// during the evaluation process. If no context is provided, there will not be such thing as time
-/// resolving variables or functions.
+/// The RPN evaluator uses an stack to evaluate Reverse Polish Notation expressions.
+/// By default, [`IRpnEvaluator::eval()`] creates a new temporary stack on each call, which can add overhead.
+/// If the evaluator is called multiple times, consider reusing a preallocated stack via
+/// [`IRpnEvaluator::eval_with_stack()`] to improve performance.
 ///
 /// # Support
 /// This evaluator supports f64 operations and the operators +. -. *. /, ^.
@@ -233,51 +251,51 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
 /// Will return an fee::ParseError if parsing fails and a fee::EvalError if evaluation fails.
 ///
 /// # Examples
-/// ```
+/// ```rust
 /// use fee::prelude::*;
-/// use fee::RpnEvaluator;
+/// use fee::{IRpnEvaluator, IndexedResolver};
 ///
 /// let expr = "2 + 3 * 4";
-/// let evaluator = RpnEvaluator::new(expr).unwrap();
-/// let result = evaluator.eval_without_context().unwrap();
+/// 
+/// let var_resolver = IndexedResolver::new_var_resolver();
+/// let fn_resolver = IndexedResolver::new_fn_resolver();
+/// 
+/// let evaluator = IRpnEvaluator::new(expr).unwrap();
+/// let mut stack = Vec::with_capacity(3);
+/// let result = evaluator.eval_with_stack(&Context::new(var_resolver, fn_resolver), &mut stack).unwrap();
 /// assert_eq!(result, 14.0);
 /// ```
-pub struct RpnEvaluator<'e>
+pub struct IRpnEvaluator
 {
-    rpn: RpnExpr<'e>,
+    rpn: IRpnExpr,
 }
 
-impl<'e> RpnEvaluator<'e>
+impl IRpnEvaluator
 {
-    pub fn new(expr: &'e str) -> Result<Self, crate::Error<'e>>
+    pub fn new(expr: &str) -> Result<Self, crate::Error<'_>>
     {
         let infix_expr = InfixExpr::try_from(expr)?;
-        let rpn_expr = RpnExpr::try_from(infix_expr)?;
+        let rpn_expr = IRpnExpr::try_from(infix_expr)?;
 
-        Ok(RpnEvaluator { rpn: rpn_expr })
+        Ok(IRpnEvaluator { rpn: rpn_expr })
     }
 
-    pub fn eval<V: Resolver<f64>, F: Resolver<ExprFn>>(
-        &'e self,
-        ctx: &Context<V, F>,
-    ) -> Result<f64, Error<'e>>
+    pub fn eval(
+        &self,
+        ctx: &Context<IndexedResolver<f64>, IndexedResolver<ExprFn>>,
+    ) -> Result<f64, Error<'_>>
     {
         let mut stack = Vec::with_capacity(self.rpn.tokens.len() / 2);
         self.eval_with_stack(ctx, &mut stack)
     }
     
-    pub fn eval_with_stack<V: Resolver<f64>, F: Resolver<ExprFn>>(
-        &'e self,
-        ctx: &Context<V, F>,
+    pub fn eval_with_stack(
+        &self,
+        ctx: &Context<IndexedResolver<f64>, IndexedResolver<ExprFn>>,
         stack: &mut Vec<f64>,
-    ) -> Result<f64, Error<'e>>
+    ) -> Result<f64, Error<'_>>
     {
         self.rpn.eval(ctx, stack)
-    }
-    
-    pub fn eval_without_context(&'e self) -> Result<f64, Error<'e>>
-    {
-        self.eval(&Context::empty())
     }
 }
 
@@ -287,7 +305,7 @@ mod tests
     use super::*;
 
     #[test]
-    fn test_infix_to_rpn()
+    fn test_infix_to_irpn()
     {
         // 2 - (4 + (p19 - 2) * (p19 + 2))
         let infix_expr = InfixExpr::new(vec![
@@ -310,27 +328,27 @@ mod tests
             InfixToken::RParen,
         ]);
 
-        let rpn_expr: RpnExpr = infix_expr.try_into().unwrap();
+        let rpn_expr: IRpnExpr = infix_expr.try_into().unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
-                RpnToken::Num(2.0),
-                RpnToken::Num(4.0),
-                RpnToken::Var("p19"),
-                RpnToken::Num(2.0),
-                RpnToken::Op(Op::Sub),
-                RpnToken::Var("p19"),
-                RpnToken::Num(2.0),
-                RpnToken::Op(Op::Add),
-                RpnToken::Op(Op::Mul),
-                RpnToken::Op(Op::Add),
-                RpnToken::Op(Op::Sub)
+                IRpnToken::Num(2.0),
+                IRpnToken::Num(4.0),
+                IRpnToken::Var((b'p' - b'a') as usize, 19),
+                IRpnToken::Num(2.0),
+                IRpnToken::Op(Op::Sub),
+                IRpnToken::Var((b'p' - b'a') as usize, 19),
+                IRpnToken::Num(2.0),
+                IRpnToken::Op(Op::Add),
+                IRpnToken::Op(Op::Mul),
+                IRpnToken::Op(Op::Add),
+                IRpnToken::Op(Op::Sub)
             ]
         );
 
         //abs((2 + 3) * 4, sqrt(5))
         let infix_expr = InfixExpr::new(vec![InfixToken::Fn(
-            "abs",
+            "f0",
             vec![
                 InfixExpr::new(vec![
                     InfixToken::LParen,
@@ -342,54 +360,54 @@ mod tests
                     InfixToken::Num(4.0),
                 ]),
                 InfixExpr::new(vec![InfixToken::Fn(
-                    "sqrt",
+                    "f1",
                     vec![InfixExpr::new(vec![InfixToken::Num(5.0)])],
                 )]),
             ],
         )]);
 
-        let rpn_expr: RpnExpr = infix_expr.try_into().unwrap();
+        let rpn_expr: IRpnExpr = infix_expr.try_into().unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
-                RpnToken::Num(20.0),
-                RpnToken::Num(5.0),
-                RpnToken::Fn("sqrt", 1),
-                RpnToken::Fn("abs", 2),
+                IRpnToken::Num(20.0),
+                IRpnToken::Num(5.0),
+                IRpnToken::Fn((b'f' - b'a') as usize, 1, 1),
+                IRpnToken::Fn((b'f' - b'a') as usize, 0, 2),
             ]
         );
     }
 
     #[test]
-    fn test_str_to_rpn()
+    fn test_str_to_irpn()
     {
         let expr = "(2 * 21) + 3 + -35 - ((5 * 80) + 5) + 10 + -p0";
         let infix_expr: InfixExpr = InfixExpr::try_from(expr).unwrap();
-        let rpn_expr: RpnExpr = infix_expr.try_into().unwrap();
+        let rpn_expr: IRpnExpr = infix_expr.try_into().unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
-                RpnToken::Num(-385.0),
-                RpnToken::Var("p0"),
-                RpnToken::Op(Op::Neg),
-                RpnToken::Op(Op::Add),
+                IRpnToken::Num(-385.0),
+                IRpnToken::Var((b'p' - b'a') as usize, 0),
+                IRpnToken::Op(Op::Neg),
+                IRpnToken::Op(Op::Add),
             ]
         );
 
         let expr = "-y1 * (p2 - p3*y0)";
         let infix_expr: InfixExpr = InfixExpr::try_from(expr).unwrap();
-        let rpn_expr: RpnExpr = infix_expr.try_into().unwrap();
+        let rpn_expr: IRpnExpr = infix_expr.try_into().unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
-                RpnToken::Var("y1"),
-                RpnToken::Op(Op::Neg),
-                RpnToken::Var("p2"),
-                RpnToken::Var("p3"),
-                RpnToken::Var("y0"),
-                RpnToken::Op(Op::Mul),
-                RpnToken::Op(Op::Sub),
-                RpnToken::Op(Op::Mul),
+                IRpnToken::Var((b'y' - b'a') as usize, 1),
+                IRpnToken::Op(Op::Neg),
+                IRpnToken::Var((b'p' - b'a') as usize, 2),
+                IRpnToken::Var((b'p' - b'a') as usize, 3),
+                IRpnToken::Var((b'y' - b'a') as usize, 0),
+                IRpnToken::Op(Op::Mul),
+                IRpnToken::Op(Op::Sub),
+                IRpnToken::Op(Op::Mul),
             ]
         );
     }

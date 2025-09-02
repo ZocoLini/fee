@@ -1,6 +1,6 @@
 use fee::{
     EmptyResolver, RpnEvaluator, SmallResolver,
-    prelude::{Context, Evaluator},
+    prelude::{Context},
 };
 
 #[test]
