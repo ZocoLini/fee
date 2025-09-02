@@ -1,4 +1,4 @@
-use smallvec::{smallvec, SmallVec};
+use smallvec::{SmallVec, smallvec};
 
 use crate::lexer::InfixExpr;
 use crate::token::{InfixToken, Op};
@@ -110,7 +110,8 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
                     while let Some(InfixToken::Op(top)) = ops.last() {
                         let prec = op.precedence();
                         let top_prec = top.precedence();
-                        let should_pop = top_prec > prec || (!op.is_right_associative() && top_prec == prec);
+                        let should_pop =
+                            top_prec > prec || (!op.is_right_associative() && top_prec == prec);
 
                         if should_pop {
                             if let Some(InfixToken::Op(op)) = ops.pop() {
@@ -160,21 +161,25 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
 
         return Ok(RpnExpr { tokens: output });
 
-        fn pre_evaluate<'t>(output: &mut Vec<RpnToken<'t>>, f64_cache: &mut SmallVec<[f64; 4]>, op: Op)
+        fn pre_evaluate<'t>(
+            output: &mut Vec<RpnToken<'t>>,
+            f64_cache: &mut SmallVec<[f64; 4]>,
+            op: Op,
+        )
         {
             let n_operands = op.num_operands();
-            
+
             if f64_cache.len() >= n_operands {
                 let output_len = output.len();
                 let f64_cache_len = f64_cache.len();
-        
+
                 let start = f64_cache_len - n_operands;
                 let num = op.apply(&f64_cache[start..]);
                 let token = RpnToken::Num(num);
-                
+
                 output.truncate(output_len - n_operands + 1);
-                output[output_len  - n_operands] = token;
-                
+                output[output_len - n_operands] = token;
+
                 f64_cache.truncate(f64_cache_len - n_operands + 1);
                 f64_cache[f64_cache_len - n_operands] = num;
             } else {
@@ -182,7 +187,6 @@ impl<'e> TryFrom<InfixExpr<'e>> for RpnExpr<'e>
                 f64_cache.clear();
             }
         }
-       
     }
 }
 
