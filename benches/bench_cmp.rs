@@ -1,9 +1,9 @@
-use std::{hint::black_box};
+use std::hint::black_box;
 
 use criterion::{Criterion, criterion_group, criterion_main};
 use evalexpr::{DefaultNumericTypes, build_operator_tree};
-use fasteval::{CachedCallbackNamespace, Compiler, Evaler};
-use fee::{IndexedResolver, RpnEvaluator, prelude::*};
+use fasteval::{CachedCallbackNamespace, Compiler, EmptyNamespace, Evaler};
+use fee::{EmptyResolver, IndexedResolver, RpnEvaluator, prelude::*};
 
 fn evaluation(c: &mut Criterion)
 {
@@ -53,23 +53,21 @@ fn evaluation(c: &mut Criterion)
 
     c.bench_function("cmp/eval/fasteval", |b| {
         let mut slab = fasteval::Slab::new();
-            let parser = fasteval::Parser::new();
-            let expr = parser.parse(expr, &mut slab.ps).unwrap();
-            let compiled = expr.from(&slab.ps).compile(&slab.ps, &mut slab.cs);
-        
-            let mut ns = CachedCallbackNamespace::new(|name, args| {
-                match name {
-                    "f0" => Some(args[0]),
-                    "p0" => Some(p0),
-                    "p1" => Some(p1),
-                    "y0" => Some(y0),
-                    _ => unreachable!("Unknown function: {}", name)
-                }
-            });
-        
-            b.iter(|| {
-                black_box(compiled.eval(&slab, &mut ns).unwrap());
-            });
+        let parser = fasteval::Parser::new();
+        let expr = parser.parse(expr, &mut slab.ps).unwrap();
+        let compiled = expr.from(&slab.ps).compile(&slab.ps, &mut slab.cs);
+
+        let mut ns = CachedCallbackNamespace::new(|name, args| match name {
+            "f0" => Some(args[0]),
+            "p0" => Some(p0),
+            "p1" => Some(p1),
+            "y0" => Some(y0),
+            _ => unreachable!("Unknown function: {}", name),
+        });
+
+        b.iter(|| {
+            black_box(compiled.eval(&slab, &mut ns).unwrap());
+        });
     });
 
     c.bench_function("cmp/eval/rust", |b| {
@@ -89,6 +87,60 @@ fn evaluation(c: &mut Criterion)
         let mut fn_resolver = IndexedResolver::new_fn_resolver();
         fn_resolver.add_fn_identifier('f', 1);
         fn_resolver.set('f', 0, (|args| args[0]) as ExprFn);
+
+        let context = Context::new(var_resolver, fn_resolver);
+        let evaluator = RpnEvaluator::new(expr).unwrap();
+
+        b.iter(|| {
+            black_box(evaluator.eval(&context).unwrap());
+        });
+    });
+}
+
+fn evaluation2(c: &mut Criterion)
+{
+    let expr = "(2 * 21) + 3 - 35 - ((5 * 80) + 5) + 10"; // = -385
+
+    c.bench_function("cmp/eval2/evalexpr", |b| {
+        use evalexpr::*;
+
+        let precompiled = build_operator_tree::<DefaultNumericTypes>(expr).unwrap();
+        let context: HashMapContext<DefaultNumericTypes> = HashMapContext::new();
+
+        b.iter(|| black_box(precompiled.eval_int_with_context(&context)));
+    });
+
+    c.bench_function("cmp/eval2/meval", |b| {
+        let expr: meval::Expr = expr.parse().unwrap();
+        let context = meval::Context::empty();
+
+        b.iter(|| {
+            black_box(expr.eval_with_context(&context).unwrap());
+        });
+    });
+
+    c.bench_function("cmp/eval2/fasteval", |b| {
+        let mut slab = fasteval::Slab::new();
+        let parser = fasteval::Parser::new();
+        let expr = parser.parse(expr, &mut slab.ps).unwrap();
+        let compiled = expr.from(&slab.ps).compile(&slab.ps, &mut slab.cs);
+
+        let mut ns = EmptyNamespace;
+
+        b.iter(|| {
+            black_box(compiled.eval(&slab, &mut ns).unwrap());
+        });
+    });
+
+    c.bench_function("cmp/eval2/rust", |b| {
+        b.iter(|| {
+            black_box((2 * 21) + 3 - 35 - ((5 * 80) + 5) + 10);
+        });
+    });
+
+    c.bench_function("cmp/eval2/fee", |b| {
+        let var_resolver = EmptyResolver;
+        let fn_resolver = EmptyResolver;
 
         let context = Context::new(var_resolver, fn_resolver);
         let evaluator = RpnEvaluator::new(expr).unwrap();
@@ -133,5 +185,5 @@ fn parse(c: &mut Criterion)
     });
 }
 
-criterion_group!(benches, evaluation, parse);
+criterion_group!(benches, evaluation, evaluation2, parse);
 criterion_main!(benches);
