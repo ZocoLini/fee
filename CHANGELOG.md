@@ -10,6 +10,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `Context::empty()` method that returns a context with `EmptyResolver`s
 - `RpnEvaluator::eval_with_stack()` method for evaluating expressions with 
 a caller-provided stack.
+- `IRpnEvaluator::new()` method for creating an evaluator optimized for the
+`IndexedResolver`.
 ### Fixed
 ### Changed
 - `RpnEvaluator` no longer stores its own stack. The caller can now manage
