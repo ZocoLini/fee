@@ -184,7 +184,7 @@ fn parse(c: &mut Criterion)
 
     c.bench_function("cmp/parse/fee/rpn", |b| {
         b.iter(|| {
-            black_box(Expr::<RpnToken>::try_from(expr).unwrap());
+            black_box(Expr::<RpnToken<'_>>::try_from(expr).unwrap());
         });
     });
 
