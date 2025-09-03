@@ -64,6 +64,9 @@ pub use crate::resolver::{
 };
 
 pub use expr::Expr;
+pub use expr::EvalRpn;
+pub use expr::irpn::IRpnToken;
+pub use expr::rpn::RpnToken;
 
 /// Type alias for the functions that can be called from expressions.
 pub type ExprFn = fn(&[f64]) -> f64;

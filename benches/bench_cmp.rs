@@ -3,7 +3,7 @@ use std::hint::black_box;
 use criterion::{Criterion, criterion_group, criterion_main};
 use evalexpr::{DefaultNumericTypes, build_operator_tree};
 use fasteval::{CachedCallbackNamespace, Compiler, EmptyNamespace, Evaler};
-use fee::{EmptyResolver, Expr, IRpnExpr, IndexedResolver, prelude::*};
+use fee::{EmptyResolver, Expr, IRpnToken, IndexedResolver, RpnToken, prelude::*};
 
 fn evaluation(c: &mut Criterion)
 {
@@ -77,7 +77,7 @@ fn evaluation(c: &mut Criterion)
     });
 
     c.bench_function("cmp/eval/fee", |b| {
-        let expr = IRpnExpr::try_from(expr).unwrap();
+        let expr = Expr::<IRpnToken>::try_from(expr).unwrap();
 
         let mut var_resolver = IndexedResolver::new_var_resolver();
         var_resolver.add_var_identifier('p', 2);
@@ -184,13 +184,13 @@ fn parse(c: &mut Criterion)
 
     c.bench_function("cmp/parse/fee/rpn", |b| {
         b.iter(|| {
-            black_box(Expr::try_from(expr).unwrap());
+            black_box(Expr::<RpnToken>::try_from(expr).unwrap());
         });
     });
 
     c.bench_function("cmp/parse/fee/irpn", |b| {
         b.iter(|| {
-            black_box(IRpnExpr::try_from(expr).unwrap());
+            black_box(Expr::<IRpnToken>::try_from(expr).unwrap());
         });
     });
 }

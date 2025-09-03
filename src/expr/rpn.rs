@@ -2,7 +2,9 @@ use std::borrow::Cow;
 
 use smallvec::{SmallVec, smallvec};
 
-use crate::{Error, EvalError, Expr, context::Context, expr::infix::*, op::Op, prelude::*};
+use crate::{
+    Error, EvalError, EvalRpn, Expr, context::Context, expr::infix::*, op::Op, prelude::*,
+};
 
 #[derive(Debug, PartialEq)]
 pub enum RpnToken<'e>
@@ -27,13 +29,11 @@ impl<'e> From<InfixToken<'e>> for RpnToken<'e>
     }
 }
 
-impl<'e> Expr<RpnToken<'e>>
+impl<'e, V: Resolver<f64>, F: Resolver<ExprFn>> EvalRpn<V, F> for Expr<RpnToken<'e>>
 {
-    pub fn eval<V: Resolver<f64>, F: Resolver<ExprFn>>(
-        &'e self,
-        ctx: &Context<V, F>,
-        stack: &mut Vec<f64>,
-    ) -> Result<f64, Error<'e>>
+    type Error = Error<'e>;
+
+    fn eval(&self, ctx: &Context<V, F>, stack: &mut Vec<f64>) -> Result<f64, Self::Error>
     {
         if self.tokens.len() == 1 {
             if let RpnToken::Num(num) = &self.tokens[0] {
@@ -80,6 +80,15 @@ impl<'e> Expr<RpnToken<'e>>
             Some(result) if stack.is_empty() => Ok(result),
             _ => Err(Error::EvalError(EvalError::MalformedExpression)),
         }
+    }
+}
+
+impl<'e> Expr<RpnToken<'e>>
+{
+    pub fn new(input: &'e str) -> Result<Self, Error<'e>>
+    {
+        let infix_expr = Expr::<InfixToken>::try_from(input)?;
+        Self::try_from(infix_expr)
     }
 }
 

@@ -1,4 +1,5 @@
 use criterion::{Criterion, criterion_group, criterion_main};
+use fee::{Expr, IRpnToken, RpnToken};
 use std::hint::black_box;
 
 fn parsers(c: &mut Criterion)
@@ -11,17 +12,13 @@ fn parsers(c: &mut Criterion)
 
     c.bench_function("internal/parse/rpn", |b| {
         b.iter(|| {
-            use fee::Expr;
-
-            black_box(Expr::try_from(expr).unwrap());
+            black_box(Expr::<RpnToken>::try_from(expr).unwrap());
         });
     });
 
     c.bench_function("internal/parse/irpn", |b| {
         b.iter(|| {
-            use fee::IRpnExpr;
-
-            black_box(IRpnExpr::try_from(expr).unwrap());
+            black_box(Expr::<IRpnToken>::try_from(expr).unwrap());
         });
     });
 }

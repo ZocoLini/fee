@@ -43,13 +43,15 @@ impl<'e> From<InfixToken<'e>> for IRpnToken
     }
 }
 
-impl Expr<IRpnToken>
+impl EvalRpn<IndexedResolver<f64>, IndexedResolver<ExprFn>> for Expr<IRpnToken>
 {
-    pub fn eval(
+    type Error = Error<'static>;
+
+    fn eval(
         &self,
         ctx: &Context<IndexedResolver<f64>, IndexedResolver<ExprFn>>,
         stack: &mut Vec<f64>,
-    ) -> Result<f64, Error<'_>>
+    ) -> Result<f64, Self::Error>
     {
         if self.tokens.len() == 1 {
             if let IRpnToken::Num(num) = &self.tokens[0] {
@@ -101,6 +103,15 @@ impl Expr<IRpnToken>
             Some(result) if stack.is_empty() => Ok(result),
             _ => Err(Error::EvalError(EvalError::MalformedExpression)),
         }
+    }
+}
+
+impl Expr<IRpnToken>
+{
+    pub fn new<'e>(input: &'e str) -> Result<Self, Error<'e>>
+    {
+        let infix_expr = Expr::<InfixToken>::try_from(input)?;
+        Self::try_from(infix_expr)
     }
 }
 
@@ -229,9 +240,8 @@ impl<'e> TryFrom<Expr<InfixToken<'e>>> for Expr<IRpnToken>
 #[cfg(test)]
 mod tests
 {
-    use crate::op::Op;
-
     use super::*;
+    use crate::op::Op;
 
     #[test]
     fn test_new()
