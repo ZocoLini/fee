@@ -2,7 +2,7 @@ use std::{borrow::Cow, iter::Peekable, ops::Deref, str::CharIndices};
 
 use crate::{expr::Expr, op::Op, *};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq)]
 pub enum InfixToken<'e>
 {
     Num(f64),

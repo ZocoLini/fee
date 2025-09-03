@@ -1,8 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{
-    Error, EvalError, IndexedResolver, expr::infix::InfixToken, op::Op, parsing, prelude::*,
-};
+use crate::{Error, EvalError, IndexedResolver, op::Op, parsing, prelude::*};
 
 #[derive(Debug, PartialEq)]
 pub enum IRpnToken
@@ -13,31 +11,41 @@ pub enum IRpnToken
     Op(Op),
 }
 
-impl<'e> TryFrom<InfixToken<'e>> for IRpnToken
+impl From<f64> for IRpnToken
 {
-    type Error = Error<'e>;
-
-    fn try_from(token: InfixToken<'e>) -> Result<Self, Self::Error>
+    fn from(num: f64) -> Self
     {
-        let out = match token {
-            InfixToken::Num(num) => IRpnToken::Num(num),
-            InfixToken::Var(name) => {
-                let name_bytes = name.as_bytes();
-                let letter = name_bytes[0] - b'a';
-                let idx = parsing::parse_usize(&name_bytes[1..]);
-                IRpnToken::Var(letter as usize, idx)
-            }
-            InfixToken::Fn(name, args) => {
-                let name_bytes = name.as_bytes();
-                let letter = name_bytes[0] - b'a';
-                let idx = parsing::parse_usize(&name_bytes[1..]);
-                IRpnToken::Fn(letter as usize, idx, args.len())
-            }
-            InfixToken::Op(op) => IRpnToken::Op(op),
-            _ => unreachable!("logic bug found"),
-        };
+        IRpnToken::Num(num)
+    }
+}
 
-        Ok(out)
+impl From<&str> for IRpnToken
+{
+    fn from(name: &str) -> Self
+    {
+        let name_bytes = name.as_bytes();
+        let letter = name_bytes[0] - b'a';
+        let idx = parsing::parse_usize(&name_bytes[1..]);
+        IRpnToken::Var(letter as usize, idx)
+    }
+}
+
+impl From<Op> for IRpnToken
+{
+    fn from(op: Op) -> Self
+    {
+        IRpnToken::Op(op)
+    }
+}
+
+impl super::FromNamedFn<'_, IRpnToken> for IRpnToken
+{
+    fn from_fn(name: &str, argc: usize) -> Self
+    {
+        let name_bytes = name.as_bytes();
+        let letter = name_bytes[0] - b'a';
+        let idx = parsing::parse_usize(&name_bytes[1..]);
+        IRpnToken::Fn(letter as usize, idx, argc)
     }
 }
 

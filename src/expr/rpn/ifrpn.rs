@@ -1,11 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    Error, EvalError, IndexedResolver,
-    expr::{infix::InfixToken, rpn::NotIndexedResolver},
-    op::Op,
-    parsing,
-    prelude::*,
+    Error, EvalError, IndexedResolver, expr::rpn::NotIndexedResolver, op::Op, parsing, prelude::*,
 };
 
 #[derive(Debug, PartialEq)]
@@ -17,26 +13,38 @@ pub enum IFRpnToken<'e>
     Op(Op),
 }
 
-impl<'e> TryFrom<InfixToken<'e>> for IFRpnToken<'e>
+impl From<f64> for IFRpnToken<'_>
 {
-    type Error = Error<'e>;
-
-    fn try_from(token: InfixToken<'e>) -> Result<Self, Self::Error>
+    fn from(num: f64) -> Self
     {
-        let out = match token {
-            InfixToken::Num(num) => IFRpnToken::Num(num),
-            InfixToken::Var(name) => IFRpnToken::Var(name),
-            InfixToken::Fn(name, args) => {
-                let name_bytes = name.as_bytes();
-                let letter = name_bytes[0] - b'a';
-                let idx = parsing::parse_usize(&name_bytes[1..]);
-                IFRpnToken::Fn(letter as usize, idx, args.len())
-            }
-            InfixToken::Op(op) => IFRpnToken::Op(op),
-            _ => unreachable!("logic bug found"),
-        };
+        IFRpnToken::Num(num)
+    }
+}
 
-        Ok(out)
+impl<'e> From<&'e str> for IFRpnToken<'e>
+{
+    fn from(name: &'e str) -> Self
+    {
+        IFRpnToken::Var(name)
+    }
+}
+
+impl From<Op> for IFRpnToken<'_>
+{
+    fn from(op: Op) -> Self
+    {
+        IFRpnToken::Op(op)
+    }
+}
+
+impl super::FromNamedFn<'_, IFRpnToken<'_>> for IFRpnToken<'_>
+{
+    fn from_fn(name: &str, argc: usize) -> Self
+    {
+        let name_bytes = name.as_bytes();
+        let letter = name_bytes[0] - b'a';
+        let idx = parsing::parse_usize(&name_bytes[1..]);
+        IFRpnToken::Fn(letter as usize, idx, argc)
     }
 }
 

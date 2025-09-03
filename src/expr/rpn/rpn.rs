@@ -1,11 +1,6 @@
 use std::borrow::Cow;
 
-use crate::{
-    Error, EvalError,
-    expr::{infix::InfixToken, rpn::NotIndexedResolver},
-    op::Op,
-    prelude::*,
-};
+use crate::{Error, EvalError, expr::rpn::NotIndexedResolver, op::Op, prelude::*};
 
 #[derive(Debug, PartialEq)]
 pub enum RpnToken<'e>
@@ -16,21 +11,35 @@ pub enum RpnToken<'e>
     Op(Op),
 }
 
-impl<'e> TryFrom<InfixToken<'e>> for RpnToken<'e>
+impl From<f64> for RpnToken<'_>
 {
-    type Error = crate::Error<'e>;
-
-    fn try_from(token: InfixToken<'e>) -> Result<Self, Self::Error>
+    fn from(num: f64) -> Self
     {
-        let out = match token {
-            InfixToken::Num(num) => RpnToken::Num(num),
-            InfixToken::Var(name) => RpnToken::Var(name),
-            InfixToken::Fn(name, args) => RpnToken::Fn(name, args.len()),
-            InfixToken::Op(op) => RpnToken::Op(op),
-            _ => unreachable!("logic bug found"),
-        };
+        RpnToken::Num(num)
+    }
+}
 
-        Ok(out)
+impl<'e> From<&'e str> for RpnToken<'e>
+{
+    fn from(name: &'e str) -> Self
+    {
+        RpnToken::Var(name)
+    }
+}
+
+impl From<Op> for RpnToken<'_>
+{
+    fn from(op: Op) -> Self
+    {
+        RpnToken::Op(op)
+    }
+}
+
+impl<'e> super::FromNamedFn<'e, RpnToken<'e>> for RpnToken<'e>
+{
+    fn from_fn(name: &'e str, argc: usize) -> Self
+    {
+        RpnToken::Fn(name, argc)
     }
 }
 

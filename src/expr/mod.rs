@@ -3,7 +3,7 @@ use crate::{ExprFn, context::Context, prelude::Resolver};
 pub mod infix;
 pub mod rpn;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq)]
 pub struct Expr<Token>
 {
     tokens: Vec<Token>,
