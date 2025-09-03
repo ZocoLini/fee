@@ -9,10 +9,10 @@ pub fn parse_infix<'e>(expr: &'e str) -> Result<InfixExpr<'e>, Error<'e>>
 
 pub fn parse_rpn<'e>(expr: &'e str) -> Result<RpnExpr<'e>, Error<'e>>
 {
-    RpnExpr::new(expr)
+    RpnExpr::try_from(expr)
 }
 
 pub fn parse_irpn<'e>(expr: &'e str) -> Result<IRpnExpr, Error<'e>>
 {
-    IRpnExpr::new(expr)
+    IRpnExpr::try_from(expr)
 }
