@@ -8,20 +8,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 - `Context::empty()` method that returns a context with `EmptyResolver`s
-- `RpnEvaluator::eval_with_stack()` method for evaluating expressions with
-a caller-provided stack.
-- `IRpnEvaluator::new()` method for creating an evaluator optimized for the
-`IndexedResolver`.
 - `RpnExpr`and `IRpnExpr` structs exposed to the library user.
 ### Fixed
 - Exponentiation had precedence over the unary minus operator.
 ### Changed
-- `RpnEvaluator` no longer stores its own stack. The caller can now manage
-and reuse allocated memory if desired.
-- `Evaluators` are no longer constructed passing an expression, they can be
-reused for any expression.
+- The `Expr` structs are now the ones that expose the specialized `eval()` method.  
 ### Removed
-- Removed `Evaluator` trait
+- Removed the `Evaluator` concept and the `RpnEvaluator` struct.
 ### Security
 ### Deprecated
 

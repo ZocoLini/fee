@@ -1,10 +1,10 @@
-# Fast Expression Evaluators
+# Fast Expression Evaluation
 
 [![Crates.io](https://img.shields.io/crates/v/fee.svg)](https://crates.io/crates/fee)
 [![Docs.rs](https://docs.rs/fee/badge.svg)](https://docs.rs/fee)
 
 
-Fast and flexible algebraic expression evaluator.
+Fast and flexible algebraic expression evaluation.
 
 `fee` aims to evaluate strings as fast as possible once they are 
 parsed, with parsing speed also being one of our concerns.The 

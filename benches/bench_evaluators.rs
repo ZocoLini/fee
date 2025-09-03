@@ -2,15 +2,14 @@ use std::hint::black_box;
 
 use criterion::{Criterion, criterion_group, criterion_main};
 use fee::{
-    ConstantResolver, DefaultResolver, ExprFn, IRpnEvaluator, IRpnExpr, IndexedResolver,
-    RpnEvaluator, RpnExpr, SmallResolver, prelude::*,
+    ConstantResolver, DefaultResolver, ExprFn, IRpnExpr, IndexedResolver, RpnExpr, SmallResolver,
+    prelude::*,
 };
 
 fn rpn_evaluator(c: &mut Criterion)
 {
     let expr = "abs((2 * 21) + 3 - 35 - ((5 * 80) + 5) + p0)";
-    let expr = RpnExpr::new(expr).unwrap();
-    let evaluator = RpnEvaluator::new();
+    let expr = RpnExpr::try_from(expr).unwrap();
     let mut stack = Vec::with_capacity(expr.len() / 2);
 
     c.bench_function("internal/eval/rpn/default_r", |b| {
@@ -23,11 +22,7 @@ fn rpn_evaluator(c: &mut Criterion)
         let context = Context::new(var_resolver, fn_resolver);
 
         b.iter(|| {
-            black_box(
-                evaluator
-                    .eval_with_stack(&expr, &context, &mut stack)
-                    .unwrap(),
-            );
+            black_box(expr.eval(&context, &mut stack).unwrap());
         });
     });
 
@@ -38,17 +33,13 @@ fn rpn_evaluator(c: &mut Criterion)
         let context = Context::new(var_resolver, fn_resolver);
 
         b.iter(|| {
-            black_box(
-                evaluator
-                    .eval_with_stack(&expr, &context, &mut stack)
-                    .unwrap(),
-            );
+            black_box(expr.eval(&context, &mut stack).unwrap());
         });
     });
 
     c.bench_function("internal/eval/rpn/indexed_r", |b| {
         let expr = "p0((2 * 21) + 3 - 35 - ((5 * 80) + 5) + p0)";
-        let expr = RpnExpr::new(expr).unwrap();
+        let expr = RpnExpr::try_from(expr).unwrap();
 
         let mut var_resolver = IndexedResolver::new_var_resolver();
         var_resolver.add_var_identifier('p', 1);
@@ -61,11 +52,7 @@ fn rpn_evaluator(c: &mut Criterion)
         let context = Context::new(var_resolver, fn_resolver);
 
         b.iter(|| {
-            black_box(
-                evaluator
-                    .eval_with_stack(&expr, &context, &mut stack)
-                    .unwrap(),
-            );
+            black_box(expr.eval(&context, &mut stack).unwrap());
         });
     });
 
@@ -79,11 +66,7 @@ fn rpn_evaluator(c: &mut Criterion)
         let context = Context::new(var_resolver, fn_resolver);
 
         b.iter(|| {
-            black_box(
-                evaluator
-                    .eval_with_stack(&expr, &context, &mut stack)
-                    .unwrap(),
-            );
+            black_box(expr.eval(&context, &mut stack).unwrap());
         });
     });
 }
@@ -91,8 +74,7 @@ fn rpn_evaluator(c: &mut Criterion)
 fn irpn_evaluator(c: &mut Criterion)
 {
     let expr = "p0((2 * 21) + 3 - 35 - ((5 * 80) + 5) + p0)";
-    let expr = IRpnExpr::new(expr).unwrap();
-    let evaluator = IRpnEvaluator::new();
+    let expr = IRpnExpr::try_from(expr).unwrap();
     let mut stack = Vec::with_capacity(expr.len() / 2);
 
     c.bench_function("internal/eval/irpn/indexed_r", |b| {
@@ -107,11 +89,7 @@ fn irpn_evaluator(c: &mut Criterion)
         let context = Context::new(var_resolver, fn_resolver);
 
         b.iter(|| {
-            black_box(
-                evaluator
-                    .eval_with_stack(&expr, &context, &mut stack)
-                    .unwrap(),
-            );
+            black_box(expr.eval(&context, &mut stack).unwrap());
         });
     });
 }

@@ -12,21 +12,20 @@ fn test_rpn_eval_with_indexed_var_resolver()
     let fn_resolver = EmptyResolver::new();
 
     let mut context = Context::new(var_resolver, fn_resolver);
-    let evaluator = RpnEvaluator::new();
 
     let expr = "(2 + 4) * 6 / (p19 + 2)";
-    let expr = RpnExpr::new(expr).unwrap();
-    let result = evaluator.eval(&expr, &context).unwrap();
+    let expr = RpnExpr::try_from(expr).unwrap();
+    let result = expr.eval(&context, &mut Vec::new()).unwrap();
     assert_eq!(result, 6.0);
 
     let expr = "2 - (4 + (p19 - 2) * (p19 + 2))";
-    let expr = RpnExpr::new(expr).unwrap();
-    let result = evaluator.eval(&expr, &context).unwrap();
+    let expr = RpnExpr::try_from(expr).unwrap();
+    let result = expr.eval(&context, &mut Vec::new()).unwrap();
     assert_eq!(result, -14.0);
 
     context.vars_mut().set('p', 19, 0.0);
 
-    let result = evaluator.eval(&expr, &context).unwrap();
+    let result = expr.eval(&context, &mut Vec::new()).unwrap();
     assert_eq!(result, 2.0);
 }
 
@@ -44,26 +43,26 @@ fn test_rpn_eval_with_vars_and_fn()
     });
 
     let context = Context::new(var_resolver, fn_resolver);
-    let evaluator = RpnEvaluator::new();
+    let mut stack = Vec::with_capacity(10);
 
     let expr = "-abs((2 + 4) * 6 / (p1 + 2)) + abs(-2)";
-    let expr = RpnExpr::new(expr).unwrap();
-    let result = evaluator.eval(&expr, &context).unwrap();
+    let expr = RpnExpr::try_from(expr).unwrap();
+    let result = expr.eval(&context, &mut stack).unwrap();
     assert_eq!(result, -4.0);
 
     let expr = "abs((2 + 4) * 6 / (p1 + 2))";
-    let expr = RpnExpr::new(expr).unwrap();
-    let result = evaluator.eval(&expr, &context).unwrap();
+    let expr = RpnExpr::try_from(expr).unwrap();
+    let result = expr.eval(&context, &mut stack).unwrap();
     assert_eq!(result, 6.0);
 
     let expr = "abs((2 * 21) + 3 - 35 + (-((5 * 80) + 5)) + p0)";
-    let expr = RpnExpr::new(expr).unwrap();
-    let result = evaluator.eval(&expr, &context).unwrap();
+    let expr = RpnExpr::try_from(expr).unwrap();
+    let result = expr.eval(&context, &mut stack).unwrap();
     assert_eq!(result, 385.0);
 
     let expr = "-3^2 + (-3)^2";
-    let expr = RpnExpr::new(expr).unwrap();
-    let result = evaluator.eval(&expr, &context).unwrap();
+    let expr = RpnExpr::try_from(expr).unwrap();
+    let result = expr.eval(&context, &mut stack).unwrap();
     assert_eq!(result, 0.0);
 }
 
@@ -71,7 +70,7 @@ fn test_rpn_eval_with_vars_and_fn()
 fn test_rpn_eval_multi_threaded()
 {
     let expr = "abs((2 * 21) + 3 - 35 - ((5 * 80) + 5) + p0)";
-    let expr = Arc::new(RpnExpr::new(expr).unwrap());
+    let expr = Arc::new(RpnExpr::try_from(expr).unwrap());
 
     let mut var_resolver = DefaultResolver::new_var_resolver();
     var_resolver.insert("p0".to_string(), 10.0);
@@ -83,20 +82,18 @@ fn test_rpn_eval_multi_threaded()
         x.abs()
     });
 
-    let evaluator = Arc::new(RpnEvaluator::new());
     let context = Arc::new(Context::new(var_resolver, fn_resolver));
 
     let mut handles = vec![];
 
     for _ in 0..100 {
-        let evaluator_clone = evaluator.clone();
         let context_clone = context.clone();
         let expr_clone = expr.clone();
 
+        let mut stack = Vec::new();
+
         let handle = thread::spawn(move || {
-            let result = evaluator_clone
-                .eval(&expr_clone, context_clone.as_ref())
-                .unwrap();
+            let result = expr_clone.eval(context_clone.as_ref(), &mut stack).unwrap();
             assert_eq!(result, 385.0);
         });
 

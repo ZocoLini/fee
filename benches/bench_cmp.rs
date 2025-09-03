@@ -3,9 +3,7 @@ use std::hint::black_box;
 use criterion::{Criterion, criterion_group, criterion_main};
 use evalexpr::{DefaultNumericTypes, build_operator_tree};
 use fasteval::{CachedCallbackNamespace, Compiler, EmptyNamespace, Evaler};
-use fee::{
-    EmptyResolver, IRpnEvaluator, IRpnExpr, IndexedResolver, RpnEvaluator, RpnExpr, prelude::*,
-};
+use fee::{EmptyResolver, IRpnExpr, IndexedResolver, RpnExpr, prelude::*};
 
 fn evaluation(c: &mut Criterion)
 {
@@ -79,7 +77,7 @@ fn evaluation(c: &mut Criterion)
     });
 
     c.bench_function("cmp/eval/fee", |b| {
-        let expr = IRpnExpr::new(expr).unwrap();
+        let expr = IRpnExpr::try_from(expr).unwrap();
 
         let mut var_resolver = IndexedResolver::new_var_resolver();
         var_resolver.add_var_identifier('p', 2);
@@ -94,14 +92,9 @@ fn evaluation(c: &mut Criterion)
 
         let context = Context::new(var_resolver, fn_resolver);
         let mut stack = Vec::with_capacity(expr.len() / 2);
-        let evaluator = IRpnEvaluator::new();
 
         b.iter(|| {
-            black_box(
-                evaluator
-                    .eval_with_stack(&expr, &context, &mut stack)
-                    .unwrap(),
-            );
+            black_box(expr.eval(&context, &mut stack).unwrap());
         });
     });
 }
@@ -148,21 +141,16 @@ fn evaluation2(c: &mut Criterion)
     });
 
     c.bench_function("cmp/eval2/fee", |b| {
-        let expr = RpnExpr::new(expr).unwrap();
+        let expr = RpnExpr::try_from(expr).unwrap();
 
         let var_resolver = EmptyResolver;
         let fn_resolver = EmptyResolver;
 
         let context = Context::new(var_resolver, fn_resolver);
         let mut stack = Vec::with_capacity(expr.len() / 2);
-        let evaluator = RpnEvaluator::new();
 
         b.iter(|| {
-            black_box(
-                evaluator
-                    .eval_with_stack(&expr, &context, &mut stack)
-                    .unwrap(),
-            );
+            black_box(expr.eval(&context, &mut stack).unwrap());
         });
     });
 }
@@ -196,13 +184,13 @@ fn parse(c: &mut Criterion)
 
     c.bench_function("cmp/parse/fee/rpn", |b| {
         b.iter(|| {
-            black_box(RpnExpr::new(expr).unwrap());
+            black_box(RpnExpr::try_from(expr).unwrap());
         });
     });
 
     c.bench_function("cmp/parse/fee/irpn", |b| {
         b.iter(|| {
-            black_box(RpnExpr::new(expr).unwrap());
+            black_box(IRpnExpr::try_from(expr).unwrap());
         });
     });
 }

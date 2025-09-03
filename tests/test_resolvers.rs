@@ -1,4 +1,4 @@
-use fee::{EmptyResolver, RpnEvaluator, RpnExpr, SmallResolver, prelude::Context};
+use fee::{EmptyResolver, RpnExpr, SmallResolver, prelude::Context};
 
 #[test]
 fn test_lockeable_resolvers()
@@ -22,12 +22,12 @@ fn test_lockeable_resolvers()
     let context_1 = Context::new(var_resolver_1, fn_resolver_1);
     let context_2 = Context::new(var_resolver_2, fn_resolver_2);
 
-    let rpn_expr = RpnExpr::new(expr).unwrap();
-    let evaluator = RpnEvaluator::new();
+    let rpn_expr = RpnExpr::try_from(expr).unwrap();
+    let mut stack = Vec::with_capacity(rpn_expr.len() / 2);
 
     assert_eq!(
-        evaluator.eval(&rpn_expr, &context_1),
-        evaluator.eval(&rpn_expr, &context_2)
+        rpn_expr.eval(&context_1, &mut stack),
+        rpn_expr.eval(&context_2, &mut stack)
     );
 
     unsafe {
@@ -36,8 +36,8 @@ fn test_lockeable_resolvers()
     }
 
     assert_eq!(
-        evaluator.eval(&rpn_expr, &context_1),
-        evaluator.eval(&rpn_expr, &context_2)
+        rpn_expr.eval(&context_1, &mut stack),
+        rpn_expr.eval(&context_2, &mut stack)
     );
 
     unsafe {
@@ -46,7 +46,7 @@ fn test_lockeable_resolvers()
     }
 
     assert_ne!(
-        evaluator.eval(&rpn_expr, &context_1),
-        evaluator.eval(&rpn_expr, &context_2)
+        rpn_expr.eval(&context_1, &mut stack),
+        rpn_expr.eval(&context_2, &mut stack)
     );
 }

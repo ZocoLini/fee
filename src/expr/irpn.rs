@@ -55,18 +55,12 @@ pub struct IRpnExpr
 
 impl IRpnExpr
 {
-    pub fn new<'e>(expr: &'e str) -> Result<Self, crate::Error<'e>>
-    {
-        let infix_expr = InfixExpr::try_from(expr)?;
-        IRpnExpr::try_from(infix_expr)
-    }
-
     pub fn len(&self) -> usize
     {
         self.tokens.len()
     }
 
-    pub(crate) fn eval(
+    pub fn eval(
         &self,
         ctx: &Context<IndexedResolver<f64>, IndexedResolver<ExprFn>>,
         stack: &mut Vec<f64>,
@@ -122,6 +116,17 @@ impl IRpnExpr
             Some(result) if stack.is_empty() => Ok(result),
             _ => Err(Error::EvalError(EvalError::MalformedExpression)),
         }
+    }
+}
+
+impl<'e> TryFrom<&'e str> for IRpnExpr
+{
+    type Error = crate::Error<'e>;
+
+    fn try_from(input: &'e str) -> Result<Self, Self::Error>
+    {
+        let infix_expr = InfixExpr::try_from(input)?;
+        Self::try_from(infix_expr)
     }
 }
 
@@ -247,7 +252,7 @@ mod tests
     fn test_new()
     {
         let expr = "2 - (4 + (p19 - 2) * (p19 + 2))";
-        let rpn_expr = IRpnExpr::new(expr).unwrap();
+        let rpn_expr = IRpnExpr::try_from(expr).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
@@ -266,7 +271,7 @@ mod tests
         );
 
         let expr = "f0((2 + 3) * 4, f1(5))";
-        let rpn_expr = IRpnExpr::new(expr).unwrap();
+        let rpn_expr = IRpnExpr::try_from(expr).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
@@ -278,7 +283,7 @@ mod tests
         );
 
         let expr = "(2 * 21) + 3 + -35 - ((5 * 80) + 5) + 10 + -p0";
-        let rpn_expr = IRpnExpr::new(expr).unwrap();
+        let rpn_expr = IRpnExpr::try_from(expr).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
@@ -290,7 +295,7 @@ mod tests
         );
 
         let expr = "-y1 * (p2 - p3*y0)";
-        let rpn_expr = IRpnExpr::new(expr).unwrap();
+        let rpn_expr = IRpnExpr::try_from(expr).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![

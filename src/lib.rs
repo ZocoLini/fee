@@ -50,7 +50,6 @@
 
 mod context;
 mod error;
-mod evaluator;
 mod expr;
 mod op;
 mod parsing;
@@ -66,8 +65,6 @@ pub use crate::error::*;
 pub use crate::resolver::{
     ConstantResolver, DefaultResolver, EmptyResolver, IndexedResolver, SmallResolver,
 };
-
-pub use crate::evaluator::{IRpnEvaluator, RpnEvaluator};
 
 pub use expr::{IRpnExpr, RpnExpr};
 
