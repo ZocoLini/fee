@@ -22,7 +22,7 @@ fn test_lockeable_resolvers()
     let context_1 = Context::new(var_resolver_1, fn_resolver_1);
     let context_2 = Context::new(var_resolver_2, fn_resolver_2);
 
-    let rpn_expr = Expr::try_from(expr).unwrap();
+    let rpn_expr = Expr::compile(expr, &context_1).unwrap();
     let mut stack = Vec::with_capacity(rpn_expr.len() / 2);
 
     assert_eq!(

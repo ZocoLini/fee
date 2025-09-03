@@ -141,13 +141,13 @@ fn evaluation2(c: &mut Criterion)
     });
 
     c.bench_function("cmp/eval2/fee", |b| {
-        let expr = Expr::try_from(expr).unwrap();
-
         let var_resolver = EmptyResolver;
         let fn_resolver = EmptyResolver;
 
         let context = Context::new(var_resolver, fn_resolver);
         let mut stack = Vec::with_capacity(expr.len() / 2);
+
+        let expr = Expr::compile(expr, &context).unwrap();
 
         b.iter(|| {
             black_box(expr.eval(&context, &mut stack).unwrap());
