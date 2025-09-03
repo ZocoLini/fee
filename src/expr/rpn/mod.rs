@@ -129,11 +129,11 @@ where
 
                 let token: T = num.into();
 
-                output.truncate(output_len - n_operands + 1);
-                output[output_len - n_operands] = token;
+                output.truncate(output_len - n_operands);
+                output.push(token);
 
-                f64_cache.truncate(f64_cache_len - n_operands + 1);
-                f64_cache[f64_cache_len - n_operands] = num;
+                f64_cache.truncate(f64_cache_len - n_operands);
+                f64_cache.push(num);
             } else {
                 let token: T = op.into();
                 output.push(token);
