@@ -1,5 +1,3 @@
-use crate::lexer::InfixExpr;
-
 #[derive(Debug, PartialEq, Eq)]
 pub enum Op
 {
@@ -47,15 +45,4 @@ impl Op
             Op::Neg => -x[0],
         }
     }
-}
-
-#[derive(Debug, PartialEq)]
-pub enum InfixToken<'e>
-{
-    Num(f64),
-    Var(&'e str),
-    Fn(&'e str, Vec<InfixExpr<'e>>),
-    Op(Op),
-    LParen,
-    RParen,
 }

@@ -1,9 +1,17 @@
 use std::{borrow::Cow, iter::Peekable, ops::Deref, str::CharIndices};
 
-use crate::{
-    token::{InfixToken, Op},
-    *,
-};
+use crate::{op::Op, *};
+
+#[derive(Debug, PartialEq)]
+pub enum InfixToken<'e>
+{
+    Num(f64),
+    Var(&'e str),
+    Fn(&'e str, Vec<InfixExpr<'e>>),
+    Op(Op),
+    LParen,
+    RParen,
+}
 
 #[derive(Debug, PartialEq)]
 pub struct InfixExpr<'e>

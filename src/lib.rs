@@ -51,10 +51,10 @@
 mod context;
 mod error;
 mod evaluator;
-mod lexer;
+mod expr;
+mod op;
 mod parsing;
 mod resolver;
-mod token;
 
 #[cfg(feature = "bench-internal")]
 pub mod benches;
@@ -68,6 +68,8 @@ pub use crate::resolver::{
 };
 
 pub use crate::evaluator::{IRpnEvaluator, RpnEvaluator};
+
+pub use expr::{IRpnExpr, RpnExpr};
 
 /// Type alias for the functions that can be called from expressions.
 pub type ExprFn = fn(&[f64]) -> f64;

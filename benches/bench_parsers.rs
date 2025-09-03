@@ -24,13 +24,15 @@ fn parsers(c: &mut Criterion)
     });
 
     c.bench_function("internal/parse/rpn", |b| {
-        b.iter_batched(
-            || benches::parse_infix(expr).unwrap(),
-            |expr| {
-                black_box(benches::parse_rpn(expr).unwrap());
-            },
-            criterion::BatchSize::SmallInput,
-        );
+        b.iter(|| {
+            black_box(benches::parse_rpn(expr).unwrap());
+        });
+    });
+
+    c.bench_function("internal/parse/irpn", |b| {
+        b.iter(|| {
+            black_box(benches::parse_irpn(expr).unwrap());
+        });
     });
 }
 
