@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    Error, EvalError, IndexedResolver, expr::rpn::NotIndexedResolver, op::Op, parsing, prelude::*,
+    Error, EvalError, IndexedResolver, expr::NotIndexedResolver, op::Op, parsing, prelude::*,
 };
 
 #[derive(Debug, PartialEq)]
