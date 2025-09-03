@@ -37,9 +37,9 @@ impl From<Op> for IFRpnToken<'_>
     }
 }
 
-impl super::FromNamedFn<'_, IFRpnToken<'_>> for IFRpnToken<'_>
+impl<'e> From<(&'e str, usize)> for IFRpnToken<'e>
 {
-    fn from_fn(name: &str, argc: usize) -> Self
+    fn from((name, argc): (&'e str, usize)) -> Self
     {
         let name_bytes = name.as_bytes();
         let letter = name_bytes[0] - b'a';
@@ -48,11 +48,19 @@ impl super::FromNamedFn<'_, IFRpnToken<'_>> for IFRpnToken<'_>
     }
 }
 
-impl<'e, V> EvalRpn<V, IndexedResolver<ExprFn>> for Expr<IFRpnToken<'e>>
+impl<'e, V> RpnExpr<'e, V, IndexedResolver<ExprFn>, IFRpnToken<'e>> for Expr<IFRpnToken<'e>>
 where
     V: Resolver<f64> + NotIndexedResolver,
 {
     type Error = Error<'e>;
+
+    fn compile(
+        expr: &'e str,
+        _ctx: &Context<V, IndexedResolver<ExprFn>>,
+    ) -> Result<Expr<IFRpnToken<'e>>, Self::Error>
+    {
+        expr.try_into()
+    }
 
     fn eval(
         &self,

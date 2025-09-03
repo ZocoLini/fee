@@ -2,7 +2,10 @@ pub use crate::{Locked, Unlocked};
 
 pub use crate::ExprFn;
 
-pub use crate::expr::{EvalRpn, Expr};
+pub use crate::expr::{
+    Expr,
+    rpn::{FMLF, RpnExpr},
+};
 
 pub use crate::context::Context;
 

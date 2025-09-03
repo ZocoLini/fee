@@ -35,20 +35,25 @@ impl From<Op> for RpnToken<'_>
     }
 }
 
-impl<'e> super::FromNamedFn<'e, RpnToken<'e>> for RpnToken<'e>
+impl<'e> From<(&'e str, usize)> for RpnToken<'e>
 {
-    fn from_fn(name: &'e str, argc: usize) -> Self
+    fn from((name, argc): (&'e str, usize)) -> Self
     {
         RpnToken::Fn(name, argc)
     }
 }
 
-impl<'e, V, F> EvalRpn<V, F> for Expr<RpnToken<'e>>
+impl<'e, V, F> RpnExpr<'e, V, F, RpnToken<'e>> for Expr<RpnToken<'e>>
 where
     V: Resolver<f64> + NotIndexedResolver,
     F: Resolver<ExprFn> + NotIndexedResolver,
 {
     type Error = Error<'e>;
+
+    fn compile(expr: &'e str, _ctx: &Context<V, F>) -> Result<Expr<RpnToken<'e>>, Self::Error>
+    {
+        expr.try_into()
+    }
 
     fn eval(&self, ctx: &Context<V, F>, stack: &mut Vec<f64>) -> Result<f64, Self::Error>
     {

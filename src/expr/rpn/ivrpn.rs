@@ -40,19 +40,27 @@ impl From<Op> for IVRpnToken<'_>
     }
 }
 
-impl<'e> super::FromNamedFn<'e, IVRpnToken<'e>> for IVRpnToken<'e>
+impl<'e> From<(&'e str, usize)> for IVRpnToken<'e>
 {
-    fn from_fn(name: &'e str, argc: usize) -> Self
+    fn from((name, argc): (&'e str, usize)) -> Self
     {
         IVRpnToken::Fn(name, argc)
     }
 }
 
-impl<'e, F> EvalRpn<IndexedResolver<f64>, F> for Expr<IVRpnToken<'e>>
+impl<'e, F> RpnExpr<'e, IndexedResolver<f64>, F, IVRpnToken<'e>> for Expr<IVRpnToken<'e>>
 where
     F: Resolver<ExprFn> + NotIndexedResolver,
 {
     type Error = Error<'e>;
+
+    fn compile(
+        expr: &'e str,
+        _ctx: &Context<IndexedResolver<f64>, F>,
+    ) -> Result<Expr<IVRpnToken<'e>>, Self::Error>
+    {
+        expr.try_into()
+    }
 
     fn eval(
         &self,

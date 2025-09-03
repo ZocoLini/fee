@@ -10,9 +10,11 @@ pub use rpn::RpnToken;
 use smallvec::{SmallVec, smallvec};
 
 use crate::{
-    ConstantResolver, DefaultResolver, EmptyResolver, Error, SmallResolver,
+    ConstantResolver, DefaultResolver, EmptyResolver, Error, ExprFn, SmallResolver,
+    context::Context,
     expr::{Expr, infix::InfixToken},
     op::Op,
+    prelude::Resolver,
 };
 
 trait NotIndexedResolver {}
@@ -21,11 +23,26 @@ impl<T> NotIndexedResolver for ConstantResolver<T> {}
 impl<State, T> NotIndexedResolver for SmallResolver<State, T> {}
 impl NotIndexedResolver for EmptyResolver {}
 
-impl<T> Expr<T> {}
+pub trait FMLF {}
+impl FMLF for RpnToken<'_> {}
+impl FMLF for IVRpnToken<'_> {}
+impl FMLF for IFRpnToken<'_> {}
+impl FMLF for IRpnToken {}
+
+pub trait RpnExpr<'e, V: Resolver<f64>, F: Resolver<ExprFn>, T>
+where
+    T: From<f64> + From<&'e str> + From<Op> + From<(&'e str, usize)> + FMLF,
+{
+    type Error;
+
+    fn compile(expr: &'e str, _ctx: &Context<V, F>) -> Result<Expr<T>, Self::Error>;
+
+    fn eval(&self, ctx: &Context<V, F>, stack: &mut Vec<f64>) -> Result<f64, Self::Error>;
+}
 
 impl<'e, T> TryFrom<&'e str> for Expr<T>
 where
-    T: From<f64> + From<&'e str> + From<Op> + FromNamedFn<'e, T>,
+    T: From<f64> + From<&'e str> + From<Op> + From<(&'e str, usize)> + FMLF,
 {
     type Error = crate::Error<'e>;
 
@@ -36,14 +53,9 @@ where
     }
 }
 
-trait FromNamedFn<'e, T>
-{
-    fn from_fn(name: &'e str, argc: usize) -> Self;
-}
-
 impl<'e, T> TryFrom<Expr<InfixToken<'e>>> for Expr<T>
 where
-    T: From<f64> + From<&'e str> + From<Op> + FromNamedFn<'e, T>,
+    T: From<f64> + From<&'e str> + From<Op> + From<(&'e str, usize)> + FMLF,
 {
     type Error = Error<'e>;
 
@@ -92,7 +104,7 @@ where
                     }
                 }
                 InfixToken::Fn(name, args) => {
-                    let fn_token = T::from_fn(name, args.len());
+                    let fn_token = T::from((name, args.len()));
 
                     for arg_tokens in args {
                         let rpn_arg: Expr<T> = arg_tokens.try_into()?;

@@ -77,8 +77,6 @@ fn evaluation(c: &mut Criterion)
     });
 
     c.bench_function("cmp/eval/fee", |b| {
-        let expr = Expr::try_from(expr).unwrap();
-
         let mut var_resolver = IndexedResolver::new_var_resolver();
         var_resolver.add_var_identifier('p', 2);
         var_resolver.set('p', 0, p0);
@@ -92,6 +90,8 @@ fn evaluation(c: &mut Criterion)
 
         let context = Context::new(var_resolver, fn_resolver);
         let mut stack = Vec::with_capacity(expr.len() / 2);
+
+        let expr = Expr::compile(expr, &context).unwrap();
 
         b.iter(|| {
             black_box(expr.eval(&context, &mut stack).unwrap());
