@@ -100,7 +100,7 @@ noise as much as possible.
 
 ```bash
 CORES=0-12
-taskset -c $CORES cargo bench --features bench-internal internal
+taskset -c $CORES cargo bench internal
 ```
 
 The following script executes the benches related to comparations with
@@ -108,7 +108,7 @@ other similar libraries available in crates.io.
 
 ```bash
 CORES=0-12
-taskset -c $CORES cargo bench --features bench-internal cmp
+taskset -c $CORES cargo bench cmp
 ```
 
 Right now, comparissions are being made against `evalexpr`, `meval`, and `fasteval`.

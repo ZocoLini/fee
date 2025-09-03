@@ -1,14 +1,6 @@
-#[cfg(not(feature = "bench-internal"))]
-fn main() {}
-
-#[cfg(feature = "bench-internal")]
 use criterion::{Criterion, criterion_group, criterion_main};
-#[cfg(feature = "bench-internal")]
-use fee::benches;
-#[cfg(feature = "bench-internal")]
 use std::hint::black_box;
 
-#[cfg(feature = "bench-internal")]
 fn parsers(c: &mut Criterion)
 {
     let expr = "(2 * 21)
@@ -17,26 +9,22 @@ fn parsers(c: &mut Criterion)
         + 10
         - abs((2 + 3) * 4, sqrt(5))";
 
-    c.bench_function("internal/parse/infix", |b| {
-        b.iter(|| {
-            black_box(benches::parse_infix(expr).unwrap());
-        });
-    });
-
     c.bench_function("internal/parse/rpn", |b| {
         b.iter(|| {
-            black_box(benches::parse_rpn(expr).unwrap());
+            use fee::RpnExpr;
+
+            black_box(RpnExpr::try_from(expr).unwrap());
         });
     });
 
     c.bench_function("internal/parse/irpn", |b| {
         b.iter(|| {
-            black_box(benches::parse_irpn(expr).unwrap());
+            use fee::IRpnExpr;
+
+            black_box(IRpnExpr::try_from(expr).unwrap());
         });
     });
 }
 
-#[cfg(feature = "bench-internal")]
 criterion_group!(benches, parsers);
-#[cfg(feature = "bench-internal")]
 criterion_main!(benches);

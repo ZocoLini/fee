@@ -55,9 +55,6 @@ mod op;
 mod parsing;
 mod resolver;
 
-#[cfg(feature = "bench-internal")]
-pub mod benches;
-
 pub mod prelude;
 
 pub use crate::error::*;
