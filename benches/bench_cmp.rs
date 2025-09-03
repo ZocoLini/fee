@@ -77,7 +77,7 @@ fn evaluation(c: &mut Criterion)
     });
 
     c.bench_function("cmp/eval/fee", |b| {
-        let expr = Expr::<IRpnToken>::try_from(expr).unwrap();
+        let expr = Expr::try_from(expr).unwrap();
 
         let mut var_resolver = IndexedResolver::new_var_resolver();
         var_resolver.add_var_identifier('p', 2);

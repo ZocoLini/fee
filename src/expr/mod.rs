@@ -1,7 +1,6 @@
 use crate::{ExprFn, context::Context, prelude::Resolver};
 
 pub mod infix;
-pub mod irpn;
 pub mod rpn;
 
 #[derive(Debug, PartialEq)]

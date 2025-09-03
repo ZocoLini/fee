@@ -63,8 +63,7 @@ pub use crate::resolver::{
     ConstantResolver, DefaultResolver, EmptyResolver, IndexedResolver, SmallResolver,
 };
 
-pub use expr::irpn::IRpnToken;
-pub use expr::rpn::RpnToken;
+pub use expr::rpn::{IFRpnToken, IRpnToken, IVRpnToken, RpnToken};
 
 /// Type alias for the functions that can be called from expressions.
 pub type ExprFn = fn(&[f64]) -> f64;
