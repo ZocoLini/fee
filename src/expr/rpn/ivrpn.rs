@@ -52,21 +52,11 @@ impl<'e, F> RpnExpr<'e, IndexedResolver<f64>, F, IVRpnToken<'e>> for Expr<IVRpnT
 where
     F: Resolver<ExprFn> + NotIndexedResolver,
 {
-    type Error = Error<'e>;
-
-    fn compile(
-        expr: &'e str,
-        _ctx: &Context<IndexedResolver<f64>, F>,
-    ) -> Result<Expr<IVRpnToken<'e>>, Self::Error>
-    {
-        expr.try_into()
-    }
-
     fn eval(
         &self,
         ctx: &Context<IndexedResolver<f64>, F>,
         stack: &mut Vec<f64>,
-    ) -> Result<f64, Self::Error>
+    ) -> Result<f64, Error<'e>>
     {
         if self.tokens.len() == 1 {
             if let IVRpnToken::Num(num) = &self.tokens[0] {

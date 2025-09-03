@@ -23,26 +23,21 @@ impl<T> NotIndexedResolver for ConstantResolver<T> {}
 impl<State, T> NotIndexedResolver for SmallResolver<State, T> {}
 impl NotIndexedResolver for EmptyResolver {}
 
-pub trait FMLF {}
-impl FMLF for RpnToken<'_> {}
-impl FMLF for IVRpnToken<'_> {}
-impl FMLF for IFRpnToken<'_> {}
-impl FMLF for IRpnToken {}
-
 pub trait RpnExpr<'e, V: Resolver<f64>, F: Resolver<ExprFn>, T>
 where
-    T: From<f64> + From<&'e str> + From<Op> + From<(&'e str, usize)> + FMLF,
+    T: From<f64> + From<&'e str> + From<Op> + From<(&'e str, usize)>,
 {
-    type Error;
+    fn compile(expr: &'e str, _ctx: &Context<V, F>) -> Result<Expr<T>, Error<'e>>
+    {
+        Expr::try_from(expr)
+    }
 
-    fn compile(expr: &'e str, _ctx: &Context<V, F>) -> Result<Expr<T>, Self::Error>;
-
-    fn eval(&self, ctx: &Context<V, F>, stack: &mut Vec<f64>) -> Result<f64, Self::Error>;
+    fn eval(&self, ctx: &Context<V, F>, stack: &mut Vec<f64>) -> Result<f64, Error<'e>>;
 }
 
 impl<'e, T> TryFrom<&'e str> for Expr<T>
 where
-    T: From<f64> + From<&'e str> + From<Op> + From<(&'e str, usize)> + FMLF,
+    T: From<f64> + From<&'e str> + From<Op> + From<(&'e str, usize)>,
 {
     type Error = crate::Error<'e>;
 
@@ -55,7 +50,7 @@ where
 
 impl<'e, T> TryFrom<Expr<InfixToken<'e>>> for Expr<T>
 where
-    T: From<f64> + From<&'e str> + From<Op> + From<(&'e str, usize)> + FMLF,
+    T: From<f64> + From<&'e str> + From<Op> + From<(&'e str, usize)>,
 {
     type Error = Error<'e>;
 

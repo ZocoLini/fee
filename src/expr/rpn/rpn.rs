@@ -48,14 +48,7 @@ where
     V: Resolver<f64> + NotIndexedResolver,
     F: Resolver<ExprFn> + NotIndexedResolver,
 {
-    type Error = Error<'e>;
-
-    fn compile(expr: &'e str, _ctx: &Context<V, F>) -> Result<Expr<RpnToken<'e>>, Self::Error>
-    {
-        expr.try_into()
-    }
-
-    fn eval(&self, ctx: &Context<V, F>, stack: &mut Vec<f64>) -> Result<f64, Self::Error>
+    fn eval(&self, ctx: &Context<V, F>, stack: &mut Vec<f64>) -> Result<f64, Error<'e>>
     {
         if self.tokens.len() == 1 {
             if let RpnToken::Num(num) = &self.tokens[0] {
