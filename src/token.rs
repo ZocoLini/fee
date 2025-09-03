@@ -16,10 +16,10 @@ impl Op
     pub fn precedence(&self) -> u8
     {
         match self {
-            Op::Add | Op::Sub => 1,
-            Op::Mul | Op::Div => 2,
-            Op::Pow => 3,
-            Op::Neg => 4,
+            Op::Add | Op::Sub => 10,
+            Op::Mul | Op::Div => 20,
+            Op::Neg => 30,
+            Op::Pow => 40,
         }
     }
 

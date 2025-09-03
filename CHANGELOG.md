@@ -4,6 +4,12 @@ All the changes in this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [0.1.1] - 2025-09-03
+
+### Fixed
+- `Unary minus (-)` operator no longer has precedence over 
+`exponentiation (^)`.
+
 ## [0.1.0] - 2025-09-02
 
 - Created RpnEvaluator able to evaluate mathematical expressions.
@@ -14,7 +20,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
     - Multiplication (\*)
     - Division (/)
     - Exponentiation (^)
-    - Unary negation (-)
+    - Unary minus (-)
 - Created five Resolvers, each one with different pros and cons:
     - DefaultVarResolver
     - IndexedVarResolver

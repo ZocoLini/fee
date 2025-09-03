@@ -58,6 +58,11 @@ fn test_rpn_eval_with_vars_and_fn()
     let evaluator = RpnEvaluator::new(expr).unwrap();
     let result = evaluator.eval(&context).unwrap();
     assert_eq!(result, 385.0);
+    
+    let expr = "-3^2 + (-3)^2";
+    let evaluator = RpnEvaluator::new(expr).unwrap();
+    let result = evaluator.eval(&context).unwrap();
+    assert_eq!(result, 0.0);
 }
 
 #[test]
