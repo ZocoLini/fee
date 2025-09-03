@@ -1,5 +1,6 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use fee::{Expr, IRpnToken, RpnToken};
+use fee::prelude::*;
+use fee::{IRpnToken, RpnToken};
 use std::hint::black_box;
 
 fn parsers(c: &mut Criterion)

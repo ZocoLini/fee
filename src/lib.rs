@@ -63,8 +63,6 @@ pub use crate::resolver::{
     ConstantResolver, DefaultResolver, EmptyResolver, IndexedResolver, SmallResolver,
 };
 
-pub use expr::Expr;
-pub use expr::EvalRpn;
 pub use expr::irpn::IRpnToken;
 pub use expr::rpn::RpnToken;
 

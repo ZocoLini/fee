@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use smallvec::{SmallVec, smallvec};
 
 use crate::{
-    Error, EvalError, Expr, IndexedResolver, expr::infix::InfixToken, op::Op, parsing, prelude::*,
+    Error, EvalError, IndexedResolver, expr::infix::InfixToken, op::Op, parsing, prelude::*,
 };
 
 #[derive(Debug, PartialEq)]

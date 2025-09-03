@@ -1,6 +1,6 @@
 use std::{borrow::Cow, iter::Peekable, ops::Deref, str::CharIndices};
 
-use crate::{op::Op, *};
+use crate::{expr::Expr, op::Op, *};
 
 #[derive(Debug, PartialEq)]
 pub enum InfixToken<'e>

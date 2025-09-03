@@ -3,7 +3,7 @@ use std::hint::black_box;
 use criterion::{Criterion, criterion_group, criterion_main};
 use evalexpr::{DefaultNumericTypes, build_operator_tree};
 use fasteval::{CachedCallbackNamespace, Compiler, EmptyNamespace, Evaler};
-use fee::{EmptyResolver, Expr, IRpnToken, IndexedResolver, RpnToken, prelude::*};
+use fee::{EmptyResolver, IRpnToken, IndexedResolver, RpnToken, prelude::*};
 
 fn evaluation(c: &mut Criterion)
 {

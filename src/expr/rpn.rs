@@ -2,9 +2,7 @@ use std::borrow::Cow;
 
 use smallvec::{SmallVec, smallvec};
 
-use crate::{
-    Error, EvalError, EvalRpn, Expr, context::Context, expr::infix::*, op::Op, prelude::*,
-};
+use crate::{Error, EvalError, expr::infix::*, op::Op, prelude::*};
 
 #[derive(Debug, PartialEq)]
 pub enum RpnToken<'e>
