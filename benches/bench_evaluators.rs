@@ -2,14 +2,14 @@ use std::hint::black_box;
 
 use criterion::{Criterion, criterion_group, criterion_main};
 use fee::{
-    ConstantResolver, DefaultResolver, ExprFn, IRpnExpr, IndexedResolver, RpnExpr, SmallResolver,
+    ConstantResolver, DefaultResolver, Expr, ExprFn, IRpnExpr, IndexedResolver, SmallResolver,
     prelude::*,
 };
 
 fn rpn_evaluator(c: &mut Criterion)
 {
     let expr = "abs((2 * 21) + 3 - 35 - ((5 * 80) + 5) + p0)";
-    let expr = RpnExpr::try_from(expr).unwrap();
+    let expr = Expr::try_from(expr).unwrap();
     let mut stack = Vec::with_capacity(expr.len() / 2);
 
     c.bench_function("internal/eval/rpn/default_r", |b| {
@@ -39,7 +39,7 @@ fn rpn_evaluator(c: &mut Criterion)
 
     c.bench_function("internal/eval/rpn/indexed_r", |b| {
         let expr = "p0((2 * 21) + 3 - 35 - ((5 * 80) + 5) + p0)";
-        let expr = RpnExpr::try_from(expr).unwrap();
+        let expr = Expr::try_from(expr).unwrap();
 
         let mut var_resolver = IndexedResolver::new_var_resolver();
         var_resolver.add_var_identifier('p', 1);

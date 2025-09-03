@@ -63,7 +63,7 @@ pub use crate::resolver::{
     ConstantResolver, DefaultResolver, EmptyResolver, IndexedResolver, SmallResolver,
 };
 
-pub use expr::{IRpnExpr, RpnExpr};
+pub use expr::Expr;
 
 /// Type alias for the functions that can be called from expressions.
 pub type ExprFn = fn(&[f64]) -> f64;

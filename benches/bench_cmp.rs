@@ -3,7 +3,7 @@ use std::hint::black_box;
 use criterion::{Criterion, criterion_group, criterion_main};
 use evalexpr::{DefaultNumericTypes, build_operator_tree};
 use fasteval::{CachedCallbackNamespace, Compiler, EmptyNamespace, Evaler};
-use fee::{EmptyResolver, IRpnExpr, IndexedResolver, RpnExpr, prelude::*};
+use fee::{EmptyResolver, Expr, IRpnExpr, IndexedResolver, prelude::*};
 
 fn evaluation(c: &mut Criterion)
 {
@@ -141,7 +141,7 @@ fn evaluation2(c: &mut Criterion)
     });
 
     c.bench_function("cmp/eval2/fee", |b| {
-        let expr = RpnExpr::try_from(expr).unwrap();
+        let expr = Expr::try_from(expr).unwrap();
 
         let var_resolver = EmptyResolver;
         let fn_resolver = EmptyResolver;
@@ -184,7 +184,7 @@ fn parse(c: &mut Criterion)
 
     c.bench_function("cmp/parse/fee/rpn", |b| {
         b.iter(|| {
-            black_box(RpnExpr::try_from(expr).unwrap());
+            black_box(Expr::try_from(expr).unwrap());
         });
     });
 

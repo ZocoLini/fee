@@ -7,28 +7,13 @@ pub enum InfixToken<'e>
 {
     Num(f64),
     Var(&'e str),
-    Fn(&'e str, Vec<InfixExpr<'e>>),
+    Fn(&'e str, Vec<Expr<InfixToken<'e>>>),
     Op(Op),
     LParen,
     RParen,
 }
 
-#[derive(Debug, PartialEq)]
-pub struct InfixExpr<'e>
-{
-    tokens: Vec<InfixToken<'e>>,
-}
-
-#[cfg(test)]
-impl<'e> InfixExpr<'e>
-{
-    pub fn new(tokens: Vec<InfixToken<'e>>) -> Self
-    {
-        Self { tokens }
-    }
-}
-
-impl<'e> Deref for InfixExpr<'e>
+impl<'e> Deref for Expr<InfixToken<'e>>
 {
     type Target = Vec<InfixToken<'e>>;
 
@@ -38,7 +23,7 @@ impl<'e> Deref for InfixExpr<'e>
     }
 }
 
-impl<'e> IntoIterator for InfixExpr<'e>
+impl<'e> IntoIterator for Expr<InfixToken<'e>>
 {
     type Item = InfixToken<'e>;
     type IntoIter = std::vec::IntoIter<InfixToken<'e>>;
@@ -49,7 +34,7 @@ impl<'e> IntoIterator for InfixExpr<'e>
     }
 }
 
-impl<'e> TryFrom<&'e str> for InfixExpr<'e>
+impl<'e> TryFrom<&'e str> for Expr<InfixToken<'e>>
 {
     type Error = crate::Error<'e>;
 
@@ -57,7 +42,7 @@ impl<'e> TryFrom<&'e str> for InfixExpr<'e>
     {
         let mut lexer = Lexer::new(input);
 
-        Ok(InfixExpr {
+        Ok(Expr {
             tokens: lexer.lex()?,
         })
     }
@@ -211,13 +196,14 @@ impl State
                                     '(' | '[' => depth += 1,
                                     ')' | ']' => depth -= 1,
                                     ',' => {
-                                        let param_expr =
-                                            match InfixExpr::try_from(&input[start_index..i]) {
-                                                Ok(expr) => expr,
-                                                Err(err) => {
-                                                    return Err(err);
-                                                }
-                                            };
+                                        let param_expr = match Expr::<InfixToken>::try_from(
+                                            &input[start_index..i],
+                                        ) {
+                                            Ok(expr) => expr,
+                                            Err(err) => {
+                                                return Err(err);
+                                            }
+                                        };
                                         params.push(param_expr);
                                         start_index = i + 1;
                                     }
@@ -230,7 +216,8 @@ impl State
                                 }
                             }
 
-                            let param_expr = InfixExpr::try_from(&input[start_index..end_index])?;
+                            let param_expr =
+                                Expr::<InfixToken>::try_from(&input[start_index..end_index])?;
                             params.push(param_expr);
 
                             break InfixToken::Fn(fn_name, params);
@@ -263,7 +250,7 @@ mod tests
     fn test_str_to_infix()
     {
         let expr = "2-4-2.4*5+6/p0";
-        let infix_expr = InfixExpr::try_from(expr).unwrap();
+        let infix_expr = Expr::<InfixToken>::try_from(expr).unwrap();
         assert_eq!(
             *infix_expr,
             vec![
@@ -282,7 +269,7 @@ mod tests
         );
 
         let expr = "2 - (4 + (p19 - 2) * (-p19 + 2))";
-        let infix_expr = InfixExpr::try_from(expr).unwrap();
+        let infix_expr = Expr::<InfixToken>::try_from(expr).unwrap();
         assert_eq!(
             *infix_expr,
             vec![
@@ -308,13 +295,13 @@ mod tests
         );
 
         let expr = "abs((2 + 3) * 4, sqrt(5))";
-        let infix_expr = InfixExpr::try_from(expr).unwrap();
+        let infix_expr = Expr::<InfixToken>::try_from(expr).unwrap();
         assert_eq!(
             *infix_expr,
             vec![InfixToken::Fn(
                 "abs",
                 vec![
-                    InfixExpr {
+                    Expr::<InfixToken> {
                         tokens: vec![
                             InfixToken::LParen,
                             InfixToken::Num(2.0),
@@ -325,10 +312,10 @@ mod tests
                             InfixToken::Num(4.0)
                         ]
                     },
-                    InfixExpr {
+                    Expr::<InfixToken> {
                         tokens: vec![InfixToken::Fn(
                             "sqrt",
-                            vec![InfixExpr {
+                            vec![Expr::<InfixToken> {
                                 tokens: vec![InfixToken::Num(5.0)]
                             }]
                         )]
@@ -338,12 +325,12 @@ mod tests
         );
 
         let expr = "abs((2 * 21) + p0)";
-        let infix_expr = InfixExpr::try_from(expr).unwrap();
+        let infix_expr = Expr::<InfixToken>::try_from(expr).unwrap();
         assert_eq!(
             *infix_expr,
             vec![InfixToken::Fn(
                 "abs",
-                vec![InfixExpr {
+                vec![Expr::<InfixToken> {
                     tokens: vec![
                         InfixToken::LParen,
                         InfixToken::Num(2.0),
@@ -365,7 +352,7 @@ mod tests
         //  to the recursion used to parse the expression
 
         let expr = "abs((2.0.0 + 3) * 4, sqrt(5))";
-        let result = InfixExpr::try_from(expr);
+        let result = Expr::<InfixToken>::try_from(expr);
 
         assert_eq!(
             result,
@@ -376,7 +363,7 @@ mod tests
         );
 
         let expr = "abs((2 + 3) &* 4, sqrt(5))";
-        let result = InfixExpr::try_from(expr);
+        let result = Expr::<InfixToken>::try_from(expr);
 
         assert_eq!(
             result,

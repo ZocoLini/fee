@@ -3,11 +3,7 @@ use std::borrow::Cow;
 use smallvec::{SmallVec, smallvec};
 
 use crate::{
-    Error, EvalError, IndexedResolver,
-    expr::infix::{InfixExpr, InfixToken},
-    op::Op,
-    parsing,
-    prelude::*,
+    Error, EvalError, Expr, IndexedResolver, expr::infix::InfixToken, op::Op, parsing, prelude::*,
 };
 
 #[derive(Debug, PartialEq)]
@@ -47,19 +43,8 @@ impl<'e> From<InfixToken<'e>> for IRpnToken
     }
 }
 
-#[derive(Debug, PartialEq)]
-pub struct IRpnExpr
+impl Expr<IRpnToken>
 {
-    tokens: Vec<IRpnToken>,
-}
-
-impl IRpnExpr
-{
-    pub fn len(&self) -> usize
-    {
-        self.tokens.len()
-    }
-
     pub fn eval(
         &self,
         ctx: &Context<IndexedResolver<f64>, IndexedResolver<ExprFn>>,
@@ -119,23 +104,23 @@ impl IRpnExpr
     }
 }
 
-impl<'e> TryFrom<&'e str> for IRpnExpr
+impl<'e> TryFrom<&'e str> for Expr<IRpnToken>
 {
     type Error = crate::Error<'e>;
 
     fn try_from(input: &'e str) -> Result<Self, Self::Error>
     {
-        let infix_expr = InfixExpr::try_from(input)?;
+        let infix_expr = Expr::<InfixToken>::try_from(input)?;
         Self::try_from(infix_expr)
     }
 }
 
-impl<'e> TryFrom<InfixExpr<'e>> for IRpnExpr
+impl<'e> TryFrom<Expr<InfixToken<'e>>> for Expr<IRpnToken>
 {
     type Error = crate::Error<'e>;
 
     // shunting yard algorithm
-    fn try_from(expr: InfixExpr<'e>) -> Result<Self, Self::Error>
+    fn try_from(expr: Expr<InfixToken<'e>>) -> Result<Self, Self::Error>
     {
         let mut f64_cache: SmallVec<[f64; 4]> = smallvec![];
         let mut output: Vec<IRpnToken> = Vec::with_capacity(expr.len());
@@ -195,7 +180,7 @@ impl<'e> TryFrom<InfixExpr<'e>> for IRpnExpr
                     let token = IRpnToken::Fn(letter as usize, idx, args.len());
 
                     for arg_tokens in args {
-                        let rpn_arg: IRpnExpr = arg_tokens.try_into()?;
+                        let rpn_arg: Expr<IRpnToken> = arg_tokens.try_into()?;
                         output.extend(rpn_arg.tokens);
                     }
 
@@ -214,7 +199,7 @@ impl<'e> TryFrom<InfixExpr<'e>> for IRpnExpr
             }
         }
 
-        return Ok(IRpnExpr { tokens: output });
+        return Ok(Expr { tokens: output });
 
         fn pre_evaluate(output: &mut Vec<IRpnToken>, f64_cache: &mut SmallVec<[f64; 4]>, op: Op)
         {
@@ -252,7 +237,7 @@ mod tests
     fn test_new()
     {
         let expr = "2 - (4 + (p19 - 2) * (p19 + 2))";
-        let rpn_expr = IRpnExpr::try_from(expr).unwrap();
+        let rpn_expr = Expr::<IRpnToken>::try_from(expr).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
@@ -271,7 +256,7 @@ mod tests
         );
 
         let expr = "f0((2 + 3) * 4, f1(5))";
-        let rpn_expr = IRpnExpr::try_from(expr).unwrap();
+        let rpn_expr = Expr::<IRpnToken>::try_from(expr).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
@@ -283,7 +268,7 @@ mod tests
         );
 
         let expr = "(2 * 21) + 3 + -35 - ((5 * 80) + 5) + 10 + -p0";
-        let rpn_expr = IRpnExpr::try_from(expr).unwrap();
+        let rpn_expr = Expr::<IRpnToken>::try_from(expr).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
@@ -295,7 +280,7 @@ mod tests
         );
 
         let expr = "-y1 * (p2 - p3*y0)";
-        let rpn_expr = IRpnExpr::try_from(expr).unwrap();
+        let rpn_expr = Expr::<IRpnToken>::try_from(expr).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![

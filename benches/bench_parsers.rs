@@ -11,9 +11,9 @@ fn parsers(c: &mut Criterion)
 
     c.bench_function("internal/parse/rpn", |b| {
         b.iter(|| {
-            use fee::RpnExpr;
+            use fee::Expr;
 
-            black_box(RpnExpr::try_from(expr).unwrap());
+            black_box(Expr::try_from(expr).unwrap());
         });
     });
 
