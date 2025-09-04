@@ -82,15 +82,13 @@ impl<'e> RpnExpr<'e, IndexedResolver<f64>, IndexedResolver<ExprFn>, IRpnToken> f
 
                     let start = stack.len() - argc;
                     let args = &stack[start..];
-                    let val = match ctx.call_fn_by_index(*id, *idx, args) {
-                        Some(value) => value,
-                        None => {
-                            return Err(Error::EvalError(EvalError::UnknownFn(Cow::Owned(
-                                format!("{}{}", (*id as u8 + b'a') as char, idx),
-                            ))));
-                        }
-                    };
-
+                    let val = ctx.call_fn_by_index(*id, *idx, args).ok_or_else(|| {
+                        Error::EvalError(EvalError::UnknownFn(Cow::Owned(format!(
+                            "{}{}",
+                            (*id as u8 + b'a') as char,
+                            idx
+                        ))))
+                    })?;
                     stack.truncate(start);
                     stack.push(val);
                 }

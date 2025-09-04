@@ -67,10 +67,11 @@ where
         for tok in self.tokens.iter() {
             match tok {
                 IFRpnToken::Num(num) => stack.push(*num),
-                IFRpnToken::Var(name) => stack.push(
-                    *ctx.get_var(name)
-                        .ok_or(Error::EvalError(EvalError::UnknownVar(Cow::Borrowed(name))))?,
-                ),
+                IFRpnToken::Var(name) => {
+                    stack.push(*ctx.get_var(name).ok_or_else(|| {
+                        Error::EvalError(EvalError::UnknownVar(Cow::Borrowed(name)))
+                    })?)
+                }
                 IFRpnToken::Fn(id, idx, argc) => {
                     if *argc > stack.len() {
                         return Err(Error::EvalError(EvalError::RPNStackUnderflow));
@@ -78,14 +79,13 @@ where
 
                     let start = stack.len() - argc;
                     let args = &stack[start..];
-                    let val = match ctx.call_fn_by_index(*id, *idx, args) {
-                        Some(value) => value,
-                        None => {
-                            return Err(Error::EvalError(EvalError::UnknownFn(Cow::Owned(
-                                format!("{}{}", (*id as u8 + b'a') as char, idx),
-                            ))));
-                        }
-                    };
+                    let val = ctx.call_fn_by_index(*id, *idx, args).ok_or_else(|| {
+                        Error::EvalError(EvalError::UnknownFn(Cow::Owned(format!(
+                            "{}{}",
+                            (*id as u8 + b'a') as char,
+                            idx
+                        ))))
+                    })?;
 
                     stack.truncate(start);
                     stack.push(val);

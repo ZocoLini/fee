@@ -83,14 +83,9 @@ where
 
                     let start = stack.len() - argc;
                     let args = &stack[start..];
-                    let val = match ctx.call_fn(name, args) {
-                        Some(value) => value,
-                        None => {
-                            return Err(Error::EvalError(EvalError::UnknownFn(Cow::Borrowed(
-                                name,
-                            ))));
-                        }
-                    };
+                    let val = ctx.call_fn(name, args).ok_or_else(|| {
+                        Error::EvalError(EvalError::UnknownFn(Cow::Borrowed(name)))
+                    })?;
 
                     stack.truncate(start);
                     stack.push(val);

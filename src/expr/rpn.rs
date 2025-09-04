@@ -59,10 +59,11 @@ where
         for tok in self.tokens.iter() {
             match tok {
                 RpnToken::Num(num) => stack.push(*num),
-                RpnToken::Var(name) => stack.push(
-                    *ctx.get_var(name)
-                        .ok_or(Error::EvalError(EvalError::UnknownVar(Cow::Borrowed(name))))?,
-                ),
+                RpnToken::Var(name) => {
+                    stack.push(*ctx.get_var(name).ok_or_else(|| {
+                        Error::EvalError(EvalError::UnknownVar(Cow::Borrowed(name)))
+                    })?)
+                }
                 RpnToken::Fn(name, argc) => {
                     if *argc > stack.len() {
                         return Err(Error::EvalError(EvalError::RPNStackUnderflow));
@@ -70,14 +71,9 @@ where
 
                     let start = stack.len() - argc;
                     let args = &stack[start..];
-                    let val = match ctx.call_fn(name, args) {
-                        Some(value) => value,
-                        None => {
-                            return Err(Error::EvalError(EvalError::UnknownFn(Cow::Borrowed(
-                                name,
-                            ))));
-                        }
-                    };
+                    let val = ctx.call_fn(name, args).ok_or_else(|| {
+                        Error::EvalError(EvalError::UnknownFn(Cow::Borrowed(name)))
+                    })?;
 
                     stack.truncate(start);
                     stack.push(val);
