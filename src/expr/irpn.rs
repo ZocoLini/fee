@@ -49,14 +49,8 @@ impl<'e> From<(&'e str, usize)> for IRpnToken
     }
 }
 
-impl<'e>
-    RpnExpr<
-        'e,
-        Unlocked,
-        IndexedResolver<Unlocked, f64>,
-        IndexedResolver<Unlocked, ExprFn>,
-        IRpnToken,
-    > for Expr<IRpnToken>
+impl<'e> RpnExpr<'e, IndexedResolver<Unlocked, f64>, IndexedResolver<Unlocked, ExprFn>, IRpnToken>
+    for Expr<IRpnToken>
 {
     fn eval(
         &self,
@@ -75,11 +69,11 @@ impl<'e>
                 IRpnToken::Num(num) => stack.push(*num),
                 IRpnToken::Var(id, idx) => {
                     stack.push(*ctx.get_var_by_index(*id, *idx).ok_or_else(|| {
-                        Error::EvalError(EvalError::UnknownVar(Cow::Owned(format!(
+                        Error::UnknownVar(Cow::Owned(format!(
                             "{}{}",
                             (*id as u8 + b'a') as char,
                             idx
-                        ))))
+                        )))
                     })?)
                 }
                 IRpnToken::Fn(id, idx, argc) => {
@@ -90,11 +84,11 @@ impl<'e>
                     let start = stack.len() - argc;
                     let args = &stack[start..];
                     let val = ctx.call_fn_by_index(*id, *idx, args).ok_or_else(|| {
-                        Error::EvalError(EvalError::UnknownFn(Cow::Owned(format!(
+                        Error::UnknownFn(Cow::Owned(format!(
                             "{}{}",
                             (*id as u8 + b'a') as char,
                             idx
-                        ))))
+                        )))
                     })?;
                     stack.truncate(start);
                     stack.push(val);

@@ -1,6 +1,12 @@
 use std::{borrow::Cow, iter::Peekable, ops::Deref, str::CharIndices};
 
-use crate::{expr::Expr, op::Op, *};
+use crate::{
+    context::Context,
+    expr::Expr,
+    op::Op,
+    prelude::{Resolver, ResolverState},
+    *,
+};
 
 #[derive(Debug, PartialEq)]
 pub enum InfixToken<'e>
@@ -39,6 +45,24 @@ impl<'e> TryFrom<&'e str> for Expr<InfixToken<'e>>
     type Error = crate::Error<'e>;
 
     fn try_from(input: &'e str) -> Result<Self, Self::Error>
+    {
+        let mut lexer = Lexer::new(input);
+
+        Ok(Expr {
+            tokens: lexer.lex()?,
+        })
+    }
+}
+
+impl<'e, S, V, F> TryFrom<(&'e str, &Context<S, V, F>)> for Expr<InfixToken<'e>>
+where
+    V: Resolver<S, f64>,
+    F: Resolver<S, ExprFn>,
+    S: ResolverState,
+{
+    type Error = crate::Error<'e>;
+
+    fn try_from((input, _): (&'e str, &Context<S, V, F>)) -> Result<Self, Self::Error>
     {
         let mut lexer = Lexer::new(input);
 

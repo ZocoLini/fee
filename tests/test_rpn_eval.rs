@@ -11,7 +11,7 @@ fn test_rpn_eval_with_indexed_var_resolver()
 
     let fn_resolver = EmptyResolver::new();
 
-    let mut context = Context::new(var_resolver, fn_resolver);
+    let mut context = Context::new_unlocked(var_resolver, fn_resolver);
 
     let expr = "(2 + 4) * 6 / (p19 + 2)";
     let expr = Expr::compile(expr, &context).unwrap();
@@ -42,7 +42,7 @@ fn test_rpn_eval_with_vars_and_fn()
         x.abs()
     });
 
-    let context = Context::new(var_resolver, fn_resolver);
+    let context = Context::new_unlocked(var_resolver, fn_resolver);
     let mut stack = Vec::with_capacity(10);
 
     let expr = "-abs((2 + 4) * 6 / (p1 + 2)) + abs(-2)";
@@ -81,7 +81,7 @@ fn test_rpn_eval_multi_threaded()
         x.abs()
     });
 
-    let context = Arc::new(Context::new(var_resolver, fn_resolver));
+    let context = Arc::new(Context::new_unlocked(var_resolver, fn_resolver));
     let expr = Arc::new(Expr::compile(expr, &context).unwrap());
 
     let mut handles = vec![];

@@ -48,8 +48,7 @@ impl<'e> From<(&'e str, usize)> for IVRpnToken<'e>
     }
 }
 
-impl<'e, F> RpnExpr<'e, Unlocked, IndexedResolver<Unlocked, f64>, F, IVRpnToken<'e>>
-    for Expr<IVRpnToken<'e>>
+impl<'e, F> RpnExpr<'e, IndexedResolver<Unlocked, f64>, F, IVRpnToken<'e>> for Expr<IVRpnToken<'e>>
 where
     F: Resolver<Unlocked, ExprFn> + NotIndexedResolver,
 {
@@ -70,11 +69,11 @@ where
                 IVRpnToken::Num(num) => stack.push(*num),
                 IVRpnToken::Var(id, idx) => {
                     stack.push(*ctx.get_var_by_index(*id, *idx).ok_or_else(|| {
-                        Error::EvalError(EvalError::UnknownVar(Cow::Owned(format!(
+                        Error::UnknownVar(Cow::Owned(format!(
                             "{}{}",
                             (*id as u8 + b'a') as char,
                             idx
-                        ))))
+                        )))
                     })?)
                 }
                 IVRpnToken::Fn(name, argc) => {
@@ -84,9 +83,11 @@ where
 
                     let start = stack.len() - argc;
                     let args = &stack[start..];
-                    let val = ctx.call_fn(name, args).ok_or_else(|| {
-                        Error::EvalError(EvalError::UnknownFn(Cow::Borrowed(name)))
-                    })?;
+                    let val = ctx
+                        .get_fn(name)
+                        .ok_or_else(|| Error::UnknownFn(Cow::Borrowed(name)))?(
+                        args
+                    );
 
                     stack.truncate(start);
                     stack.push(val);

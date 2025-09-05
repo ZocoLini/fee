@@ -1,4 +1,4 @@
-use crate::prelude::{Locked, Resolver};
+use crate::prelude::*;
 
 /// For the cases where any variable or function name should resolve for the same value
 /// we encourage the use of this resolver instead of any other one.
@@ -27,6 +27,9 @@ pub struct ConstantResolver<T>
 {
     value: T,
 }
+
+impl<T> LockedResolver for ConstantResolver<T> {}
+impl<T> UnlockedResolver for ConstantResolver<T> {}
 
 impl<T> Resolver<Locked, T> for ConstantResolver<T>
 {

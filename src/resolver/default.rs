@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use super::Resolver;
-use crate::{ExprFn, prelude::*};
+use crate::prelude::*;
 
 /// General-purpose resolver that stores values indexed by name.
 ///
@@ -45,6 +45,9 @@ where
     vars: HashMap<String, T>,
     _state: S,
 }
+
+impl<T> LockedResolver for DefaultResolver<Locked, T> {}
+impl<T> UnlockedResolver for DefaultResolver<Unlocked, T> {}
 
 impl<S, T> Resolver<S, T> for DefaultResolver<S, T>
 where

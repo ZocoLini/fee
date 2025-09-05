@@ -1,6 +1,6 @@
 use crate::{
     EmptyResolver, ExprFn, IndexedResolver,
-    prelude::{Locked, Resolver, ResolverState, Unlocked},
+    prelude::{Locked, LockedResolver, Resolver, ResolverState, Unlocked, UnlockedResolver},
 };
 
 /// Container for the resolvers required to evaluate expressions containing variables or functions.
@@ -24,10 +24,10 @@ where
 
 impl<V, F> Context<Unlocked, V, F>
 where
-    V: Resolver<Unlocked, f64>,
-    F: Resolver<Unlocked, ExprFn>,
+    V: Resolver<Unlocked, f64> + UnlockedResolver,
+    F: Resolver<Unlocked, ExprFn> + UnlockedResolver,
 {
-    pub fn new(vals: V, funcs: F) -> Self
+    pub fn new_unlocked(vals: V, funcs: F) -> Self
     {
         Context {
             vars: vals,
@@ -40,10 +40,10 @@ where
 
 impl<V, F> Context<Locked, V, F>
 where
-    V: Resolver<Locked, f64>,
-    F: Resolver<Locked, ExprFn>,
+    V: Resolver<Locked, f64> + LockedResolver,
+    F: Resolver<Locked, ExprFn> + LockedResolver,
 {
-    pub fn new(vals: V, funcs: F) -> Self
+    pub fn new_locked(vals: V, funcs: F) -> Self
     {
         Context {
             vars: vals,
@@ -65,9 +65,9 @@ where
         self.vars.resolve(name)
     }
 
-    pub(crate) fn call_fn(&self, name: &str, args: &[f64]) -> Option<f64>
+    pub(crate) fn get_fn(&self, name: &str) -> Option<&ExprFn>
     {
-        Some(self.fns.resolve(name)?(args))
+        self.fns.resolve(name)
     }
 
     pub fn vars_mut(&mut self) -> &mut V
@@ -112,6 +112,6 @@ impl Context<Locked, EmptyResolver, EmptyResolver>
 {
     pub fn empty() -> Self
     {
-        Self::new(EmptyResolver, EmptyResolver)
+        Self::new_locked(EmptyResolver, EmptyResolver)
     }
 }

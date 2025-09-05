@@ -5,11 +5,17 @@ use thiserror::Error;
 #[derive(Debug, Error, PartialEq)]
 pub enum Error<'a>
 {
+    #[error("unknown variable '{0}'")]
+    UnknownVar(Cow<'a, str>),
+
+    #[error("unknown function '{0}'")]
+    UnknownFn(Cow<'a, str>),
+
     #[error("parse error: {0}")]
     ParseError(ParseError<'a>),
 
     #[error("eval error: {0}")]
-    EvalError(EvalError<'a>),
+    EvalError(EvalError),
 }
 
 #[derive(Debug, Error, PartialEq)]
@@ -23,14 +29,8 @@ pub enum ParseError<'a>
 }
 
 #[derive(Debug, Error, PartialEq)]
-pub enum EvalError<'a>
+pub enum EvalError
 {
-    #[error("unknown variable '{0}'")]
-    UnknownVar(Cow<'a, str>),
-
-    #[error("unknown function '{0}'")]
-    UnknownFn(Cow<'a, str>),
-
     #[error("RPN stack underflow")]
     RPNStackUnderflow,
 

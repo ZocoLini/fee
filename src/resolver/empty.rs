@@ -1,4 +1,4 @@
-use crate::prelude::{Locked, Resolver, ResolverState};
+use crate::prelude::*;
 
 /// A resolver that does not resolve any values.
 ///
@@ -8,6 +8,9 @@ use crate::prelude::{Locked, Resolver, ResolverState};
 /// When calling `eval_without_context()` on any `Evaluator`, the method internally calls
 /// `eval()` using a `Context` that contains two `EmptyResolver`s.
 pub struct EmptyResolver;
+
+impl LockedResolver for EmptyResolver {}
+impl UnlockedResolver for EmptyResolver {}
 
 impl<S, T> Resolver<S, T> for EmptyResolver
 where

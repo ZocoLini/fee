@@ -13,6 +13,8 @@ pub use indexed::IndexedResolver;
 pub use small::SmallResolver;
 
 pub trait ResolverState {}
+pub trait LockedResolver {}
+pub trait UnlockedResolver {}
 
 pub struct Locked;
 pub struct Unlocked;
@@ -20,8 +22,8 @@ pub struct Unlocked;
 impl ResolverState for Locked {}
 impl ResolverState for Unlocked {}
 
-type VarPtr = *mut f64;
-type FnPtr = fn(&[f64]) -> f64;
+pub type VarPtr = *mut f64;
+pub type FnPtr = *mut fn(&[f64]) -> f64;
 
 /// Trait for resolving values by name.
 ///

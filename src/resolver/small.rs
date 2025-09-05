@@ -50,6 +50,9 @@ where
     _state: S,
 }
 
+impl<T> LockedResolver for SmallResolver<Locked, T> {}
+impl<T> UnlockedResolver for SmallResolver<Unlocked, T> {}
+
 impl<S, T> Resolver<S, T> for SmallResolver<S, T>
 where
     S: ResolverState,

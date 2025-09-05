@@ -43,7 +43,7 @@ impl<'e> From<(&'e str, usize)> for RpnToken<'e>
     }
 }
 
-impl<'e, V, F> RpnExpr<'e, Unlocked, V, F, RpnToken<'e>> for Expr<RpnToken<'e>>
+impl<'e, V, F> RpnExpr<'e, V, F, RpnToken<'e>> for Expr<RpnToken<'e>>
 where
     V: Resolver<Unlocked, f64> + NotIndexedResolver,
     F: Resolver<Unlocked, ExprFn> + NotIndexedResolver,
@@ -59,11 +59,10 @@ where
         for tok in self.tokens.iter() {
             match tok {
                 RpnToken::Num(num) => stack.push(*num),
-                RpnToken::Var(name) => {
-                    stack.push(*ctx.get_var(name).ok_or_else(|| {
-                        Error::EvalError(EvalError::UnknownVar(Cow::Borrowed(name)))
-                    })?)
-                }
+                RpnToken::Var(name) => stack.push(
+                    *ctx.get_var(name)
+                        .ok_or_else(|| Error::UnknownVar(Cow::Borrowed(name)))?,
+                ),
                 RpnToken::Fn(name, argc) => {
                     if *argc > stack.len() {
                         return Err(Error::EvalError(EvalError::RPNStackUnderflow));
@@ -71,9 +70,11 @@ where
 
                     let start = stack.len() - argc;
                     let args = &stack[start..];
-                    let val = ctx.call_fn(name, args).ok_or_else(|| {
-                        Error::EvalError(EvalError::UnknownFn(Cow::Borrowed(name)))
-                    })?;
+                    let val = ctx
+                        .get_fn(name)
+                        .ok_or_else(|| Error::UnknownFn(Cow::Borrowed(name)))?(
+                        args
+                    );
 
                     stack.truncate(start);
                     stack.push(val);
