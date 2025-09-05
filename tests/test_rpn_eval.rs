@@ -14,18 +14,18 @@ fn test_rpn_eval_with_indexed_var_resolver()
     let mut context = Context::new_unlocked(var_resolver, fn_resolver);
 
     let expr = "(2 + 4) * 6 / (p19 + 2)";
-    let expr = Expr::compile(expr, &context).unwrap();
-    let result = expr.eval(&context, &mut Vec::new()).unwrap();
+    let expr = Expr::compile_unlocked(expr, &context).unwrap();
+    let result = expr.eval_unlocked(&context, &mut Vec::new()).unwrap();
     assert_eq!(result, 6.0);
 
     let expr = "2 - (4 + (p19 - 2) * (p19 + 2))";
-    let expr = Expr::compile(expr, &context).unwrap();
-    let result = expr.eval(&context, &mut Vec::new()).unwrap();
+    let expr = Expr::compile_unlocked(expr, &context).unwrap();
+    let result = expr.eval_unlocked(&context, &mut Vec::new()).unwrap();
     assert_eq!(result, -14.0);
 
     context.vars_mut().set('p', 19, 0.0);
 
-    let result = expr.eval(&context, &mut Vec::new()).unwrap();
+    let result = expr.eval_unlocked(&context, &mut Vec::new()).unwrap();
     assert_eq!(result, 2.0);
 }
 
@@ -46,23 +46,23 @@ fn test_rpn_eval_with_vars_and_fn()
     let mut stack = Vec::with_capacity(10);
 
     let expr = "-abs((2 + 4) * 6 / (p1 + 2)) + abs(-2)";
-    let expr = Expr::compile(expr, &context).unwrap();
-    let result = expr.eval(&context, &mut stack).unwrap();
+    let expr = Expr::compile_unlocked(expr, &context).unwrap();
+    let result = expr.eval_unlocked(&context, &mut stack).unwrap();
     assert_eq!(result, -4.0);
 
     let expr = "abs((2 + 4) * 6 / (p1 + 2))";
-    let expr = Expr::compile(expr, &context).unwrap();
-    let result = expr.eval(&context, &mut stack).unwrap();
+    let expr = Expr::compile_unlocked(expr, &context).unwrap();
+    let result = expr.eval_unlocked(&context, &mut stack).unwrap();
     assert_eq!(result, 6.0);
 
     let expr = "abs((2 * 21) + 3 - 35 + (-((5 * 80) + 5)) + p0)";
-    let expr = Expr::compile(expr, &context).unwrap();
-    let result = expr.eval(&context, &mut stack).unwrap();
+    let expr = Expr::compile_unlocked(expr, &context).unwrap();
+    let result = expr.eval_unlocked(&context, &mut stack).unwrap();
     assert_eq!(result, 385.0);
 
     let expr = "-3^2 + (-3)^2";
-    let expr = Expr::compile(expr, &context).unwrap();
-    let result = expr.eval(&context, &mut stack).unwrap();
+    let expr = Expr::compile_unlocked(expr, &context).unwrap();
+    let result = expr.eval_unlocked(&context, &mut stack).unwrap();
     assert_eq!(result, 0.0);
 }
 
@@ -82,7 +82,7 @@ fn test_rpn_eval_multi_threaded()
     });
 
     let context = Arc::new(Context::new_unlocked(var_resolver, fn_resolver));
-    let expr = Arc::new(Expr::compile(expr, &context).unwrap());
+    let expr = Arc::new(Expr::compile_unlocked(expr, &context).unwrap());
 
     let mut handles = vec![];
 
@@ -93,7 +93,9 @@ fn test_rpn_eval_multi_threaded()
         let mut stack = Vec::new();
 
         let handle = thread::spawn(move || {
-            let result = expr_clone.eval(context_clone.as_ref(), &mut stack).unwrap();
+            let result = expr_clone
+                .eval_unlocked(context_clone.as_ref(), &mut stack)
+                .unwrap();
             assert_eq!(result, 385.0);
         });
 

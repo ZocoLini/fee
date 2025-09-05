@@ -83,18 +83,20 @@ fn evaluation(c: &mut Criterion)
         var_resolver.set('p', 1, p1);
         var_resolver.add_var_identifier('y', 1);
         var_resolver.set('y', 0, y0);
+        let var_resolver = var_resolver.lock();
 
         let mut fn_resolver = IndexedResolver::new_fn_resolver();
         fn_resolver.add_fn_identifier('f', 1);
         fn_resolver.set('f', 0, (|args| args[0]) as ExprFn);
+        let fn_resolver = fn_resolver.lock();
 
-        let context = Context::new_unlocked(var_resolver, fn_resolver);
+        let context = Context::new_locked(var_resolver, fn_resolver);
         let mut stack = Vec::with_capacity(expr.len() / 2);
 
-        let expr = Expr::compile(expr, &context).unwrap();
+        let expr = Expr::compile_locked(expr, &context).unwrap();
 
         b.iter(|| {
-            black_box(expr.eval(&context, &mut stack).unwrap());
+            black_box(expr.eval_locked(&mut stack).unwrap());
         });
     });
 }
@@ -144,13 +146,13 @@ fn evaluation2(c: &mut Criterion)
         let var_resolver = EmptyResolver;
         let fn_resolver = EmptyResolver;
 
-        let context = Context::new_unlocked(var_resolver, fn_resolver);
+        let context = Context::new_locked(var_resolver, fn_resolver);
         let mut stack = Vec::with_capacity(expr.len() / 2);
 
-        let expr = Expr::compile(expr, &context).unwrap();
+        let expr = Expr::compile_locked(expr, &context).unwrap();
 
         b.iter(|| {
-            black_box(expr.eval(&context, &mut stack).unwrap());
+            black_box(expr.eval_locked(&mut stack).unwrap());
         });
     });
 }

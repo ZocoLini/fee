@@ -4,7 +4,7 @@ pub use crate::resolver::{
 
 pub use crate::ExprFn;
 
-pub use crate::expr::{Expr, RpnExpr};
+pub use crate::expr::{Expr, LRpnExpr, RpnExpr};
 
 pub use crate::context::Context;
 

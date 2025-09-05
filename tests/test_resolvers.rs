@@ -22,12 +22,12 @@ fn test_lockeable_resolvers()
     let context_1 = Context::new_locked(var_resolver_1, fn_resolver_1);
     let context_2 = Context::new_locked(var_resolver_2, fn_resolver_2);
 
-    let rpn_expr = Expr::compile(expr, &context_1).unwrap();
+    let rpn_expr = Expr::compile_locked(expr, &context_1).unwrap();
     let mut stack = Vec::with_capacity(rpn_expr.len() / 2);
 
     assert_eq!(
-        rpn_expr.eval(&context_1, &mut stack),
-        rpn_expr.eval(&context_2, &mut stack)
+        rpn_expr.eval_locked(&mut stack),
+        rpn_expr.eval_locked(&mut stack)
     );
 
     unsafe {
@@ -36,8 +36,8 @@ fn test_lockeable_resolvers()
     }
 
     assert_eq!(
-        rpn_expr.eval(&context_1, &mut stack),
-        rpn_expr.eval(&context_2, &mut stack)
+        rpn_expr.eval_locked(&mut stack),
+        rpn_expr.eval_locked(&mut stack)
     );
 
     unsafe {
@@ -46,7 +46,7 @@ fn test_lockeable_resolvers()
     }
 
     assert_ne!(
-        rpn_expr.eval(&context_1, &mut stack),
-        rpn_expr.eval(&context_2, &mut stack)
+        rpn_expr.eval_locked(&mut stack),
+        rpn_expr.eval_locked(&mut stack)
     );
 }

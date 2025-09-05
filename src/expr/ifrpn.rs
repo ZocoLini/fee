@@ -53,7 +53,7 @@ impl<'e, V> RpnExpr<'e, V, IndexedResolver<Unlocked, ExprFn>, IFRpnToken<'e>>
 where
     V: Resolver<Unlocked, f64> + NotIndexedResolver + UnlockedResolver,
 {
-    fn eval(
+    fn eval_unlocked(
         &self,
         ctx: &Context<Unlocked, V, IndexedResolver<Unlocked, ExprFn>>,
         stack: &mut Vec<f64>,

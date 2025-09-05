@@ -52,7 +52,7 @@ impl<'e> From<(&'e str, usize)> for IRpnToken
 impl<'e> RpnExpr<'e, IndexedResolver<Unlocked, f64>, IndexedResolver<Unlocked, ExprFn>, IRpnToken>
     for Expr<IRpnToken>
 {
-    fn eval(
+    fn eval_unlocked(
         &self,
         ctx: &Context<Unlocked, IndexedResolver<Unlocked, f64>, IndexedResolver<Unlocked, ExprFn>>,
         stack: &mut Vec<f64>,

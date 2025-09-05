@@ -50,12 +50,17 @@ where
     V: Resolver<Unlocked, f64> + UnlockedResolver,
     F: Resolver<Unlocked, ExprFn> + UnlockedResolver,
 {
-    fn compile(expr: &'e str, _ctx: &Context<Unlocked, V, F>) -> Result<Expr<T>, Error<'e>>
+    fn compile_unlocked(expr: &'e str, _ctx: &Context<Unlocked, V, F>)
+    -> Result<Expr<T>, Error<'e>>
     {
         Expr::try_from(expr)
     }
 
-    fn eval(&self, ctx: &Context<Unlocked, V, F>, stack: &mut Vec<f64>) -> Result<f64, Error<'e>>;
+    fn eval_unlocked(
+        &self,
+        ctx: &Context<Unlocked, V, F>,
+        stack: &mut Vec<f64>,
+    ) -> Result<f64, Error<'e>>;
 }
 
 pub trait LRpnExpr<'e, V, F, T>
@@ -64,12 +69,12 @@ where
     V: Resolver<Locked, f64> + LockedResolver,
     F: Resolver<Locked, ExprFn> + LockedResolver,
 {
-    fn compile(expr: &'e str, ctx: &Context<Locked, V, F>) -> Result<Expr<T>, Error<'e>>
+    fn compile_locked(expr: &'e str, ctx: &Context<Locked, V, F>) -> Result<Expr<T>, Error<'e>>
     {
         Expr::try_from((expr, ctx))
     }
 
-    fn eval(&self, stack: &mut Vec<f64>) -> Result<f64, Error<'e>>;
+    fn eval_locked(&self, stack: &mut Vec<f64>) -> Result<f64, Error<'e>>;
 }
 
 impl<'e, T> TryFrom<&'e str> for Expr<T>

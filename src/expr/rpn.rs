@@ -48,7 +48,11 @@ where
     V: Resolver<Unlocked, f64> + NotIndexedResolver + UnlockedResolver,
     F: Resolver<Unlocked, ExprFn> + NotIndexedResolver + UnlockedResolver,
 {
-    fn eval(&self, ctx: &Context<Unlocked, V, F>, stack: &mut Vec<f64>) -> Result<f64, Error<'e>>
+    fn eval_unlocked(
+        &self,
+        ctx: &Context<Unlocked, V, F>,
+        stack: &mut Vec<f64>,
+    ) -> Result<f64, Error<'e>>
     {
         if self.tokens.len() == 1 {
             if let RpnToken::Num(num) = &self.tokens[0] {
