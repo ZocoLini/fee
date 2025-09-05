@@ -1,7 +1,10 @@
 use std::collections::HashMap;
 
 use super::Resolver;
-use crate::prelude::*;
+use crate::{
+    prelude::*,
+    resolver::{LockedResolver, UnlockedResolver},
+};
 
 /// General-purpose resolver that stores values indexed by name.
 ///

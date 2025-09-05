@@ -1,6 +1,12 @@
 use std::borrow::Cow;
 
-use crate::{Error, EvalError, expr::NotIndexedResolver, op::Op, prelude::*};
+use crate::{
+    Error, EvalError,
+    expr::NotIndexedResolver,
+    op::Op,
+    prelude::*,
+    resolver::{LockedResolver, UnlockedResolver},
+};
 
 #[derive(Debug, PartialEq)]
 pub enum RpnToken<'e>

@@ -7,20 +7,18 @@ fn test_lockeable_resolvers()
 
     let mut var_resolver_1 = SmallResolver::new();
     var_resolver_1.insert("p0".to_string(), 10.0);
-    let var_resolver_1 = var_resolver_1.lock();
 
     let mut var_resolver_2 = SmallResolver::new();
     var_resolver_2.insert("p0".to_string(), 10.0);
-    let var_resolver_2 = var_resolver_2.lock();
 
     let fn_resolver_1 = EmptyResolver::new();
     let fn_resolver_2 = EmptyResolver::new();
 
-    let context_1 = Context::new(var_resolver_1, fn_resolver_1);
-    let context_2 = Context::new(var_resolver_2, fn_resolver_2);
+    let context_1 = Context::new(var_resolver_1, fn_resolver_1).lock();
+    let context_2 = Context::new(var_resolver_2, fn_resolver_2).lock();
 
-    let p0_ptr_1 = context_1.vars().get_ptr("p0").unwrap();
-    let p0_ptr_2 = context_2.vars().get_ptr("p0").unwrap();
+    let p0_ptr_1 = context_1.get_var_ptr("p0").unwrap();
+    let p0_ptr_2 = context_2.get_var_ptr("p0").unwrap();
 
     let rpn_expr_1 = Expr::compile_locked(expr, &context_1).unwrap();
     let rpn_expr_2 = Expr::compile_locked(expr, &context_2).unwrap();

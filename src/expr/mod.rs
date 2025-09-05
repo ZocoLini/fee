@@ -14,12 +14,13 @@ pub use lrpn::LRpnToken;
 pub use rpn::RpnToken;
 use smallvec::{SmallVec, smallvec};
 
+use crate::resolver::{LockedResolver, UnlockedResolver};
 use crate::{
     ConstantResolver, DefaultResolver, EmptyResolver, Error, ExprFn, SmallResolver,
     context::Context,
     expr::infix::InfixToken,
     op::Op,
-    prelude::{Locked, LockedResolver, Ptr, Resolver, ResolverState, Unlocked, UnlockedResolver},
+    prelude::{Locked, Ptr, Resolver, ResolverState, Unlocked},
 };
 
 #[derive(Debug, PartialEq)]

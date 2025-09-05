@@ -1,4 +1,8 @@
-use crate::{parsing, prelude::*};
+use crate::{
+    parsing,
+    prelude::*,
+    resolver::{LockedResolver, UnlockedResolver},
+};
 
 use super::Resolver;
 

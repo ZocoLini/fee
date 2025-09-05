@@ -1,4 +1,7 @@
-use crate::prelude::*;
+use crate::{
+    prelude::*,
+    resolver::{LockedResolver, UnlockedResolver},
+};
 
 /// A resolver that does not resolve any values.
 ///

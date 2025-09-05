@@ -1,8 +1,10 @@
 use std::marker::PhantomData;
 
+use crate::resolver::LockedResolver;
+use crate::resolver::UnlockedResolver;
 use crate::{
     EmptyResolver, ExprFn, IndexedResolver,
-    prelude::{Locked, LockedResolver, Resolver, ResolverState, Unlocked, UnlockedResolver},
+    prelude::{Locked, Ptr, Resolver, ResolverState, Unlocked},
 };
 
 /// Container for the resolvers required to evaluate expressions containing variables or functions.
@@ -14,8 +16,6 @@ use crate::{
 /// This struct is passed to evaluators to provide variable values and function implementations.
 pub struct Context<S, V, F, LV, LF>
 where
-    V: Resolver<S, f64>,
-    F: Resolver<S, ExprFn>,
     S: ResolverState,
 {
     vars: V,
@@ -28,8 +28,8 @@ where
 
 impl<V, F, LV, LF> Context<Unlocked, V, F, LV, LF>
 where
-    V: Resolver<Unlocked, f64> + UnlockedResolver<f64, LV>,
-    F: Resolver<Unlocked, ExprFn> + UnlockedResolver<ExprFn, LF>,
+    V: UnlockedResolver<f64, LV>,
+    F: UnlockedResolver<ExprFn, LF>,
     LV: LockedResolver<f64>,
     LF: LockedResolver<ExprFn>,
 {
@@ -92,6 +92,23 @@ where
     pub fn fns_mut(&mut self) -> &mut F
     {
         &mut self.fns
+    }
+}
+
+impl<'a, S, V, F, LV, LF> Context<S, V, F, LV, LF>
+where
+    V: LockedResolver<f64>,
+    F: LockedResolver<ExprFn>,
+    S: ResolverState,
+{
+    pub fn get_var_ptr(&'a self, name: &str) -> Option<Ptr<'a, f64>>
+    {
+        self.vars.get_ptr(name)
+    }
+
+    pub fn get_fn_ptr(&'a self, name: &str) -> Option<Ptr<'a, ExprFn>>
+    {
+        self.fns.get_ptr(name)
     }
 }
 

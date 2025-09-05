@@ -1,4 +1,7 @@
-use crate::prelude::*;
+use crate::{
+    prelude::*,
+    resolver::{LockedResolver, UnlockedResolver},
+};
 
 /// For the cases where any variable or function name should resolve for the same value
 /// we encourage the use of this resolver instead of any other one.
