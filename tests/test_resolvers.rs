@@ -16,8 +16,8 @@ fn test_lockeable_resolvers()
     let fn_resolver_1 = EmptyResolver::new();
     let fn_resolver_2 = EmptyResolver::new();
 
-    let context_1 = Context::new_locked(var_resolver_1, fn_resolver_1);
-    let context_2 = Context::new_locked(var_resolver_2, fn_resolver_2);
+    let context_1 = Context::new(var_resolver_1, fn_resolver_1);
+    let context_2 = Context::new(var_resolver_2, fn_resolver_2);
 
     let p0_ptr_1 = context_1.vars().get_ptr("p0").unwrap();
     let p0_ptr_2 = context_2.vars().get_ptr("p0").unwrap();

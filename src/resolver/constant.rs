@@ -29,7 +29,13 @@ pub struct ConstantResolver<T>
 }
 
 impl<T> LockedResolver<T> for ConstantResolver<T> {}
-impl<T> UnlockedResolver<T> for ConstantResolver<T> {}
+impl<T> UnlockedResolver<T, ConstantResolver<T>> for ConstantResolver<T>
+{
+    fn lock(self) -> ConstantResolver<T>
+    {
+        self
+    }
+}
 
 impl<T> Resolver<Locked, T> for ConstantResolver<T>
 {

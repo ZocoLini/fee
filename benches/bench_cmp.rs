@@ -90,7 +90,7 @@ fn evaluation(c: &mut Criterion)
         fn_resolver.set('f', 0, (|args| args[0]) as ExprFn);
         let fn_resolver = fn_resolver.lock();
 
-        let context = Context::new_locked(var_resolver, fn_resolver);
+        let context = Context::new(var_resolver, fn_resolver);
         let mut stack = Vec::with_capacity(expr.len() / 2);
 
         let expr = Expr::compile_locked(expr, &context).unwrap();

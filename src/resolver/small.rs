@@ -51,7 +51,16 @@ where
 }
 
 impl<T> LockedResolver<T> for SmallResolver<Locked, T> {}
-impl<T> UnlockedResolver<T> for SmallResolver<Unlocked, T> {}
+impl<T> UnlockedResolver<T, SmallResolver<Locked, T>> for SmallResolver<Unlocked, T>
+{
+    fn lock(self) -> SmallResolver<Locked, T>
+    {
+        SmallResolver {
+            cache: self.cache,
+            _state: Locked,
+        }
+    }
+}
 
 impl<S, T> Resolver<S, T> for SmallResolver<S, T>
 where
@@ -88,13 +97,5 @@ impl<T> SmallResolver<Unlocked, T>
         }
 
         self.cache.push((name, value));
-    }
-
-    pub fn lock(self) -> SmallResolver<Locked, T>
-    {
-        SmallResolver {
-            cache: self.cache,
-            _state: Locked,
-        }
     }
 }

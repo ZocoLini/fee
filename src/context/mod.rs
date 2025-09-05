@@ -1,3 +1,5 @@
+use std::marker::PhantomData;
+
 use crate::{
     EmptyResolver, ExprFn, IndexedResolver,
     prelude::{Locked, LockedResolver, Resolver, ResolverState, Unlocked, UnlockedResolver},
@@ -10,7 +12,7 @@ use crate::{
 /// - a function resolver (`F`) that implements `Resolver<ExprFn>`
 ///
 /// This struct is passed to evaluators to provide variable values and function implementations.
-pub struct Context<S, V, F>
+pub struct Context<S, V, F, LV, LF>
 where
     V: Resolver<S, f64>,
     F: Resolver<S, ExprFn>,
@@ -20,41 +22,43 @@ where
     fns: F,
 
     _state: S,
+    _locked_vars: PhantomData<LV>,
+    _locked_fns: PhantomData<LF>,
 }
 
-impl<V, F> Context<Unlocked, V, F>
+impl<V, F, LV, LF> Context<Unlocked, V, F, LV, LF>
 where
-    V: Resolver<Unlocked, f64> + UnlockedResolver<f64>,
-    F: Resolver<Unlocked, ExprFn> + UnlockedResolver<ExprFn>,
+    V: Resolver<Unlocked, f64> + UnlockedResolver<f64, LV>,
+    F: Resolver<Unlocked, ExprFn> + UnlockedResolver<ExprFn, LF>,
+    LV: LockedResolver<f64>,
+    LF: LockedResolver<ExprFn>,
 {
-    pub fn new_unlocked(vals: V, funcs: F) -> Self
+    pub fn new(vals: V, funcs: F) -> Self
     {
         Context {
             vars: vals,
             fns: funcs,
 
             _state: Unlocked,
+            _locked_vars: PhantomData,
+            _locked_fns: PhantomData,
         }
     }
-}
 
-impl<V, F> Context<Locked, V, F>
-where
-    V: Resolver<Locked, f64> + LockedResolver<f64>,
-    F: Resolver<Locked, ExprFn> + LockedResolver<ExprFn>,
-{
-    pub fn new_locked(vals: V, funcs: F) -> Self
+    pub fn lock(self) -> Context<Locked, LV, LF, LV, LF>
     {
         Context {
-            vars: vals,
-            fns: funcs,
+            vars: self.vars.lock(),
+            fns: self.fns.lock(),
 
             _state: Locked,
+            _locked_vars: PhantomData,
+            _locked_fns: PhantomData,
         }
     }
 }
 
-impl<S, V, F> Context<S, V, F>
+impl<S, V, F, LV, LF> Context<S, V, F, LV, LF>
 where
     V: Resolver<S, f64>,
     F: Resolver<S, ExprFn>,
@@ -91,7 +95,7 @@ where
     }
 }
 
-impl<S, F> Context<S, IndexedResolver<S, f64>, F>
+impl<S, F, LF> Context<S, IndexedResolver<S, f64>, F, IndexedResolver<Locked, f64>, LF>
 where
     S: ResolverState,
     F: Resolver<S, ExprFn>,
@@ -102,7 +106,7 @@ where
     }
 }
 
-impl<S, V> Context<S, V, IndexedResolver<S, ExprFn>>
+impl<S, V, LV> Context<S, V, IndexedResolver<S, ExprFn>, LV, IndexedResolver<Locked, ExprFn>>
 where
     S: ResolverState,
     V: Resolver<S, f64>,
@@ -118,10 +122,10 @@ where
     }
 }
 
-impl Context<Locked, EmptyResolver, EmptyResolver>
+impl Context<Locked, EmptyResolver, EmptyResolver, EmptyResolver, EmptyResolver>
 {
     pub fn empty() -> Self
     {
-        Self::new_locked(EmptyResolver, EmptyResolver)
+        Context::new(EmptyResolver, EmptyResolver).lock()
     }
 }

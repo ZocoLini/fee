@@ -47,7 +47,16 @@ where
 }
 
 impl<T> LockedResolver<T> for DefaultResolver<Locked, T> {}
-impl<T> UnlockedResolver<T> for DefaultResolver<Unlocked, T> {}
+impl<T> UnlockedResolver<T, DefaultResolver<Locked, T>> for DefaultResolver<Unlocked, T>
+{
+    fn lock(self) -> DefaultResolver<Locked, T>
+    {
+        DefaultResolver {
+            vars: self.vars,
+            _state: Locked,
+        }
+    }
+}
 
 impl<S, T> Resolver<S, T> for DefaultResolver<S, T>
 where
@@ -72,14 +81,6 @@ impl<T> DefaultResolver<Unlocked, T>
     pub fn insert(&mut self, name: String, val: T)
     {
         self.vars.insert(name, val);
-    }
-
-    pub fn lock(self) -> DefaultResolver<Locked, T>
-    {
-        DefaultResolver {
-            vars: self.vars,
-            _state: Locked,
-        }
     }
 }
 

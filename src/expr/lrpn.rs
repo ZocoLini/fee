@@ -43,12 +43,12 @@ impl<'a> From<(Ptr<'a, ExprFn>, usize)> for LRpnToken<'a>
 
 impl<'a, V, F> LRpnExpr<'a, V, F, LRpnToken<'a>> for Expr<LRpnToken<'a>>
 where
-    V: Resolver<Locked, f64> + LockedResolver<f64>,
-    F: Resolver<Locked, ExprFn> + LockedResolver<ExprFn>,
+    V: LockedResolver<f64>,
+    F: LockedResolver<ExprFn>,
 {
     fn eval_locked(
         &self,
-        _ctx: &Context<Locked, V, F>,
+        _ctx: &Context<Locked, V, F, V, F>,
         stack: &mut Vec<f64>,
     ) -> Result<f64, Error<'a>>
     {

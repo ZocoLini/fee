@@ -22,7 +22,10 @@ pub trait LockedResolver<T>: Resolver<Locked, T>
         })
     }
 }
-pub trait UnlockedResolver<T>: Resolver<Unlocked, T> {}
+pub trait UnlockedResolver<T, R: LockedResolver<T>>: Resolver<Unlocked, T>
+{
+    fn lock(self) -> R;
+}
 
 pub trait ResolverState {}
 

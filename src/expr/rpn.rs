@@ -43,14 +43,16 @@ impl<'e> From<(&'e str, usize)> for RpnToken<'e>
     }
 }
 
-impl<'e, V, F> RpnExpr<'e, V, F, RpnToken<'e>> for Expr<RpnToken<'e>>
+impl<'e, V, F, LV, LF> RpnExpr<'e, V, F, LV, LF, RpnToken<'e>> for Expr<RpnToken<'e>>
 where
-    V: Resolver<Unlocked, f64> + NotIndexedResolver + UnlockedResolver<f64>,
-    F: Resolver<Unlocked, ExprFn> + NotIndexedResolver + UnlockedResolver<ExprFn>,
+    V: NotIndexedResolver + UnlockedResolver<f64, LV>,
+    F: NotIndexedResolver + UnlockedResolver<ExprFn, LF>,
+    LV: LockedResolver<f64>,
+    LF: LockedResolver<ExprFn>,
 {
     fn eval_unlocked(
         &self,
-        ctx: &Context<Unlocked, V, F>,
+        ctx: &Context<Unlocked, V, F, LV, LF>,
         stack: &mut Vec<f64>,
     ) -> Result<f64, Error<'e>>
     {

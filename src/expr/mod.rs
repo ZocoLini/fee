@@ -42,21 +42,25 @@ impl<T> NotIndexedResolver for ConstantResolver<T> {}
 impl<S: ResolverState, T> NotIndexedResolver for SmallResolver<S, T> {}
 impl NotIndexedResolver for EmptyResolver {}
 
-pub trait RpnExpr<'e, V, F, T>
+pub trait RpnExpr<'e, V, F, LV, LF, T>
 where
     T: From<f64> + From<&'e str> + From<Op> + From<(&'e str, usize)>,
-    V: Resolver<Unlocked, f64> + UnlockedResolver<f64>,
-    F: Resolver<Unlocked, ExprFn> + UnlockedResolver<ExprFn>,
+    V: UnlockedResolver<f64, LV>,
+    F: UnlockedResolver<ExprFn, LF>,
+    LV: LockedResolver<f64>,
+    LF: LockedResolver<ExprFn>,
 {
-    fn compile_unlocked(expr: &'e str, _ctx: &Context<Unlocked, V, F>)
-    -> Result<Expr<T>, Error<'e>>
+    fn compile_unlocked(
+        expr: &'e str,
+        _ctx: &Context<Unlocked, V, F, LV, LF>,
+    ) -> Result<Expr<T>, Error<'e>>
     {
         Expr::try_from(expr)
     }
 
     fn eval_unlocked(
         &self,
-        ctx: &Context<Unlocked, V, F>,
+        ctx: &Context<Unlocked, V, F, LV, LF>,
         stack: &mut Vec<f64>,
     ) -> Result<f64, Error<'e>>;
 }
@@ -64,17 +68,20 @@ where
 pub trait LRpnExpr<'e, V, F, T>
 where
     T: From<f64> + From<Ptr<'e, f64>> + From<Op> + From<(Ptr<'e, ExprFn>, usize)>,
-    V: Resolver<Locked, f64> + LockedResolver<f64>,
-    F: Resolver<Locked, ExprFn> + LockedResolver<ExprFn>,
+    V: LockedResolver<f64>,
+    F: LockedResolver<ExprFn>,
 {
-    fn compile_locked(expr: &'e str, ctx: &'e Context<Locked, V, F>) -> Result<Expr<T>, Error<'e>>
+    fn compile_locked(
+        expr: &'e str,
+        ctx: &'e Context<Locked, V, F, V, F>,
+    ) -> Result<Expr<T>, Error<'e>>
     {
         Expr::try_from((expr, ctx))
     }
 
     fn eval_locked(
         &self,
-        ctx: &Context<Locked, V, F>,
+        ctx: &Context<Locked, V, F, V, F>,
         stack: &mut Vec<f64>,
     ) -> Result<f64, Error<'e>>;
 }
@@ -92,7 +99,7 @@ where
     }
 }
 
-impl<'e, T, V, F> TryFrom<(&'e str, &'e Context<Locked, V, F>)> for Expr<T>
+impl<'e, T, V, F> TryFrom<(&'e str, &'e Context<Locked, V, F, V, F>)> for Expr<T>
 where
     T: From<f64> + From<Ptr<'e, f64>> + From<Op> + From<(Ptr<'e, ExprFn>, usize)>,
     V: Resolver<Locked, f64> + LockedResolver<f64>,
@@ -100,14 +107,16 @@ where
 {
     type Error = crate::Error<'e>;
 
-    fn try_from((input, ctx): (&'e str, &'e Context<Locked, V, F>)) -> Result<Self, Self::Error>
+    fn try_from(
+        (input, ctx): (&'e str, &'e Context<Locked, V, F, V, F>),
+    ) -> Result<Self, Self::Error>
     {
         let infix_expr = Expr::<InfixToken>::try_from(input)?;
         Expr::<T>::try_from((infix_expr, ctx))
     }
 }
 
-impl<'e, T, V, F> TryFrom<(Expr<InfixToken<'e>>, &'e Context<Locked, V, F>)> for Expr<T>
+impl<'e, T, V, F> TryFrom<(Expr<InfixToken<'e>>, &'e Context<Locked, V, F, V, F>)> for Expr<T>
 where
     T: From<f64> + From<Ptr<'e, f64>> + From<Op> + From<(Ptr<'e, ExprFn>, usize)>,
     V: Resolver<Locked, f64> + LockedResolver<f64>,
@@ -117,7 +126,7 @@ where
 
     // shunting yard algorithm
     fn try_from(
-        (expr, ctx): (Expr<InfixToken<'e>>, &'e Context<Locked, V, F>),
+        (expr, ctx): (Expr<InfixToken<'e>>, &'e Context<Locked, V, F, V, F>),
     ) -> Result<Self, Self::Error>
     {
         let mut f64_cache: SmallVec<[f64; 4]> = smallvec![];

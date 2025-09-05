@@ -59,7 +59,16 @@ pub struct IndexedResolver<S: ResolverState, T>
 }
 
 impl<T> LockedResolver<T> for IndexedResolver<Locked, T> {}
-impl<T> UnlockedResolver<T> for IndexedResolver<Unlocked, T> {}
+impl<T> UnlockedResolver<T, IndexedResolver<Locked, T>> for IndexedResolver<Unlocked, T>
+{
+    fn lock(self) -> IndexedResolver<Locked, T>
+    {
+        IndexedResolver {
+            vars: self.vars,
+            _state: Locked,
+        }
+    }
+}
 
 const ALPHABET_SIZE: usize = (b'z' - b'a' + 1) as usize;
 const ALPHABET_START_USIZE: usize = b'a' as usize;
@@ -91,17 +100,6 @@ where
     pub(crate) fn get_by_index(&self, identifier: usize, index: usize) -> Option<&T>
     {
         self.vars[identifier].get(index)
-    }
-}
-
-impl<T> IndexedResolver<Unlocked, T>
-{
-    pub fn lock(self) -> IndexedResolver<Locked, T>
-    {
-        IndexedResolver {
-            vars: self.vars,
-            _state: Locked,
-        }
     }
 }
 
