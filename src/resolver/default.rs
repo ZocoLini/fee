@@ -46,7 +46,7 @@ where
     _state: S,
 }
 
-impl<T> LockedResolver for DefaultResolver<Locked, T> {}
+impl<T> LockedResolver<T> for DefaultResolver<Locked, T> {}
 impl<T> UnlockedResolver for DefaultResolver<Unlocked, T> {}
 
 impl<S, T> Resolver<S, T> for DefaultResolver<S, T>

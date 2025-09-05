@@ -1,15 +1,15 @@
 use crate::{Error, EvalError, LRpnExpr, op::Op, prelude::*};
 
 #[derive(Debug, PartialEq)]
-pub enum LRpnToken
+pub enum LRpnToken<'a>
 {
     Num(f64),
-    Var(VarPtr),
-    Fn(FnPtr, usize),
+    Var(Ptr<'a, f64>),
+    Fn(Ptr<'a, ExprFn>, usize),
     Op(Op),
 }
 
-impl From<f64> for LRpnToken
+impl<'a> From<f64> for LRpnToken<'a>
 {
     fn from(num: f64) -> Self
     {
@@ -17,15 +17,15 @@ impl From<f64> for LRpnToken
     }
 }
 
-impl<'e> From<VarPtr> for LRpnToken
+impl<'a> From<Ptr<'a, f64>> for LRpnToken<'a>
 {
-    fn from(ptr: VarPtr) -> Self
+    fn from(ptr: Ptr<'a, f64>) -> Self
     {
         LRpnToken::Var(ptr)
     }
 }
 
-impl From<Op> for LRpnToken
+impl<'a> From<Op> for LRpnToken<'a>
 {
     fn from(op: Op) -> Self
     {
@@ -33,24 +33,24 @@ impl From<Op> for LRpnToken
     }
 }
 
-impl<'e> From<(FnPtr, usize)> for LRpnToken
+impl<'a> From<(Ptr<'a, ExprFn>, usize)> for LRpnToken<'a>
 {
-    fn from((ptr, argc): (FnPtr, usize)) -> Self
+    fn from((ptr, argc): (Ptr<'a, ExprFn>, usize)) -> Self
     {
         LRpnToken::Fn(ptr, argc)
     }
 }
 
-impl<'e, V, F> LRpnExpr<'e, V, F, LRpnToken> for Expr<LRpnToken>
+impl<'a, V, F> LRpnExpr<'a, V, F, LRpnToken<'a>> for Expr<LRpnToken<'a>>
 where
-    V: Resolver<Locked, f64> + LockedResolver,
-    F: Resolver<Locked, ExprFn> + LockedResolver,
+    V: Resolver<Locked, f64> + LockedResolver<f64>,
+    F: Resolver<Locked, ExprFn> + LockedResolver<ExprFn>,
 {
     fn eval_locked(
         &self,
         _ctx: &Context<Locked, V, F>,
         stack: &mut Vec<f64>,
-    ) -> Result<f64, Error<'e>>
+    ) -> Result<f64, Error<'a>>
     {
         if self.tokens.len() == 1 {
             if let LRpnToken::Num(num) = &self.tokens[0] {
@@ -61,7 +61,7 @@ where
         for tok in self.tokens.iter() {
             match tok {
                 LRpnToken::Num(num) => stack.push(*num),
-                LRpnToken::Var(ptr) => stack.push(unsafe { **ptr }),
+                LRpnToken::Var(ptr) => stack.push(ptr.get()),
                 LRpnToken::Fn(ptr, argc) => {
                     if *argc > stack.len() {
                         return Err(Error::EvalError(EvalError::RPNStackUnderflow));
@@ -69,7 +69,7 @@ where
 
                     let start = stack.len() - argc;
                     let args = &stack[start..];
-                    let val = (unsafe { **ptr })(args);
+                    let val = (ptr.get())(args);
 
                     stack.truncate(start);
                     stack.push(val);

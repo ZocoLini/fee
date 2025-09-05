@@ -19,9 +19,7 @@ use crate::{
     context::Context,
     expr::infix::InfixToken,
     op::Op,
-    prelude::{
-        FnPtr, Locked, LockedResolver, Resolver, ResolverState, Unlocked, UnlockedResolver, VarPtr,
-    },
+    prelude::{Locked, LockedResolver, Ptr, Resolver, ResolverState, Unlocked, UnlockedResolver},
 };
 
 #[derive(Debug, PartialEq)]
@@ -65,11 +63,11 @@ where
 
 pub trait LRpnExpr<'e, V, F, T>
 where
-    T: From<f64> + From<VarPtr> + From<Op> + From<(FnPtr, usize)>,
-    V: Resolver<Locked, f64> + LockedResolver,
-    F: Resolver<Locked, ExprFn> + LockedResolver,
+    T: From<f64> + From<Ptr<'e, f64>> + From<Op> + From<(Ptr<'e, ExprFn>, usize)>,
+    V: Resolver<Locked, f64> + LockedResolver<f64>,
+    F: Resolver<Locked, ExprFn> + LockedResolver<ExprFn>,
 {
-    fn compile_locked(expr: &'e str, ctx: &Context<Locked, V, F>) -> Result<Expr<T>, Error<'e>>
+    fn compile_locked(expr: &'e str, ctx: &'e Context<Locked, V, F>) -> Result<Expr<T>, Error<'e>>
     {
         Expr::try_from((expr, ctx))
     }
@@ -94,34 +92,33 @@ where
     }
 }
 
-impl<'e, T, V, F, S> TryFrom<(&'e str, &Context<S, V, F>)> for Expr<T>
+impl<'e, T, V, F> TryFrom<(&'e str, &'e Context<Locked, V, F>)> for Expr<T>
 where
-    T: From<f64> + From<VarPtr> + From<Op> + From<(FnPtr, usize)>,
-    V: Resolver<S, f64>,
-    F: Resolver<S, ExprFn>,
-    S: ResolverState,
+    T: From<f64> + From<Ptr<'e, f64>> + From<Op> + From<(Ptr<'e, ExprFn>, usize)>,
+    V: Resolver<Locked, f64> + LockedResolver<f64>,
+    F: Resolver<Locked, ExprFn> + LockedResolver<ExprFn>,
 {
     type Error = crate::Error<'e>;
 
-    fn try_from((input, ctx): (&'e str, &Context<S, V, F>)) -> Result<Self, Self::Error>
+    fn try_from((input, ctx): (&'e str, &'e Context<Locked, V, F>)) -> Result<Self, Self::Error>
     {
         let infix_expr = Expr::<InfixToken>::try_from(input)?;
         Expr::<T>::try_from((infix_expr, ctx))
     }
 }
 
-impl<'e, T, V, F, S> TryFrom<(Expr<InfixToken<'e>>, &Context<S, V, F>)> for Expr<T>
+impl<'e, T, V, F> TryFrom<(Expr<InfixToken<'e>>, &'e Context<Locked, V, F>)> for Expr<T>
 where
-    T: From<f64> + From<VarPtr> + From<Op> + From<(FnPtr, usize)>,
-    V: Resolver<S, f64>,
-    F: Resolver<S, ExprFn>,
-    S: ResolverState,
+    T: From<f64> + From<Ptr<'e, f64>> + From<Op> + From<(Ptr<'e, ExprFn>, usize)>,
+    V: Resolver<Locked, f64> + LockedResolver<f64>,
+    F: Resolver<Locked, ExprFn> + LockedResolver<ExprFn>,
 {
     type Error = Error<'e>;
 
     // shunting yard algorithm
-    fn try_from((expr, ctx): (Expr<InfixToken<'e>>, &Context<S, V, F>))
-    -> Result<Self, Self::Error>
+    fn try_from(
+        (expr, ctx): (Expr<InfixToken<'e>>, &'e Context<Locked, V, F>),
+    ) -> Result<Self, Self::Error>
     {
         let mut f64_cache: SmallVec<[f64; 4]> = smallvec![];
         let mut output: Vec<T> = Vec::with_capacity(expr.len());
@@ -134,11 +131,11 @@ where
                     f64_cache.push(num);
                 }
                 InfixToken::Var(name) => {
-                    let var_ptr = match ctx.get_var(name) {
-                        Some(var_ptr) => var_ptr as *const f64 as VarPtr,
-                        None => return Err(Error::UnknownVar(Cow::Borrowed(name))),
-                    };
-                    output.push(var_ptr.into());
+                    let var_ptr = ctx
+                        .vars()
+                        .get_ptr(name)
+                        .ok_or_else(|| Error::UnknownVar(Cow::Borrowed(name)))?;
+                    output.push(T::from(var_ptr));
                     f64_cache.clear();
                 }
                 InfixToken::Op(op) => {
@@ -169,10 +166,10 @@ where
                     }
                 }
                 InfixToken::Fn(name, args) => {
-                    let fn_ptr = match ctx.get_fn(name) {
-                        Some(var_ptr) => var_ptr as *const ExprFn as FnPtr,
-                        None => return Err(Error::UnknownFn(Cow::Borrowed(name))),
-                    };
+                    let fn_ptr = ctx
+                        .fns()
+                        .get_ptr(name)
+                        .ok_or_else(|| Error::UnknownVar(Cow::Borrowed(name)))?;
                     let fn_token = T::from((fn_ptr, args.len()));
 
                     for arg_tokens in args {

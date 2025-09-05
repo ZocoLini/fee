@@ -40,8 +40,8 @@ where
 
 impl<V, F> Context<Locked, V, F>
 where
-    V: Resolver<Locked, f64> + LockedResolver,
-    F: Resolver<Locked, ExprFn> + LockedResolver,
+    V: Resolver<Locked, f64> + LockedResolver<f64>,
+    F: Resolver<Locked, ExprFn> + LockedResolver<ExprFn>,
 {
     pub fn new_locked(vals: V, funcs: F) -> Self
     {
@@ -68,6 +68,16 @@ where
     pub(crate) fn get_fn(&self, name: &str) -> Option<&ExprFn>
     {
         self.fns.resolve(name)
+    }
+
+    pub fn vars(&self) -> &V
+    {
+        &self.vars
+    }
+
+    pub fn fns(&self) -> &F
+    {
+        &self.fns
     }
 
     pub fn vars_mut(&mut self) -> &mut V

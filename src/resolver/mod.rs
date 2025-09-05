@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, marker::PhantomData};
 
 mod constant;
 mod default;
@@ -13,7 +13,16 @@ pub use indexed::IndexedResolver;
 pub use small::SmallResolver;
 
 pub trait ResolverState {}
-pub trait LockedResolver {}
+pub trait LockedResolver<T>: Resolver<Locked, T>
+{
+    fn get_ptr<'a>(&'a self, name: &str) -> Option<Ptr<'a, T>>
+    {
+        self.resolve(name).map(|v| Ptr {
+            ptr: v as *const T as *mut T,
+            _marker: std::marker::PhantomData,
+        })
+    }
+}
 pub trait UnlockedResolver {}
 
 pub struct Locked;
@@ -22,8 +31,30 @@ pub struct Unlocked;
 impl ResolverState for Locked {}
 impl ResolverState for Unlocked {}
 
-pub type VarPtr = *mut f64;
-pub type FnPtr = *mut fn(&[f64]) -> f64;
+#[derive(Debug, PartialEq)]
+pub struct Ptr<'a, T>
+{
+    ptr: *mut T,
+
+    _marker: PhantomData<&'a ()>,
+}
+
+impl<'a, T> Ptr<'a, T>
+where
+    T: Copy,
+{
+    pub fn set(&self, value: T)
+    {
+        unsafe {
+            *self.ptr = value;
+        }
+    }
+
+    pub fn get(&self) -> T
+    {
+        unsafe { *self.ptr }
+    }
+}
 
 /// Trait for resolving values by name.
 ///

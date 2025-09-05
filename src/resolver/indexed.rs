@@ -58,7 +58,7 @@ pub struct IndexedResolver<S: ResolverState, T>
     _state: S,
 }
 
-impl<T> LockedResolver for IndexedResolver<Locked, T> {}
+impl<T> LockedResolver<T> for IndexedResolver<Locked, T> {}
 impl<T> UnlockedResolver for IndexedResolver<Unlocked, T> {}
 
 const ALPHABET_SIZE: usize = (b'z' - b'a' + 1) as usize;

@@ -9,7 +9,7 @@ use crate::prelude::*;
 /// `eval()` using a `Context` that contains two `EmptyResolver`s.
 pub struct EmptyResolver;
 
-impl LockedResolver for EmptyResolver {}
+impl<T> LockedResolver<T> for EmptyResolver {}
 impl UnlockedResolver for EmptyResolver {}
 
 impl<T> Resolver<Unlocked, T> for EmptyResolver
