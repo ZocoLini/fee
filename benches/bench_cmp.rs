@@ -3,7 +3,7 @@ use std::hint::black_box;
 use criterion::{Criterion, criterion_group, criterion_main};
 use evalexpr::{DefaultNumericTypes, build_operator_tree};
 use fasteval::{CachedCallbackNamespace, Compiler, EmptyNamespace, Evaler};
-use fee::{EmptyResolver, IRpnToken, IndexedResolver, RpnToken, prelude::*};
+use fee::{EmptyResolver, IndexedResolver, prelude::*};
 
 fn evaluation(c: &mut Criterion)
 {
@@ -183,14 +183,25 @@ fn parse(c: &mut Criterion)
     });
 
     c.bench_function("cmp/parse/fee/rpn", |b| {
+        let context = Context::empty();
         b.iter(|| {
-            black_box(Expr::<RpnToken<'_>>::try_from(expr).unwrap());
+            black_box(Expr::compile_unlocked(expr, &context).unwrap());
         });
     });
 
     c.bench_function("cmp/parse/fee/irpn", |b| {
+        let v_resolver = IndexedResolver::new_var_resolver();
+        let f_resolver = IndexedResolver::new_fn_resolver();
+        let context = Context::new(v_resolver, f_resolver);
         b.iter(|| {
-            black_box(Expr::<IRpnToken>::try_from(expr).unwrap());
+            black_box(Expr::compile_unlocked(expr, &context).unwrap());
+        });
+    });
+
+    c.bench_function("cmp/parse/fee/lrpn", |b| {
+        let context = Context::empty().lock();
+        b.iter(|| {
+            black_box(Expr::compile_locked(expr, &context).unwrap());
         });
     });
 }

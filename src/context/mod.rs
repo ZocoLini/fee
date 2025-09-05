@@ -139,10 +139,10 @@ where
     }
 }
 
-impl Context<Locked, EmptyResolver, EmptyResolver, EmptyResolver, EmptyResolver>
+impl Context<Unlocked, EmptyResolver, EmptyResolver, EmptyResolver, EmptyResolver>
 {
     pub fn empty() -> Self
     {
-        Context::new(EmptyResolver, EmptyResolver).lock()
+        Context::new(EmptyResolver, EmptyResolver)
     }
 }
