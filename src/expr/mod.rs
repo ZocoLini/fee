@@ -74,7 +74,11 @@ where
         Expr::try_from((expr, ctx))
     }
 
-    fn eval_locked(&self, stack: &mut Vec<f64>) -> Result<f64, Error<'e>>;
+    fn eval_locked(
+        &self,
+        ctx: &Context<Locked, V, F>,
+        stack: &mut Vec<f64>,
+    ) -> Result<f64, Error<'e>>;
 }
 
 impl<'e, T> TryFrom<&'e str> for Expr<T>

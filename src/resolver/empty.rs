@@ -12,9 +12,15 @@ pub struct EmptyResolver;
 impl LockedResolver for EmptyResolver {}
 impl UnlockedResolver for EmptyResolver {}
 
-impl<S, T> Resolver<S, T> for EmptyResolver
-where
-    S: ResolverState,
+impl<T> Resolver<Unlocked, T> for EmptyResolver
+{
+    fn resolve(&self, _name: &str) -> Option<&T>
+    {
+        None
+    }
+}
+
+impl<T> Resolver<Locked, T> for EmptyResolver
 {
     fn resolve(&self, _name: &str) -> Option<&T>
     {

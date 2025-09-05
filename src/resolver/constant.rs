@@ -39,6 +39,14 @@ impl<T> Resolver<Locked, T> for ConstantResolver<T>
     }
 }
 
+impl<T> Resolver<Unlocked, T> for ConstantResolver<T>
+{
+    fn resolve(&self, _name: &str) -> Option<&T>
+    {
+        Some(&self.value)
+    }
+}
+
 impl<T> ConstantResolver<T>
 {
     pub fn new(value: T) -> Self

@@ -46,7 +46,11 @@ where
     V: Resolver<Locked, f64> + LockedResolver,
     F: Resolver<Locked, ExprFn> + LockedResolver,
 {
-    fn eval_locked(&self, stack: &mut Vec<f64>) -> Result<f64, Error<'e>>
+    fn eval_locked(
+        &self,
+        _ctx: &Context<Locked, V, F>,
+        stack: &mut Vec<f64>,
+    ) -> Result<f64, Error<'e>>
     {
         if self.tokens.len() == 1 {
             if let LRpnToken::Num(num) = &self.tokens[0] {

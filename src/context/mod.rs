@@ -1,5 +1,5 @@
 use crate::{
-    EmptyResolver, Error, ExprFn, IndexedResolver,
+    EmptyResolver, ExprFn, IndexedResolver,
     prelude::{Locked, LockedResolver, Resolver, ResolverState, Unlocked, UnlockedResolver},
 };
 
