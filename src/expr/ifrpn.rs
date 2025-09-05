@@ -51,7 +51,7 @@ impl<'e> From<(&'e str, usize)> for IFRpnToken<'e>
 impl<'e, V> RpnExpr<'e, V, IndexedResolver<Unlocked, ExprFn>, IFRpnToken<'e>>
     for Expr<IFRpnToken<'e>>
 where
-    V: Resolver<Unlocked, f64> + NotIndexedResolver + UnlockedResolver,
+    V: Resolver<Unlocked, f64> + NotIndexedResolver + UnlockedResolver<f64>,
 {
     fn eval_unlocked(
         &self,

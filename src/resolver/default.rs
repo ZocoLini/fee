@@ -47,7 +47,7 @@ where
 }
 
 impl<T> LockedResolver<T> for DefaultResolver<Locked, T> {}
-impl<T> UnlockedResolver for DefaultResolver<Unlocked, T> {}
+impl<T> UnlockedResolver<T> for DefaultResolver<Unlocked, T> {}
 
 impl<S, T> Resolver<S, T> for DefaultResolver<S, T>
 where

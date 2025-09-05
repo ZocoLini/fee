@@ -51,7 +51,7 @@ where
 }
 
 impl<T> LockedResolver<T> for SmallResolver<Locked, T> {}
-impl<T> UnlockedResolver for SmallResolver<Unlocked, T> {}
+impl<T> UnlockedResolver<T> for SmallResolver<Unlocked, T> {}
 
 impl<S, T> Resolver<S, T> for SmallResolver<S, T>
 where

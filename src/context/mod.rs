@@ -24,8 +24,8 @@ where
 
 impl<V, F> Context<Unlocked, V, F>
 where
-    V: Resolver<Unlocked, f64> + UnlockedResolver,
-    F: Resolver<Unlocked, ExprFn> + UnlockedResolver,
+    V: Resolver<Unlocked, f64> + UnlockedResolver<f64>,
+    F: Resolver<Unlocked, ExprFn> + UnlockedResolver<ExprFn>,
 {
     pub fn new_unlocked(vals: V, funcs: F) -> Self
     {

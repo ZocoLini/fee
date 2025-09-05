@@ -45,8 +45,8 @@ impl NotIndexedResolver for EmptyResolver {}
 pub trait RpnExpr<'e, V, F, T>
 where
     T: From<f64> + From<&'e str> + From<Op> + From<(&'e str, usize)>,
-    V: Resolver<Unlocked, f64> + UnlockedResolver,
-    F: Resolver<Unlocked, ExprFn> + UnlockedResolver,
+    V: Resolver<Unlocked, f64> + UnlockedResolver<f64>,
+    F: Resolver<Unlocked, ExprFn> + UnlockedResolver<ExprFn>,
 {
     fn compile_unlocked(expr: &'e str, _ctx: &Context<Unlocked, V, F>)
     -> Result<Expr<T>, Error<'e>>

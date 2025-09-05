@@ -10,7 +10,7 @@ use crate::prelude::*;
 pub struct EmptyResolver;
 
 impl<T> LockedResolver<T> for EmptyResolver {}
-impl UnlockedResolver for EmptyResolver {}
+impl<T> UnlockedResolver<T> for EmptyResolver {}
 
 impl<T> Resolver<Unlocked, T> for EmptyResolver
 {

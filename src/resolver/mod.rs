@@ -12,7 +12,6 @@ pub use empty::EmptyResolver;
 pub use indexed::IndexedResolver;
 pub use small::SmallResolver;
 
-pub trait ResolverState {}
 pub trait LockedResolver<T>: Resolver<Locked, T>
 {
     fn get_ptr<'a>(&'a self, name: &str) -> Option<Ptr<'a, T>>
@@ -23,7 +22,9 @@ pub trait LockedResolver<T>: Resolver<Locked, T>
         })
     }
 }
-pub trait UnlockedResolver {}
+pub trait UnlockedResolver<T>: Resolver<Unlocked, T> {}
+
+pub trait ResolverState {}
 
 pub struct Locked;
 pub struct Unlocked;
