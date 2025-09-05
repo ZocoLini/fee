@@ -19,7 +19,9 @@ use crate::{
     context::Context,
     expr::infix::InfixToken,
     op::Op,
-    prelude::{FnPtr, Locked, Resolver, ResolverState, Unlocked, VarPtr},
+    prelude::{
+        FnPtr, Locked, LockedResolver, Resolver, ResolverState, Unlocked, UnlockedResolver, VarPtr,
+    },
 };
 
 #[derive(Debug, PartialEq)]
@@ -42,11 +44,13 @@ impl<T> NotIndexedResolver for ConstantResolver<T> {}
 impl<S: ResolverState, T> NotIndexedResolver for SmallResolver<S, T> {}
 impl NotIndexedResolver for EmptyResolver {}
 
-pub trait RpnExpr<'e, V: Resolver<Unlocked, f64>, F: Resolver<Unlocked, ExprFn>, T>
+pub trait RpnExpr<'e, V, F, T>
 where
     T: From<f64> + From<&'e str> + From<Op> + From<(&'e str, usize)>,
+    V: Resolver<Unlocked, f64> + UnlockedResolver,
+    F: Resolver<Unlocked, ExprFn> + UnlockedResolver,
 {
-    fn compile(expr: &'e str) -> Result<Expr<T>, Error<'e>>
+    fn compile(expr: &'e str, _ctx: &Context<Unlocked, V, F>) -> Result<Expr<T>, Error<'e>>
     {
         Expr::try_from(expr)
     }
@@ -54,9 +58,11 @@ where
     fn eval(&self, ctx: &Context<Unlocked, V, F>, stack: &mut Vec<f64>) -> Result<f64, Error<'e>>;
 }
 
-pub trait LRpnExpr<'e, V: Resolver<Locked, f64>, F: Resolver<Locked, ExprFn>, T>
+pub trait LRpnExpr<'e, V, F, T>
 where
     T: From<f64> + From<VarPtr> + From<Op> + From<(FnPtr, usize)>,
+    V: Resolver<Locked, f64> + LockedResolver,
+    F: Resolver<Locked, ExprFn> + LockedResolver,
 {
     fn compile(expr: &'e str, ctx: &Context<Locked, V, F>) -> Result<Expr<T>, Error<'e>>
     {
