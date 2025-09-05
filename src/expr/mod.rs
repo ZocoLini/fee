@@ -12,7 +12,10 @@ use smallvec::{SmallVec, smallvec};
 
 use crate::{
     ConstantResolver, DefaultResolver, EmptyResolver, Error, ExprFn, SmallResolver,
-    context::Context, expr::infix::InfixToken, op::Op, prelude::Resolver,
+    context::Context,
+    expr::infix::InfixToken,
+    op::Op,
+    prelude::{Resolver, ResolverState},
 };
 
 #[derive(Debug, PartialEq)]
@@ -30,21 +33,22 @@ impl<Token> Expr<Token>
 }
 
 trait NotIndexedResolver {}
-impl<State, T> NotIndexedResolver for DefaultResolver<State, T> {}
+impl<S: ResolverState, T> NotIndexedResolver for DefaultResolver<S, T> {}
 impl<T> NotIndexedResolver for ConstantResolver<T> {}
-impl<State, T> NotIndexedResolver for SmallResolver<State, T> {}
+impl<S: ResolverState, T> NotIndexedResolver for SmallResolver<S, T> {}
 impl NotIndexedResolver for EmptyResolver {}
 
-pub trait RpnExpr<'e, V: Resolver<f64>, F: Resolver<ExprFn>, T>
+pub trait RpnExpr<'e, S, V: Resolver<S, f64>, F: Resolver<S, ExprFn>, T>
 where
     T: From<f64> + From<&'e str> + From<Op> + From<(&'e str, usize)>,
+    S: ResolverState,
 {
-    fn compile(expr: &'e str, _ctx: &Context<V, F>) -> Result<Expr<T>, Error<'e>>
+    fn compile(expr: &'e str, _ctx: &Context<S, V, F>) -> Result<Expr<T>, Error<'e>>
     {
         Expr::try_from(expr)
     }
 
-    fn eval(&self, ctx: &Context<V, F>, stack: &mut Vec<f64>) -> Result<f64, Error<'e>>;
+    fn eval(&self, ctx: &Context<S, V, F>, stack: &mut Vec<f64>) -> Result<f64, Error<'e>>;
 }
 
 impl<'e, T> TryFrom<&'e str> for Expr<T>

@@ -1,4 +1,4 @@
-pub use crate::{Locked, Unlocked};
+pub use crate::resolver::{Locked, ResolverState, Unlocked};
 
 pub use crate::ExprFn;
 

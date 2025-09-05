@@ -42,13 +42,17 @@ const CACHE_SIZE: usize = 10; // 30 is the 'limit'
 ///
 /// assert_eq!(*var_resolver.resolve("p0").unwrap(), 20.0);
 /// ```
-pub struct SmallResolver<State, T>
+pub struct SmallResolver<S, T>
+where
+    S: ResolverState,
 {
     cache: Vec<(String, T)>,
-    _state: State,
+    _state: S,
 }
 
-impl<State, T> Resolver<T> for SmallResolver<State, T>
+impl<S, T> Resolver<S, T> for SmallResolver<S, T>
+where
+    S: ResolverState,
 {
     fn resolve(&self, name: &str) -> Option<&T>
     {
@@ -89,18 +93,5 @@ impl<T> SmallResolver<Unlocked, T>
             cache: self.cache,
             _state: Locked,
         }
-    }
-}
-
-impl SmallResolver<Locked, f64>
-{
-    pub fn get_var_pointer(&mut self, name: &str) -> Option<*mut f64>
-    {
-        for (key, value) in &mut self.cache {
-            if key == name {
-                return Some(value as *mut f64);
-            }
-        }
-        None
     }
 }

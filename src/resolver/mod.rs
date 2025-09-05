@@ -12,6 +12,17 @@ pub use empty::EmptyResolver;
 pub use indexed::IndexedResolver;
 pub use small::SmallResolver;
 
+pub trait ResolverState {}
+
+pub struct Locked;
+pub struct Unlocked;
+
+impl ResolverState for Locked {}
+impl ResolverState for Unlocked {}
+
+type VarPtr = *mut f64;
+type FnPtr = fn(&[f64]) -> f64;
+
 /// Trait for resolving values by name.
 ///
 /// This trait can be implemented to resolve any type of value by a string key.  
@@ -36,12 +47,14 @@ pub use small::SmallResolver;
 ///     }
 /// }
 /// ```
-pub trait Resolver<T>
+pub trait Resolver<State, T>
+where
+    State: ResolverState,
 {
     fn resolve(&self, name: &str) -> Option<&T>;
 }
 
-impl<T> Resolver<T> for HashMap<String, T>
+impl<T> Resolver<Unlocked, T> for HashMap<String, T>
 {
     fn resolve(&self, name: &str) -> Option<&T>
     {

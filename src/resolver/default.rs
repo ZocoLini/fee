@@ -38,13 +38,17 @@ use crate::{ExprFn, prelude::*};
 ///
 /// assert_eq!(*var_resolver.resolve("p0").unwrap(), 20.0);
 /// ```
-pub struct DefaultResolver<State, T>
+pub struct DefaultResolver<S, T>
+where
+    S: ResolverState,
 {
     vars: HashMap<String, T>,
-    _state: State,
+    _state: S,
 }
 
-impl<State, T> Resolver<T> for DefaultResolver<State, T>
+impl<S, T> Resolver<S, T> for DefaultResolver<S, T>
+where
+    S: ResolverState,
 {
     fn resolve(&self, name: &str) -> Option<&T>
     {
@@ -66,6 +70,14 @@ impl<T> DefaultResolver<Unlocked, T>
     {
         self.vars.insert(name, val);
     }
+
+    pub fn lock(self) -> DefaultResolver<Locked, T>
+    {
+        DefaultResolver {
+            vars: self.vars,
+            _state: Locked,
+        }
+    }
 }
 
 impl DefaultResolver<Unlocked, f64>
@@ -84,22 +96,6 @@ impl DefaultResolver<Unlocked, f64>
             _state: Unlocked,
         }
     }
-
-    pub fn lock(self) -> DefaultResolver<Locked, f64>
-    {
-        DefaultResolver {
-            vars: self.vars,
-            _state: Locked,
-        }
-    }
-}
-
-impl DefaultResolver<Locked, f64>
-{
-    pub fn get_var_pointer(&mut self, name: &str) -> Option<*mut f64>
-    {
-        self.vars.get_mut(name).map(|v| v as *mut f64)
-    }
 }
 
 impl DefaultResolver<Unlocked, ExprFn>
@@ -115,25 +111,5 @@ impl DefaultResolver<Unlocked, ExprFn>
             vars: hashmap,
             _state: Unlocked,
         };
-    }
-}
-
-#[cfg(test)]
-mod tests
-{
-    use super::*;
-
-    #[test]
-    fn test_locked_resolver_get_var_mut_updates_value()
-    {
-        let mut var_resolver = DefaultResolver::new_empty();
-        var_resolver.insert("x".to_string(), 10.0);
-
-        let mut resolver = var_resolver.lock();
-
-        let x = resolver.get_var_pointer("x").unwrap();
-        unsafe { *x = 20.0 };
-
-        assert_eq!(resolver.resolve("x"), Some(&20.0));
     }
 }

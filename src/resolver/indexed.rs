@@ -1,4 +1,4 @@
-use crate::{ExprFn, parsing};
+use crate::{ExprFn, parsing, prelude::*};
 
 use super::Resolver;
 
@@ -51,15 +51,19 @@ use super::Resolver;
 /// assert_eq!(y0_eval.eval(&context), Ok(1.0));
 /// assert_eq!(y1_eval.eval(&context), Ok(-2.0));
 /// ```
-pub struct IndexedResolver<T>
+pub struct IndexedResolver<S: ResolverState, T>
 {
     vars: Vec<Vec<T>>,
+
+    _state: S,
 }
 
 const ALPHABET_SIZE: usize = (b'z' - b'a' + 1) as usize;
 const ALPHABET_START_USIZE: usize = b'a' as usize;
 
-impl<T> Resolver<T> for IndexedResolver<T>
+impl<S, T> Resolver<S, T> for IndexedResolver<S, T>
+where
+    S: ResolverState,
 {
     #[inline(always)]
     fn resolve(&self, name: &str) -> Option<&T>
@@ -72,7 +76,9 @@ impl<T> Resolver<T> for IndexedResolver<T>
     }
 }
 
-impl<T> IndexedResolver<T>
+impl<S, T> IndexedResolver<S, T>
+where
+    S: ResolverState,
 {
     pub fn set(&mut self, identifier: char, index: usize, value: T)
     {
@@ -85,27 +91,41 @@ impl<T> IndexedResolver<T>
     }
 }
 
-impl IndexedResolver<f64>
+impl<T> IndexedResolver<Unlocked, T>
+{
+    pub fn lock(self) -> IndexedResolver<Locked, T>
+    {
+        IndexedResolver {
+            vars: self.vars,
+            _state: Locked,
+        }
+    }
+}
+
+impl IndexedResolver<Unlocked, f64>
 {
     pub fn new_var_resolver() -> Self
     {
         Self {
             vars: vec![vec![]; ALPHABET_SIZE],
+            _state: Unlocked,
         }
     }
 
+    // TODO: Use default trait to avoid duplicate implementations
     pub fn add_var_identifier(&mut self, identifier: char, len: usize)
     {
         self.vars[identifier as usize - ALPHABET_START_USIZE] = vec![0.0; len]
     }
 }
 
-impl IndexedResolver<ExprFn>
+impl IndexedResolver<Unlocked, ExprFn>
 {
     pub fn new_fn_resolver() -> Self
     {
         Self {
             vars: vec![vec![]; ALPHABET_SIZE],
+            _state: Unlocked,
         }
     }
 

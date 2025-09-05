@@ -1,4 +1,7 @@
-use crate::{EmptyResolver, ExprFn, IndexedResolver, prelude::Resolver};
+use crate::{
+    EmptyResolver, ExprFn, IndexedResolver,
+    prelude::{Locked, Resolver, ResolverState, Unlocked},
+};
 
 /// Container for the resolvers required to evaluate expressions containing variables or functions.
 ///
@@ -7,22 +10,56 @@ use crate::{EmptyResolver, ExprFn, IndexedResolver, prelude::Resolver};
 /// - a function resolver (`F`) that implements `Resolver<ExprFn>`
 ///
 /// This struct is passed to evaluators to provide variable values and function implementations.
-pub struct Context<V: Resolver<f64>, F: Resolver<ExprFn>>
+pub struct Context<S, V, F>
+where
+    V: Resolver<S, f64>,
+    F: Resolver<S, ExprFn>,
+    S: ResolverState,
 {
     vars: V,
     fns: F,
+
+    _state: S,
 }
 
-impl<V: Resolver<f64>, F: Resolver<ExprFn>> Context<V, F>
+impl<V, F> Context<Unlocked, V, F>
+where
+    V: Resolver<Unlocked, f64>,
+    F: Resolver<Unlocked, ExprFn>,
 {
     pub fn new(vals: V, funcs: F) -> Self
     {
         Context {
             vars: vals,
             fns: funcs,
+
+            _state: Unlocked,
         }
     }
+}
 
+impl<V, F> Context<Locked, V, F>
+where
+    V: Resolver<Locked, f64>,
+    F: Resolver<Locked, ExprFn>,
+{
+    pub fn new(vals: V, funcs: F) -> Self
+    {
+        Context {
+            vars: vals,
+            fns: funcs,
+
+            _state: Locked,
+        }
+    }
+}
+
+impl<S, V, F> Context<S, V, F>
+where
+    V: Resolver<S, f64>,
+    F: Resolver<S, ExprFn>,
+    S: ResolverState,
+{
     pub(crate) fn get_var(&self, name: &str) -> Option<&f64>
     {
         self.vars.resolve(name)
@@ -44,7 +81,10 @@ impl<V: Resolver<f64>, F: Resolver<ExprFn>> Context<V, F>
     }
 }
 
-impl<F: Resolver<ExprFn>> Context<IndexedResolver<f64>, F>
+impl<S, F> Context<S, IndexedResolver<S, f64>, F>
+where
+    S: ResolverState,
+    F: Resolver<S, ExprFn>,
 {
     pub(crate) fn get_var_by_index(&self, identifier: usize, index: usize) -> Option<&f64>
     {
@@ -52,7 +92,10 @@ impl<F: Resolver<ExprFn>> Context<IndexedResolver<f64>, F>
     }
 }
 
-impl<V: Resolver<f64>> Context<V, IndexedResolver<ExprFn>>
+impl<S, V> Context<S, V, IndexedResolver<S, ExprFn>>
+where
+    S: ResolverState,
+    V: Resolver<S, f64>,
 {
     pub(crate) fn call_fn_by_index(
         &self,
@@ -65,13 +108,10 @@ impl<V: Resolver<f64>> Context<V, IndexedResolver<ExprFn>>
     }
 }
 
-impl Context<EmptyResolver, EmptyResolver>
+impl Context<Locked, EmptyResolver, EmptyResolver>
 {
     pub fn empty() -> Self
     {
-        Context {
-            vars: EmptyResolver,
-            fns: EmptyResolver,
-        }
+        Self::new(EmptyResolver, EmptyResolver)
     }
 }

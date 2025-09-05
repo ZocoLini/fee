@@ -1,4 +1,4 @@
-use crate::prelude::Resolver;
+use crate::prelude::{Locked, Resolver, ResolverState};
 
 /// A resolver that does not resolve any values.
 ///
@@ -9,7 +9,9 @@ use crate::prelude::Resolver;
 /// `eval()` using a `Context` that contains two `EmptyResolver`s.
 pub struct EmptyResolver;
 
-impl<T> Resolver<T> for EmptyResolver
+impl<S, T> Resolver<S, T> for EmptyResolver
+where
+    S: ResolverState,
 {
     fn resolve(&self, _name: &str) -> Option<&T>
     {

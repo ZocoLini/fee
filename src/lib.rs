@@ -67,6 +67,3 @@ pub use expr::{IFRpnToken, IRpnToken, IVRpnToken, RpnToken};
 
 /// Type alias for the functions that can be called from expressions.
 pub type ExprFn = fn(&[f64]) -> f64;
-
-pub struct Locked;
-pub struct Unlocked;

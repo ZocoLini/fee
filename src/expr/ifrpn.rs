@@ -48,13 +48,14 @@ impl<'e> From<(&'e str, usize)> for IFRpnToken<'e>
     }
 }
 
-impl<'e, V> RpnExpr<'e, V, IndexedResolver<ExprFn>, IFRpnToken<'e>> for Expr<IFRpnToken<'e>>
+impl<'e, V> RpnExpr<'e, Unlocked, V, IndexedResolver<Unlocked, ExprFn>, IFRpnToken<'e>>
+    for Expr<IFRpnToken<'e>>
 where
-    V: Resolver<f64> + NotIndexedResolver,
+    V: Resolver<Unlocked, f64> + NotIndexedResolver,
 {
     fn eval(
         &self,
-        ctx: &Context<V, IndexedResolver<ExprFn>>,
+        ctx: &Context<Unlocked, V, IndexedResolver<Unlocked, ExprFn>>,
         stack: &mut Vec<f64>,
     ) -> Result<f64, Error<'e>>
     {
