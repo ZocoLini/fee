@@ -62,7 +62,7 @@ where
     }
 }
 
-impl<'a, V, F> ExprEvaluator<'a, Locked, V, F, V, F, LRpnToken<'a>> for Expr<LRpnToken<'a>>
+impl<'a, V, F> ExprEvaluator<'a, Locked, V, F, V, F> for Expr<LRpnToken<'a>>
 where
     V: LockedResolver<f64>,
     F: LockedResolver<ExprFn>,

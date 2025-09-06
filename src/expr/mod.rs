@@ -43,15 +43,11 @@ where
     fn compile(expr: &'e str, ctx: &'c Context<S, V, F, LV, LF>) -> Result<Expr<T>, Error<'e>>;
 }
 
-pub trait ExprEvaluator<'e, S, V, F, LV, LF, T>
+pub trait ExprEvaluator<'e, S, V, F, LV, LF>
 where
     S: ResolverState,
 {
-    fn eval(
-        &self,
-        ctx: &Context<S, V, F, LV, LF>,
-        stack: &mut Vec<f64>,
-    ) -> Result<f64, Error<'e>>;
+    fn eval(&self, ctx: &Context<S, V, F, LV, LF>, stack: &mut Vec<f64>) -> Result<f64, Error<'e>>;
 }
 
 impl<'e, T> TryFrom<&'e str> for Expr<T>

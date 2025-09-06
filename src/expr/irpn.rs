@@ -85,12 +85,12 @@ impl<'e>
 
 impl<'e>
     ExprEvaluator<
-        'e, Unlocked, 
+        'e,
+        Unlocked,
         IndexedResolver<Unlocked, f64>,
         IndexedResolver<Unlocked, ExprFn>,
         IndexedResolver<Locked, f64>,
         IndexedResolver<Locked, ExprFn>,
-        IRpnToken,
     > for Expr<IRpnToken>
 {
     fn eval(

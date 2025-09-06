@@ -85,12 +85,12 @@ where
 
 impl<'e, V, LV>
     ExprEvaluator<
-        'e, Unlocked, 
+        'e,
+        Unlocked,
         V,
         IndexedResolver<Unlocked, ExprFn>,
         LV,
         IndexedResolver<Locked, ExprFn>,
-        IFRpnToken<'e>,
     > for Expr<IFRpnToken<'e>>
 where
     V: NotIndexedResolver + UnlockedResolver<f64, LV>,
