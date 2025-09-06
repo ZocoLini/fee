@@ -19,8 +19,8 @@ fn var_resolver(c: &mut Criterion)
     });
 
     c.bench_function("internal/resolver/indexed", |b| {
-        let mut resolver = IndexedResolver::new_var_resolver();
-        resolver.add_var_identifier('p', 10);
+        let mut resolver = IndexedResolver::new();
+        resolver.add_id('p', 10);
         for i in 0..10 {
             resolver.set('p', i, 2.0);
         }

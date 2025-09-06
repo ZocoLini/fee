@@ -120,7 +120,7 @@ where
 {
     pub(crate) fn get_var_by_index(&self, identifier: usize, index: usize) -> Option<&f64>
     {
-        self.vars.get_by_index(identifier, index)
+        self.vars.get(identifier, index)
     }
 }
 
@@ -136,7 +136,7 @@ where
         args: &[f64],
     ) -> Option<f64>
     {
-        Some(self.fns.get_by_index(identifier, index)?(args))
+        Some(self.fns.get(identifier, index)?(args))
     }
 }
 

@@ -18,8 +18,8 @@ fn parsers(c: &mut Criterion)
     });
 
     c.bench_function("internal/parse/irpn", |b| {
-        let v_resolver = IndexedResolver::new_var_resolver();
-        let f_resolver = IndexedResolver::new_fn_resolver();
+        let v_resolver = IndexedResolver::new();
+        let f_resolver = IndexedResolver::new();
         let context = Context::new(v_resolver, f_resolver);
         b.iter(|| {
             black_box(Expr::compile_unlocked(expr, &context).unwrap());

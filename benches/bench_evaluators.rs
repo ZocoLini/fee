@@ -13,7 +13,7 @@ fn rpn_evaluator(c: &mut Criterion)
         var_resolver.insert("p0".to_string(), 10.0);
 
         let mut fn_resolver = DefaultResolver::new_empty();
-        fn_resolver.insert("abs".to_string(), abs as ExprFn);
+        fn_resolver.insert("abs".to_string(), ExprFn::new(abs));
 
         let context = Context::new(var_resolver, fn_resolver);
         let expr = Expr::compile_unlocked(expr, &context).unwrap();
@@ -25,7 +25,7 @@ fn rpn_evaluator(c: &mut Criterion)
 
     c.bench_function("internal/eval/rpn/constant_r", |b| {
         let var_resolver = ConstantResolver::new(10.0);
-        let fn_resolver = ConstantResolver::new(abs as ExprFn);
+        let fn_resolver = ConstantResolver::new(ExprFn::new(abs));
 
         let context = Context::new(var_resolver, fn_resolver);
         let expr = Expr::compile_unlocked(expr, &context).unwrap();
@@ -38,13 +38,13 @@ fn rpn_evaluator(c: &mut Criterion)
     c.bench_function("internal/eval/rpn/indexed_r", |b| {
         let expr = "p0((2 * 21) + 3 - 35 - ((5 * 80) + 5) + p0)";
 
-        let mut var_resolver = IndexedResolver::new_var_resolver();
-        var_resolver.add_var_identifier('p', 1);
+        let mut var_resolver = IndexedResolver::new();
+        var_resolver.add_id('p', 1);
         var_resolver.set('p', 0, 10.0);
 
-        let mut fn_resolver = IndexedResolver::new_fn_resolver();
-        fn_resolver.add_fn_identifier('p', 1);
-        fn_resolver.set('p', 0, abs as ExprFn);
+        let mut fn_resolver = IndexedResolver::new();
+        fn_resolver.add_id('p', 1);
+        fn_resolver.set('p', 0, ExprFn::new(abs));
 
         let context = Context::new(var_resolver, fn_resolver);
         let expr = Expr::compile_unlocked(expr, &context).unwrap();
@@ -59,7 +59,7 @@ fn rpn_evaluator(c: &mut Criterion)
         var_resolver.insert("p0".to_string(), 10.0);
 
         let mut fn_resolver = SmallResolver::new();
-        fn_resolver.insert("abs".to_string(), abs as ExprFn);
+        fn_resolver.insert("abs".to_string(), ExprFn::new(abs));
 
         let context = Context::new(var_resolver, fn_resolver);
         let expr = Expr::compile_unlocked(expr, &context).unwrap();
@@ -76,13 +76,13 @@ fn irpn_evaluator(c: &mut Criterion)
     let mut stack = Vec::with_capacity(expr.len() / 2);
 
     c.bench_function("internal/eval/irpn/indexed_r", |b| {
-        let mut var_resolver = IndexedResolver::new_var_resolver();
-        var_resolver.add_var_identifier('p', 1);
+        let mut var_resolver = IndexedResolver::new();
+        var_resolver.add_id('p', 1);
         var_resolver.set('p', 0, 10.0);
 
-        let mut fn_resolver = IndexedResolver::new_fn_resolver();
-        fn_resolver.add_fn_identifier('p', 1);
-        fn_resolver.set('p', 0, abs as ExprFn);
+        let mut fn_resolver = IndexedResolver::new();
+        fn_resolver.add_id('p', 1);
+        fn_resolver.set('p', 0, ExprFn::new(abs));
 
         let context = Context::new(var_resolver, fn_resolver);
         let expr = Expr::compile_unlocked(expr, &context).unwrap();

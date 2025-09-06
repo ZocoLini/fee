@@ -77,16 +77,16 @@ fn evaluation(c: &mut Criterion)
     });
 
     c.bench_function("cmp/eval/fee", |b| {
-        let mut var_resolver = IndexedResolver::new_var_resolver();
-        var_resolver.add_var_identifier('p', 2);
+        let mut var_resolver = IndexedResolver::new();
+        var_resolver.add_id('p', 2);
         var_resolver.set('p', 0, p0);
         var_resolver.set('p', 1, p1);
-        var_resolver.add_var_identifier('y', 1);
+        var_resolver.add_id('y', 1);
         var_resolver.set('y', 0, y0);
 
-        let mut fn_resolver = IndexedResolver::new_fn_resolver();
-        fn_resolver.add_fn_identifier('f', 1);
-        fn_resolver.set('f', 0, (|args| args[0]) as ExprFn);
+        let mut fn_resolver = IndexedResolver::new();
+        fn_resolver.add_id('f', 1);
+        fn_resolver.set('f', 0, ExprFn::new(|args| args[0]));
 
         let context = Context::new(var_resolver, fn_resolver).lock();
         let mut stack = Vec::with_capacity(expr.len() / 2);
@@ -187,8 +187,8 @@ fn parse(c: &mut Criterion)
     });
 
     c.bench_function("cmp/parse/fee/irpn", |b| {
-        let v_resolver = IndexedResolver::new_var_resolver();
-        let f_resolver = IndexedResolver::new_fn_resolver();
+        let v_resolver = IndexedResolver::new();
+        let f_resolver = IndexedResolver::new();
         let context = Context::new(v_resolver, f_resolver);
         b.iter(|| {
             black_box(Expr::compile_unlocked(expr, &context).unwrap());

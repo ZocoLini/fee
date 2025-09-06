@@ -5,8 +5,8 @@ use fee::{prelude::*, *};
 #[test]
 fn test_rpn_eval_with_indexed_var_resolver()
 {
-    let mut var_resolver = IndexedResolver::new_var_resolver();
-    var_resolver.add_var_identifier('p', 20);
+    let mut var_resolver = IndexedResolver::new();
+    var_resolver.add_id('p', 20);
     var_resolver.set('p', 19, 4.0);
 
     let fn_resolver = EmptyResolver::new();
@@ -37,10 +37,13 @@ fn test_rpn_eval_with_vars_and_fn()
     var_resolver.insert("p1".to_string(), 4.0);
 
     let mut fn_resolver = DefaultResolver::new_fn_resolver();
-    fn_resolver.insert("abs".to_string(), |args| {
-        let x = args[0];
-        x.abs()
-    });
+    fn_resolver.insert(
+        "abs".to_string(),
+        ExprFn::new(|args: &[f64]| {
+            let x = args[0];
+            x.abs()
+        }),
+    );
 
     let context = Context::new(var_resolver, fn_resolver);
     let mut stack = Vec::with_capacity(10);
@@ -76,10 +79,13 @@ fn test_rpn_eval_multi_threaded()
     var_resolver.insert("p1".to_string(), 4.0);
 
     let mut fn_resolver = DefaultResolver::new_fn_resolver();
-    fn_resolver.insert("abs".to_string(), |args| {
-        let x = args[0];
-        x.abs()
-    });
+    fn_resolver.insert(
+        "abs".to_string(),
+        ExprFn::new(|args| {
+            let x = args[0];
+            x.abs()
+        }),
+    );
 
     let context = Arc::new(Context::new(var_resolver, fn_resolver));
     let expr = Arc::new(Expr::compile_unlocked(expr, &context).unwrap());

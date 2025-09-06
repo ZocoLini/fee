@@ -1,6 +1,5 @@
 use crate::{
     parsing,
-    prelude::*,
     resolver::{Locked, LockedResolver, ResolverState, Unlocked, UnlockedResolver},
 };
 
@@ -96,20 +95,20 @@ impl<S, T> IndexedResolver<S, T>
 where
     S: ResolverState,
 {
-    pub fn set(&mut self, identifier: char, index: usize, value: T)
+    pub fn set(&mut self, id: char, index: usize, value: T)
     {
-        self.vars[identifier as usize - ALPHABET_START_USIZE][index] = value;
+        self.vars[id as usize - ALPHABET_START_USIZE][index] = value;
     }
 
-    pub(crate) fn get_by_index(&self, identifier: usize, index: usize) -> Option<&T>
+    pub(crate) fn get(&self, id: usize, index: usize) -> Option<&T>
     {
-        self.vars[identifier].get(index)
+        self.vars[id].get(index)
     }
 }
 
-impl IndexedResolver<Unlocked, f64>
+impl<T: Default + Clone> IndexedResolver<Unlocked, T>
 {
-    pub fn new_var_resolver() -> Self
+    pub fn new() -> Self
     {
         Self {
             vars: vec![vec![]; ALPHABET_SIZE],
@@ -117,25 +116,8 @@ impl IndexedResolver<Unlocked, f64>
         }
     }
 
-    // TODO: Use default trait to avoid duplicate implementations
-    pub fn add_var_identifier(&mut self, identifier: char, len: usize)
+    pub fn add_id(&mut self, id: char, len: usize)
     {
-        self.vars[identifier as usize - ALPHABET_START_USIZE] = vec![0.0; len]
-    }
-}
-
-impl IndexedResolver<Unlocked, ExprFn>
-{
-    pub fn new_fn_resolver() -> Self
-    {
-        Self {
-            vars: vec![vec![]; ALPHABET_SIZE],
-            _state: Unlocked,
-        }
-    }
-
-    pub fn add_fn_identifier(&mut self, identifier: char, len: usize)
-    {
-        self.vars[identifier as usize - ALPHABET_START_USIZE] = vec![|_| { 0.0 }; len]
+        self.vars[id as usize - ALPHABET_START_USIZE] = vec![T::default(); len]
     }
 }

@@ -111,12 +111,22 @@ impl DefaultResolver<Unlocked, ExprFn>
     {
         let mut hashmap: HashMap<String, ExprFn> = HashMap::new();
 
-        hashmap.insert("abs".to_string(), |x| x[0].abs());
-        hashmap.insert("sqrt".to_string(), |x| x[0].sqrt());
+        hashmap.insert("abs".to_string(), ExprFn(abs));
+        hashmap.insert("sqrt".to_string(), ExprFn(sqrt));
 
         return DefaultResolver {
             vars: hashmap,
             _state: Unlocked,
         };
     }
+}
+
+fn abs(x: &[f64]) -> f64
+{
+    x[0].abs()
+}
+
+fn sqrt(x: &[f64]) -> f64
+{
+    x[0].sqrt()
 }

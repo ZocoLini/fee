@@ -57,10 +57,43 @@ mod resolver;
 
 pub mod prelude;
 
+use std::ops::Deref;
+
 pub use crate::error::*;
 pub use crate::resolver::{
     ConstantResolver, DefaultResolver, EmptyResolver, IndexedResolver, Ptr, SmallResolver,
 };
 
-/// Type alias for the functions that can be called from expressions.
-pub type ExprFn = fn(&[f64]) -> f64;
+#[allow(unpredictable_function_pointer_comparisons)]
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ExprFn(fn(&[f64]) -> f64);
+
+impl ExprFn
+{
+    pub fn new(f: fn(&[f64]) -> f64) -> Self
+    {
+        ExprFn(f)
+    }
+}
+
+impl Deref for ExprFn
+{
+    type Target = fn(&[f64]) -> f64;
+
+    fn deref(&self) -> &Self::Target
+    {
+        &self.0
+    }
+}
+
+impl Default for ExprFn
+{
+    fn default() -> Self
+    {
+        fn identity(_: &[f64]) -> f64
+        {
+            0.0
+        }
+        ExprFn(identity)
+    }
+}
