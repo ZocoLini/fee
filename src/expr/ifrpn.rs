@@ -84,8 +84,8 @@ where
 }
 
 impl<'e, V, LV>
-    RpnExpr<
-        'e,
+    ExprEvaluator<
+        'e, Unlocked, 
         V,
         IndexedResolver<Unlocked, ExprFn>,
         LV,

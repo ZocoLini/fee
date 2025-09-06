@@ -10,7 +10,7 @@ use std::borrow::Cow;
 use smallvec::{SmallVec, smallvec};
 
 use crate::Ptr;
-use crate::resolver::{Locked, LockedResolver, ResolverState, Unlocked, UnlockedResolver};
+use crate::resolver::{Locked, LockedResolver, ResolverState};
 use crate::{
     ConstantResolver, DefaultResolver, EmptyResolver, Error, ExprFn, SmallResolver,
     context::Context, expr::infix::InfixToken, op::Op, prelude::*,
@@ -43,30 +43,13 @@ where
     fn compile(expr: &'e str, ctx: &'c Context<S, V, F, LV, LF>) -> Result<Expr<T>, Error<'e>>;
 }
 
-pub trait RpnExpr<'e, V, F, LV, LF, T>
+pub trait ExprEvaluator<'e, S, V, F, LV, LF, T>
 where
-    T: From<f64> + From<&'e str> + From<Op> + From<(&'e str, usize)>,
-    V: UnlockedResolver<f64, LV>,
-    F: UnlockedResolver<ExprFn, LF>,
-    LV: LockedResolver<f64>,
-    LF: LockedResolver<ExprFn>,
+    S: ResolverState,
 {
     fn eval(
         &self,
-        ctx: &Context<Unlocked, V, F, LV, LF>,
-        stack: &mut Vec<f64>,
-    ) -> Result<f64, Error<'e>>;
-}
-
-pub trait LRpnExpr<'e, V, F, T>
-where
-    T: From<f64> + From<Ptr<'e, f64>> + From<Op> + From<(Ptr<'e, ExprFn>, usize)>,
-    V: LockedResolver<f64>,
-    F: LockedResolver<ExprFn>,
-{
-    fn eval(
-        &self,
-        ctx: &Context<Locked, V, F, V, F>,
+        ctx: &Context<S, V, F, LV, LF>,
         stack: &mut Vec<f64>,
     ) -> Result<f64, Error<'e>>;
 }

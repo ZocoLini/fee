@@ -66,7 +66,7 @@ where
     }
 }
 
-impl<'e, V, F, LV, LF> RpnExpr<'e, V, F, LV, LF, RpnToken<'e>> for Expr<RpnToken<'e>>
+impl<'e, V, F, LV, LF> ExprEvaluator<'e, Unlocked, V, F, LV, LF, RpnToken<'e>> for Expr<RpnToken<'e>>
 where
     V: NotIndexedResolver + UnlockedResolver<f64, LV>,
     F: NotIndexedResolver + UnlockedResolver<ExprFn, LF>,

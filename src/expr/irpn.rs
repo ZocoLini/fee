@@ -84,8 +84,8 @@ impl<'e>
 }
 
 impl<'e>
-    RpnExpr<
-        'e,
+    ExprEvaluator<
+        'e, Unlocked, 
         IndexedResolver<Unlocked, f64>,
         IndexedResolver<Unlocked, ExprFn>,
         IndexedResolver<Locked, f64>,
