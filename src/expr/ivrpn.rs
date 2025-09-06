@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use crate::{
     Error, EvalError, IndexedResolver,
-    expr::NotIndexedResolver,
+    expr::{ExprCompiler, NotIndexedResolver},
     op::Op,
     parsing,
     prelude::*,
@@ -50,6 +50,36 @@ impl<'e> From<(&'e str, usize)> for IVRpnToken<'e>
     fn from((name, argc): (&'e str, usize)) -> Self
     {
         IVRpnToken::Fn(name, argc)
+    }
+}
+
+impl<'e, F, LF>
+    ExprCompiler<
+        'e,
+        '_,
+        Unlocked,
+        IndexedResolver<Unlocked, f64>,
+        F,
+        IndexedResolver<Locked, f64>,
+        LF,
+        IVRpnToken<'e>,
+    > for Expr<IVRpnToken<'e>>
+where
+    F: NotIndexedResolver + UnlockedResolver<ExprFn, LF>,
+    LF: LockedResolver<ExprFn>,
+{
+    fn compile(
+        expr: &'e str,
+        _ctx: &Context<
+            Unlocked,
+            IndexedResolver<Unlocked, f64>,
+            F,
+            IndexedResolver<Locked, f64>,
+            LF,
+        >,
+    ) -> Result<Expr<IVRpnToken<'e>>, Error<'e>>
+    {
+        Expr::try_from(expr)
     }
 }
 

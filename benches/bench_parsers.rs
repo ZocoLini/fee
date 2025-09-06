@@ -13,7 +13,7 @@ fn parsers(c: &mut Criterion)
     c.bench_function("internal/parse/rpn", |b| {
         let context = Context::empty();
         b.iter(|| {
-            black_box(Expr::compile_unlocked(expr, &context).unwrap());
+            black_box(Expr::compile(expr, &context).unwrap());
         });
     });
 
@@ -22,14 +22,14 @@ fn parsers(c: &mut Criterion)
         let f_resolver = IndexedResolver::new();
         let context = Context::new(v_resolver, f_resolver);
         b.iter(|| {
-            black_box(Expr::compile_unlocked(expr, &context).unwrap());
+            black_box(Expr::compile(expr, &context).unwrap());
         });
     });
 
     c.bench_function("internal/parse/lrpn", |b| {
         let context = Context::empty();
         b.iter(|| {
-            black_box(Expr::compile_unlocked(expr, &context).unwrap());
+            black_box(Expr::compile(expr, &context).unwrap());
         });
     });
 }

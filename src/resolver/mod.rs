@@ -30,6 +30,8 @@ pub trait UnlockedResolver<T, R: LockedResolver<T>>: Resolver<Unlocked, T>
 
 pub trait ResolverState {}
 
+// TODO: Find a better name than Locked and Unlocked
+
 pub struct Locked;
 pub struct Unlocked;
 
@@ -63,7 +65,7 @@ where
 
 /// Trait for resolving values by name.
 ///
-/// This trait can be implemented to resolve any type of value by a string key.  
+/// This trait can be implemented to resolve any type of value by a string key.
 /// Within this crate, it is primarily used for:
 /// - Resolving **expression variables** to `f64` values.
 /// - Resolving **function names** to `ExprFn` (functions taking a slice of `f64` and returning `f64`).

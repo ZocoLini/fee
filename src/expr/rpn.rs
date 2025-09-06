@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use crate::{
     Error, EvalError,
-    expr::NotIndexedResolver,
+    expr::{ExprCompiler, NotIndexedResolver},
     op::Op,
     prelude::*,
     resolver::{LockedResolver, Unlocked, UnlockedResolver},
@@ -46,6 +46,23 @@ impl<'e> From<(&'e str, usize)> for RpnToken<'e>
     fn from((name, argc): (&'e str, usize)) -> Self
     {
         RpnToken::Fn(name, argc)
+    }
+}
+
+impl<'e, V, F, LV, LF> ExprCompiler<'e, '_, Unlocked, V, F, LV, LF, RpnToken<'e>>
+    for Expr<RpnToken<'e>>
+where
+    V: NotIndexedResolver + UnlockedResolver<f64, LV>,
+    F: NotIndexedResolver + UnlockedResolver<ExprFn, LF>,
+    LV: LockedResolver<f64>,
+    LF: LockedResolver<ExprFn>,
+{
+    fn compile(
+        expr: &'e str,
+        _ctx: &Context<Unlocked, V, F, LV, LF>,
+    ) -> Result<Expr<RpnToken<'e>>, Error<'e>>
+    {
+        Expr::try_from(expr)
     }
 }
 

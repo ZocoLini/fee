@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use crate::{
     Error, EvalError, IndexedResolver,
-    expr::NotIndexedResolver,
+    expr::{ExprCompiler, NotIndexedResolver},
     op::Op,
     parsing,
     prelude::*,
@@ -50,6 +50,36 @@ impl<'e> From<(&'e str, usize)> for IFRpnToken<'e>
         let letter = name_bytes[0] - b'a';
         let idx = parsing::parse_usize(&name_bytes[1..]);
         IFRpnToken::Fn(letter as usize, idx, argc)
+    }
+}
+
+impl<'e, V, LV>
+    ExprCompiler<
+        'e,
+        '_,
+        Unlocked,
+        V,
+        IndexedResolver<Unlocked, ExprFn>,
+        LV,
+        IndexedResolver<Locked, ExprFn>,
+        IFRpnToken<'e>,
+    > for Expr<IFRpnToken<'e>>
+where
+    V: NotIndexedResolver + UnlockedResolver<f64, LV>,
+    LV: LockedResolver<f64>,
+{
+    fn compile(
+        expr: &'e str,
+        _ctx: &Context<
+            Unlocked,
+            V,
+            IndexedResolver<Unlocked, ExprFn>,
+            LV,
+            IndexedResolver<Locked, ExprFn>,
+        >,
+    ) -> Result<Expr<IFRpnToken<'e>>, Error<'e>>
+    {
+        Expr::try_from(expr)
     }
 }
 

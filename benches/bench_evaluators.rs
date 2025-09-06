@@ -16,7 +16,7 @@ fn rpn_evaluator(c: &mut Criterion)
         fn_resolver.insert("abs".to_string(), ExprFn::new(abs));
 
         let context = Context::new(var_resolver, fn_resolver);
-        let expr = Expr::compile_unlocked(expr, &context).unwrap();
+        let expr = Expr::compile(expr, &context).unwrap();
 
         b.iter(|| {
             black_box(expr.eval_unlocked(&context, &mut stack).unwrap());
@@ -28,7 +28,7 @@ fn rpn_evaluator(c: &mut Criterion)
         let fn_resolver = ConstantResolver::new(ExprFn::new(abs));
 
         let context = Context::new(var_resolver, fn_resolver);
-        let expr = Expr::compile_unlocked(expr, &context).unwrap();
+        let expr = Expr::compile(expr, &context).unwrap();
 
         b.iter(|| {
             black_box(expr.eval_unlocked(&context, &mut stack).unwrap());
@@ -47,7 +47,7 @@ fn rpn_evaluator(c: &mut Criterion)
         fn_resolver.set('p', 0, ExprFn::new(abs));
 
         let context = Context::new(var_resolver, fn_resolver);
-        let expr = Expr::compile_unlocked(expr, &context).unwrap();
+        let expr = Expr::compile(expr, &context).unwrap();
 
         b.iter(|| {
             black_box(expr.eval_unlocked(&context, &mut stack).unwrap());
@@ -62,7 +62,7 @@ fn rpn_evaluator(c: &mut Criterion)
         fn_resolver.insert("abs".to_string(), ExprFn::new(abs));
 
         let context = Context::new(var_resolver, fn_resolver);
-        let expr = Expr::compile_unlocked(expr, &context).unwrap();
+        let expr = Expr::compile(expr, &context).unwrap();
 
         b.iter(|| {
             black_box(expr.eval_unlocked(&context, &mut stack).unwrap());
@@ -85,7 +85,7 @@ fn irpn_evaluator(c: &mut Criterion)
         fn_resolver.set('p', 0, ExprFn::new(abs));
 
         let context = Context::new(var_resolver, fn_resolver);
-        let expr = Expr::compile_unlocked(expr, &context).unwrap();
+        let expr = Expr::compile(expr, &context).unwrap();
 
         b.iter(|| {
             black_box(expr.eval_unlocked(&context, &mut stack).unwrap());

@@ -91,7 +91,7 @@ fn evaluation(c: &mut Criterion)
         let context = Context::new(var_resolver, fn_resolver).lock();
         let mut stack = Vec::with_capacity(expr.len() / 2);
 
-        let expr = Expr::compile_locked(expr, &context).unwrap();
+        let expr = Expr::compile(expr, &context).unwrap();
 
         b.iter(|| {
             black_box(expr.eval_locked(&context, &mut stack).unwrap());
@@ -144,7 +144,7 @@ fn evaluation2(c: &mut Criterion)
         let context = Context::empty().lock();
         let mut stack = Vec::with_capacity(expr.len() / 2);
 
-        let expr = Expr::compile_locked(expr, &context).unwrap();
+        let expr = Expr::compile(expr, &context).unwrap();
 
         b.iter(|| {
             black_box(expr.eval_locked(&context, &mut stack).unwrap());
@@ -182,7 +182,7 @@ fn parse(c: &mut Criterion)
     c.bench_function("cmp/parse/fee/rpn", |b| {
         let context = Context::empty();
         b.iter(|| {
-            black_box(Expr::compile_unlocked(expr, &context).unwrap());
+            black_box(Expr::compile(expr, &context).unwrap());
         });
     });
 
@@ -191,14 +191,14 @@ fn parse(c: &mut Criterion)
         let f_resolver = IndexedResolver::new();
         let context = Context::new(v_resolver, f_resolver);
         b.iter(|| {
-            black_box(Expr::compile_unlocked(expr, &context).unwrap());
+            black_box(Expr::compile(expr, &context).unwrap());
         });
     });
 
     c.bench_function("cmp/parse/fee/lrpn", |b| {
         let context = Context::empty().lock();
         b.iter(|| {
-            black_box(Expr::compile_locked(expr, &context).unwrap());
+            black_box(Expr::compile(expr, &context).unwrap());
         });
     });
 }

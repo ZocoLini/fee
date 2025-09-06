@@ -36,6 +36,13 @@ impl<S: ResolverState, T> NotIndexedResolver for ConstantResolver<S, T> {}
 impl<S: ResolverState, T> NotIndexedResolver for SmallResolver<S, T> {}
 impl<S: ResolverState> NotIndexedResolver for EmptyResolver<S> {}
 
+pub trait ExprCompiler<'e, 'c, S, V, F, LV, LF, T>
+where
+    S: ResolverState,
+{
+    fn compile(expr: &'e str, ctx: &'c Context<S, V, F, LV, LF>) -> Result<Expr<T>, Error<'e>>;
+}
+
 pub trait RpnExpr<'e, V, F, LV, LF, T>
 where
     T: From<f64> + From<&'e str> + From<Op> + From<(&'e str, usize)>,
@@ -44,14 +51,6 @@ where
     LV: LockedResolver<f64>,
     LF: LockedResolver<ExprFn>,
 {
-    fn compile_unlocked(
-        expr: &'e str,
-        _ctx: &Context<Unlocked, V, F, LV, LF>,
-    ) -> Result<Expr<T>, Error<'e>>
-    {
-        Expr::try_from(expr)
-    }
-
     fn eval_unlocked(
         &self,
         ctx: &Context<Unlocked, V, F, LV, LF>,
@@ -65,14 +64,6 @@ where
     V: LockedResolver<f64>,
     F: LockedResolver<ExprFn>,
 {
-    fn compile_locked(
-        expr: &'e str,
-        ctx: &'e Context<Locked, V, F, V, F>,
-    ) -> Result<Expr<T>, Error<'e>>
-    {
-        Expr::try_from((expr, ctx))
-    }
-
     fn eval_locked(
         &self,
         ctx: &Context<Locked, V, F, V, F>,

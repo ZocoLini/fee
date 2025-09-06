@@ -1,5 +1,6 @@
 use crate::{
     Error, EvalError, Ptr,
+    expr::ExprCompiler,
     op::Op,
     prelude::*,
     resolver::{Locked, LockedResolver},
@@ -43,6 +44,21 @@ impl<'a> From<(Ptr<'a, ExprFn>, usize)> for LRpnToken<'a>
     fn from((ptr, argc): (Ptr<'a, ExprFn>, usize)) -> Self
     {
         LRpnToken::Fn(ptr, argc)
+    }
+}
+
+impl<'e: 'c, 'c: 'e, V, F> ExprCompiler<'e, 'c, Locked, V, F, V, F, LRpnToken<'c>>
+    for Expr<LRpnToken<'c>>
+where
+    V: LockedResolver<f64>,
+    F: LockedResolver<ExprFn>,
+{
+    fn compile(
+        expr: &'e str,
+        ctx: &'c Context<Locked, V, F, V, F>,
+    ) -> Result<Expr<LRpnToken<'c>>, Error<'e>>
+    {
+        Expr::try_from((expr, ctx))
     }
 }
 
