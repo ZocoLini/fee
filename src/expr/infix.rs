@@ -195,15 +195,10 @@ impl State
                                 match d {
                                     '(' | '[' => depth += 1,
                                     ')' | ']' => depth -= 1,
-                                    ',' => {
-                                        let param_expr = match Expr::<InfixToken>::try_from(
-                                            &input[start_index..i],
-                                        ) {
-                                            Ok(expr) => expr,
-                                            Err(err) => {
-                                                return Err(err);
-                                            }
-                                        };
+                                    // If depth is greater than 1, it is a parameter separator of a nested function call
+                                    ',' if depth == 1 => {
+                                        let param_expr =
+                                            Expr::<InfixToken>::try_from(&input[start_index..i])?;
                                         params.push(param_expr);
                                         start_index = i + 1;
                                     }
@@ -214,6 +209,10 @@ impl State
                                     end_index = i;
                                     break;
                                 }
+                            }
+
+                            if depth != 0 {
+                                return Err(Error::ParseError(ParseError::UnmatchedParentheses(i)));
                             }
 
                             let param_expr =

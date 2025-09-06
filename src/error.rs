@@ -26,6 +26,9 @@ pub enum ParseError<'a>
 
     #[error("invalid number '{0}' at {1}")]
     InvalidNumber(Cow<'a, str>, usize),
+
+    #[error("unmatched parentheses at {0}")]
+    UnmatchedParentheses(usize),
 }
 
 #[derive(Debug, Error, PartialEq)]

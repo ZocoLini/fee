@@ -11,8 +11,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `RpnExpr`and `IRpnExpr` structs exposed to the library user.
 ### Fixed
 - Exponentiation had precedence over the unary minus operator.
+- Fixed parsing nested functions with multiple arguments.
 ### Changed
-- The `Expr` structs are now the ones that expose the specialized `eval()` method.  
+- The `Expr` structs are now the ones that expose the specialized `eval()` method.
 ### Removed
 - Removed the `Evaluator` concept and the `RpnEvaluator` struct.
 ### Security
