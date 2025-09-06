@@ -89,7 +89,7 @@ impl<T> DefaultResolver<Unlocked, T>
 
 impl DefaultResolver<Unlocked, f64>
 {
-    pub fn new_var_resolver() -> Self
+    pub fn new_vars() -> Self
     {
         let mut hashmap = HashMap::new();
 
@@ -107,7 +107,7 @@ impl DefaultResolver<Unlocked, f64>
 
 impl DefaultResolver<Unlocked, ExprFn>
 {
-    pub fn new_fn_resolver() -> Self
+    pub fn new_fns() -> Self
     {
         let mut hashmap: HashMap<String, ExprFn> = HashMap::new();
 

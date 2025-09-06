@@ -32,11 +32,11 @@ fn test_rpn_eval_with_indexed_var_resolver()
 #[test]
 fn test_rpn_eval_with_vars_and_fn()
 {
-    let mut var_resolver = DefaultResolver::new_var_resolver();
+    let mut var_resolver = DefaultResolver::new_vars();
     var_resolver.insert("p0".to_string(), 10.0);
     var_resolver.insert("p1".to_string(), 4.0);
 
-    let mut fn_resolver = DefaultResolver::new_fn_resolver();
+    let mut fn_resolver = DefaultResolver::new_fns();
     fn_resolver.insert(
         "abs".to_string(),
         ExprFn::new(|args: &[f64]| {
@@ -74,11 +74,11 @@ fn test_rpn_eval_multi_threaded()
 {
     let expr = "abs((2 * 21) + 3 - 35 - ((5 * 80) + 5) + p0)";
 
-    let mut var_resolver = DefaultResolver::new_var_resolver();
+    let mut var_resolver = DefaultResolver::new_vars();
     var_resolver.insert("p0".to_string(), 10.0);
     var_resolver.insert("p1".to_string(), 4.0);
 
-    let mut fn_resolver = DefaultResolver::new_fn_resolver();
+    let mut fn_resolver = DefaultResolver::new_fns();
     fn_resolver.insert(
         "abs".to_string(),
         ExprFn::new(|args| {
