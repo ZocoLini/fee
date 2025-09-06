@@ -9,13 +9,11 @@ use std::borrow::Cow;
 
 use smallvec::{SmallVec, smallvec};
 
-use crate::resolver::{LockedResolver, UnlockedResolver};
+use crate::Ptr;
+use crate::resolver::{Locked, LockedResolver, ResolverState, Unlocked, UnlockedResolver};
 use crate::{
     ConstantResolver, DefaultResolver, EmptyResolver, Error, ExprFn, SmallResolver,
-    context::Context,
-    expr::infix::InfixToken,
-    op::Op,
-    prelude::{Locked, Ptr, Resolver, ResolverState, Unlocked},
+    context::Context, expr::infix::InfixToken, op::Op, prelude::*,
 };
 
 #[derive(Debug, PartialEq)]
@@ -34,9 +32,9 @@ impl<Token> Expr<Token>
 
 trait NotIndexedResolver {}
 impl<S: ResolverState, T> NotIndexedResolver for DefaultResolver<S, T> {}
-impl<T> NotIndexedResolver for ConstantResolver<T> {}
+impl<S: ResolverState, T> NotIndexedResolver for ConstantResolver<S, T> {}
 impl<S: ResolverState, T> NotIndexedResolver for SmallResolver<S, T> {}
-impl NotIndexedResolver for EmptyResolver {}
+impl<S: ResolverState> NotIndexedResolver for EmptyResolver<S> {}
 
 pub trait RpnExpr<'e, V, F, LV, LF, T>
 where

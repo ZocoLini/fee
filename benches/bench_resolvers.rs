@@ -49,15 +49,9 @@ fn var_resolver(c: &mut Criterion)
         let resolver = ConstantResolver::new(2.0);
 
         b.iter(|| {
-            black_box(
-                <ConstantResolver<f64> as Resolver<Locked, f64>>::resolve(&resolver, "p9").unwrap(),
-            );
-            black_box(
-                <ConstantResolver<f64> as Resolver<Locked, f64>>::resolve(&resolver, "p5").unwrap(),
-            );
-            black_box(
-                <ConstantResolver<f64> as Resolver<Locked, f64>>::resolve(&resolver, "p1").unwrap(),
-            );
+            black_box(resolver.resolve("p9").unwrap());
+            black_box(resolver.resolve("p5").unwrap());
+            black_box(resolver.resolve("p1").unwrap());
         });
     });
 

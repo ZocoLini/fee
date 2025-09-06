@@ -6,7 +6,7 @@ use crate::{
     op::Op,
     parsing,
     prelude::*,
-    resolver::{LockedResolver, UnlockedResolver},
+    resolver::{Locked, LockedResolver, Unlocked, UnlockedResolver},
 };
 
 #[derive(Debug, PartialEq)]

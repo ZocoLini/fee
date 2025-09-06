@@ -1,6 +1,6 @@
 use crate::{
     prelude::*,
-    resolver::{LockedResolver, UnlockedResolver},
+    resolver::{Locked, LockedResolver, ResolverState, Unlocked, UnlockedResolver},
 };
 
 const CACHE_SIZE: usize = 10; // 30 is the 'limit'

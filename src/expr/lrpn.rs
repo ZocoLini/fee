@@ -1,4 +1,9 @@
-use crate::{Error, EvalError, op::Op, prelude::*, resolver::LockedResolver};
+use crate::{
+    Error, EvalError, Ptr,
+    op::Op,
+    prelude::*,
+    resolver::{Locked, LockedResolver},
+};
 
 #[derive(Debug, PartialEq)]
 pub enum LRpnToken<'a>

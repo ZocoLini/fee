@@ -1,11 +1,12 @@
 use std::marker::PhantomData;
 
+use crate::Ptr;
+use crate::resolver::Locked;
 use crate::resolver::LockedResolver;
+use crate::resolver::ResolverState;
+use crate::resolver::Unlocked;
 use crate::resolver::UnlockedResolver;
-use crate::{
-    EmptyResolver, ExprFn, IndexedResolver,
-    prelude::{Locked, Ptr, Resolver, ResolverState, Unlocked},
-};
+use crate::{EmptyResolver, ExprFn, IndexedResolver, prelude::*};
 
 /// Container for the resolvers required to evaluate expressions containing variables or functions.
 ///
@@ -139,10 +140,17 @@ where
     }
 }
 
-impl Context<Unlocked, EmptyResolver, EmptyResolver, EmptyResolver, EmptyResolver>
+impl
+    Context<
+        Unlocked,
+        EmptyResolver<Unlocked>,
+        EmptyResolver<Unlocked>,
+        EmptyResolver<Locked>,
+        EmptyResolver<Locked>,
+    >
 {
     pub fn empty() -> Self
     {
-        Context::new(EmptyResolver, EmptyResolver)
+        Context::new(EmptyResolver::new(), EmptyResolver::new())
     }
 }

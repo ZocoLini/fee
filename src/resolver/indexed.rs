@@ -1,7 +1,7 @@
 use crate::{
     parsing,
     prelude::*,
-    resolver::{LockedResolver, UnlockedResolver},
+    resolver::{Locked, LockedResolver, ResolverState, Unlocked, UnlockedResolver},
 };
 
 use super::Resolver;

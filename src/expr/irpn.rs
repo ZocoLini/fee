@@ -1,6 +1,12 @@
 use std::borrow::Cow;
 
-use crate::{Error, EvalError, IndexedResolver, op::Op, parsing, prelude::*};
+use crate::{
+    Error, EvalError, IndexedResolver,
+    op::Op,
+    parsing,
+    prelude::*,
+    resolver::{Locked, Unlocked},
+};
 
 #[derive(Debug, PartialEq)]
 pub enum IRpnToken

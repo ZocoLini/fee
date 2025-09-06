@@ -58,9 +58,8 @@ mod resolver;
 pub mod prelude;
 
 pub use crate::error::*;
-
 pub use crate::resolver::{
-    ConstantResolver, DefaultResolver, EmptyResolver, IndexedResolver, SmallResolver,
+    ConstantResolver, DefaultResolver, EmptyResolver, IndexedResolver, Ptr, SmallResolver,
 };
 
 /// Type alias for the functions that can be called from expressions.

@@ -5,7 +5,7 @@ use crate::{
     expr::NotIndexedResolver,
     op::Op,
     prelude::*,
-    resolver::{LockedResolver, UnlockedResolver},
+    resolver::{LockedResolver, Unlocked, UnlockedResolver},
 };
 
 #[derive(Debug, PartialEq)]

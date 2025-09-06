@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use super::Resolver;
 use crate::{
     prelude::*,
-    resolver::{LockedResolver, UnlockedResolver},
+    resolver::{Locked, LockedResolver, ResolverState, Unlocked, UnlockedResolver},
 };
 
 /// General-purpose resolver that stores values indexed by name.

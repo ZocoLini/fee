@@ -1,6 +1,6 @@
 use crate::{
     prelude::*,
-    resolver::{LockedResolver, UnlockedResolver},
+    resolver::{Locked, LockedResolver, ResolverState, Unlocked, UnlockedResolver},
 };
 
 /// For the cases where any variable or function name should resolve for the same value
@@ -26,21 +26,30 @@ use crate::{
 /// let result = evaluator.eval(&context).unwrap();
 /// assert_eq!(result, 2.0);
 /// ```
-pub struct ConstantResolver<T>
+pub struct ConstantResolver<S, T>
+where
+    S: ResolverState,
 {
     value: T,
+
+    _state: S,
 }
 
-impl<T> LockedResolver<T> for ConstantResolver<T> {}
-impl<T> UnlockedResolver<T, ConstantResolver<T>> for ConstantResolver<T>
+impl<T> LockedResolver<T> for ConstantResolver<Locked, T> {}
+impl<T> UnlockedResolver<T, ConstantResolver<Locked, T>> for ConstantResolver<Unlocked, T>
 {
-    fn lock(self) -> ConstantResolver<T>
+    fn lock(self) -> ConstantResolver<Locked, T>
     {
-        self
+        ConstantResolver {
+            value: self.value,
+            _state: Locked,
+        }
     }
 }
 
-impl<T> Resolver<Locked, T> for ConstantResolver<T>
+impl<S, T> Resolver<S, T> for ConstantResolver<S, T>
+where
+    S: ResolverState,
 {
     fn resolve(&self, _name: &str) -> Option<&T>
     {
@@ -48,21 +57,21 @@ impl<T> Resolver<Locked, T> for ConstantResolver<T>
     }
 }
 
-impl<T> Resolver<Unlocked, T> for ConstantResolver<T>
-{
-    fn resolve(&self, _name: &str) -> Option<&T>
-    {
-        Some(&self.value)
-    }
-}
-
-impl<T> ConstantResolver<T>
+impl<T> ConstantResolver<Unlocked, T>
 {
     pub fn new(value: T) -> Self
     {
-        ConstantResolver { value }
+        ConstantResolver {
+            value,
+            _state: Unlocked,
+        }
     }
+}
 
+impl<S, T> ConstantResolver<S, T>
+where
+    S: ResolverState,
+{
     pub fn set(&mut self, value: T)
     {
         self.value = value;

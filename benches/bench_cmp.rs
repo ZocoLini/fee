@@ -3,7 +3,7 @@ use std::hint::black_box;
 use criterion::{Criterion, criterion_group, criterion_main};
 use evalexpr::{DefaultNumericTypes, build_operator_tree};
 use fasteval::{CachedCallbackNamespace, Compiler, EmptyNamespace, Evaler};
-use fee::{EmptyResolver, IndexedResolver, prelude::*};
+use fee::{IndexedResolver, prelude::*};
 
 fn evaluation(c: &mut Criterion)
 {
@@ -141,10 +141,7 @@ fn evaluation2(c: &mut Criterion)
     });
 
     c.bench_function("cmp/eval2/fee", |b| {
-        let var_resolver = EmptyResolver;
-        let fn_resolver = EmptyResolver;
-
-        let context = Context::new(var_resolver, fn_resolver).lock();
+        let context = Context::empty().lock();
         let mut stack = Vec::with_capacity(expr.len() / 2);
 
         let expr = Expr::compile_locked(expr, &context).unwrap();

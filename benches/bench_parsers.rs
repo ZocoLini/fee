@@ -27,9 +27,9 @@ fn parsers(c: &mut Criterion)
     });
 
     c.bench_function("internal/parse/lrpn", |b| {
-        let context = Context::empty().lock();
+        let context = Context::empty();
         b.iter(|| {
-            black_box(Expr::compile_locked(expr, &context).unwrap());
+            black_box(Expr::compile_unlocked(expr, &context).unwrap());
         });
     });
 }

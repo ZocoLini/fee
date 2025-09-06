@@ -1,27 +1,34 @@
 use crate::{
     prelude::*,
-    resolver::{LockedResolver, UnlockedResolver},
+    resolver::{Locked, LockedResolver, ResolverState, Unlocked, UnlockedResolver},
 };
 
 /// A resolver that does not resolve any values.
 ///
-/// Every call to `resolve()` returns `None`.  
+/// Every call to `resolve()` returns `None`.
 /// This resolver is useful when expressions do not contain any variables or function calls.
 ///
 /// When calling `eval_without_context()` on any `Evaluator`, the method internally calls
 /// `eval()` using a `Context` that contains two `EmptyResolver`s.
-pub struct EmptyResolver;
-
-impl<T> LockedResolver<T> for EmptyResolver {}
-impl<T> UnlockedResolver<T, EmptyResolver> for EmptyResolver
+pub struct EmptyResolver<S>
+where
+    S: ResolverState,
 {
-    fn lock(self) -> EmptyResolver
+    _state: S,
+}
+
+impl<T> LockedResolver<T> for EmptyResolver<Locked> {}
+impl<T> UnlockedResolver<T, EmptyResolver<Locked>> for EmptyResolver<Unlocked>
+{
+    fn lock(self) -> EmptyResolver<Locked>
     {
-        self
+        EmptyResolver { _state: Locked }
     }
 }
 
-impl<T> Resolver<Unlocked, T> for EmptyResolver
+impl<S, T> Resolver<S, T> for EmptyResolver<S>
+where
+    S: ResolverState,
 {
     fn resolve(&self, _name: &str) -> Option<&T>
     {
@@ -29,18 +36,10 @@ impl<T> Resolver<Unlocked, T> for EmptyResolver
     }
 }
 
-impl<T> Resolver<Locked, T> for EmptyResolver
-{
-    fn resolve(&self, _name: &str) -> Option<&T>
-    {
-        None
-    }
-}
-
-impl EmptyResolver
+impl EmptyResolver<Unlocked>
 {
     pub fn new() -> Self
     {
-        EmptyResolver
+        EmptyResolver { _state: Unlocked }
     }
 }
