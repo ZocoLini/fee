@@ -93,7 +93,7 @@ impl<'e>
         IRpnToken,
     > for Expr<IRpnToken>
 {
-    fn eval_unlocked(
+    fn eval(
         &self,
         ctx: &Context<
             Unlocked,

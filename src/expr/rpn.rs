@@ -73,7 +73,7 @@ where
     LV: LockedResolver<f64>,
     LF: LockedResolver<ExprFn>,
 {
-    fn eval_unlocked(
+    fn eval(
         &self,
         ctx: &Context<Unlocked, V, F, LV, LF>,
         stack: &mut Vec<f64>,

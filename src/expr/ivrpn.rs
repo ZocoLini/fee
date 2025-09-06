@@ -90,7 +90,7 @@ where
     F: NotIndexedResolver + UnlockedResolver<ExprFn, LF>,
     LF: LockedResolver<ExprFn>,
 {
-    fn eval_unlocked(
+    fn eval(
         &self,
         ctx: &Context<
             Unlocked,

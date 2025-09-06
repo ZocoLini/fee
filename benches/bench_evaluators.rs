@@ -19,7 +19,7 @@ fn rpn_evaluator(c: &mut Criterion)
         let expr = Expr::compile(expr, &context).unwrap();
 
         b.iter(|| {
-            black_box(expr.eval_unlocked(&context, &mut stack).unwrap());
+            black_box(expr.eval(&context, &mut stack).unwrap());
         });
     });
 
@@ -31,7 +31,7 @@ fn rpn_evaluator(c: &mut Criterion)
         let expr = Expr::compile(expr, &context).unwrap();
 
         b.iter(|| {
-            black_box(expr.eval_unlocked(&context, &mut stack).unwrap());
+            black_box(expr.eval(&context, &mut stack).unwrap());
         });
     });
 
@@ -50,7 +50,7 @@ fn rpn_evaluator(c: &mut Criterion)
         let expr = Expr::compile(expr, &context).unwrap();
 
         b.iter(|| {
-            black_box(expr.eval_unlocked(&context, &mut stack).unwrap());
+            black_box(expr.eval(&context, &mut stack).unwrap());
         });
     });
 
@@ -65,7 +65,7 @@ fn rpn_evaluator(c: &mut Criterion)
         let expr = Expr::compile(expr, &context).unwrap();
 
         b.iter(|| {
-            black_box(expr.eval_unlocked(&context, &mut stack).unwrap());
+            black_box(expr.eval(&context, &mut stack).unwrap());
         });
     });
 }
@@ -88,7 +88,7 @@ fn irpn_evaluator(c: &mut Criterion)
         let expr = Expr::compile(expr, &context).unwrap();
 
         b.iter(|| {
-            black_box(expr.eval_unlocked(&context, &mut stack).unwrap());
+            black_box(expr.eval(&context, &mut stack).unwrap());
         });
     });
 }

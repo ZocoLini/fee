@@ -51,7 +51,7 @@ where
     LV: LockedResolver<f64>,
     LF: LockedResolver<ExprFn>,
 {
-    fn eval_unlocked(
+    fn eval(
         &self,
         ctx: &Context<Unlocked, V, F, LV, LF>,
         stack: &mut Vec<f64>,
@@ -64,7 +64,7 @@ where
     V: LockedResolver<f64>,
     F: LockedResolver<ExprFn>,
 {
-    fn eval_locked(
+    fn eval(
         &self,
         ctx: &Context<Locked, V, F, V, F>,
         stack: &mut Vec<f64>,

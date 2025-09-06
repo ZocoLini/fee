@@ -94,7 +94,7 @@ fn evaluation(c: &mut Criterion)
         let expr = Expr::compile(expr, &context).unwrap();
 
         b.iter(|| {
-            black_box(expr.eval_locked(&context, &mut stack).unwrap());
+            black_box(expr.eval(&context, &mut stack).unwrap());
         });
     });
 }
@@ -147,7 +147,7 @@ fn evaluation2(c: &mut Criterion)
         let expr = Expr::compile(expr, &context).unwrap();
 
         b.iter(|| {
-            black_box(expr.eval_locked(&context, &mut stack).unwrap());
+            black_box(expr.eval(&context, &mut stack).unwrap());
         });
     });
 }

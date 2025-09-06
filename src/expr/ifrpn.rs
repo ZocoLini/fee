@@ -96,7 +96,7 @@ where
     V: NotIndexedResolver + UnlockedResolver<f64, LV>,
     LV: LockedResolver<f64>,
 {
-    fn eval_unlocked(
+    fn eval(
         &self,
         ctx: &Context<
             Unlocked,

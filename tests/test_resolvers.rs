@@ -26,23 +26,23 @@ fn test_lockeable_resolvers()
     let mut stack = Vec::with_capacity(rpn_expr_1.len() / 2);
 
     assert_eq!(
-        rpn_expr_1.eval_locked(&context_1, &mut stack),
-        rpn_expr_2.eval_locked(&context_2, &mut stack)
+        rpn_expr_1.eval(&context_1, &mut stack),
+        rpn_expr_2.eval(&context_2, &mut stack)
     );
 
     p0_ptr_1.set(20.0);
     p0_ptr_2.set(20.0);
 
     assert_eq!(
-        rpn_expr_1.eval_locked(&context_1, &mut stack),
-        rpn_expr_2.eval_locked(&context_2, &mut stack)
+        rpn_expr_1.eval(&context_1, &mut stack),
+        rpn_expr_2.eval(&context_2, &mut stack)
     );
 
     p0_ptr_1.set(50.0);
     p0_ptr_2.set(40.0);
 
     assert_ne!(
-        rpn_expr_1.eval_locked(&context_1, &mut stack),
-        rpn_expr_2.eval_locked(&context_2, &mut stack)
+        rpn_expr_1.eval(&context_1, &mut stack),
+        rpn_expr_2.eval(&context_2, &mut stack)
     );
 }
