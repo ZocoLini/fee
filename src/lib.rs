@@ -1,25 +1,24 @@
-//! Fast Expression Evaluators
+//! # Fast Expression Evaluators
 //!
-//! This Rust crate provides ways to evaluate mathematical expressions efficiently.
-//! Each evaluator and resolver has his own pros, cons and capabilities.
+//! The fastest expression evaluators
 //!
-//! # Introduction
+//! ## Introduction
 //!
 //! ```rust
-//! use fee::{prelude::*, DefaultResolver, RpnEvaluator};
+//! use fee::{prelude::*, DefaultResolver};
 //!
-//! let mut var_resolver = DefaultResolver::new_empty();
-//! var_resolver.insert("p0".to_string(), 10.0);
-//! var_resolver.insert("p1".to_string(), 4.0);
+//! let mut var_resolver = DefaultResolver::empty();
+//! var_resolver.insert("p0", 10.0);
+//! var_resolver.insert("p1", 4.0);
 //!
-//! let mut fn_resolver = DefaultResolver::new_empty();
-//! fn_resolver.insert("abs".to_string(), abs as ExprFn);
+//! let mut fn_resolver = DefaultResolver::empty();
+//! fn_resolver.insert("abs", ExprFn::new(abs));
 //!
 //! let context = Context::new(var_resolver, fn_resolver);
+//! let mut stack = Vec::with_capacity(10);
 //!
-//! let expr = "abs((2 + 4) * 6 / (p1 + 2)) + abs(-2)";
-//! let evaluator = RpnEvaluator::new(expr).unwrap();
-//! let result = evaluator.eval(&context).unwrap();
+//! let expr = Expr::compile("abs((2 + 4) * 6 / (p1 + 2)) + abs(-2)", &context).unwrap();
+//! let result = expr.eval(&context, &mut stack).unwrap();
 //! assert_eq!(result, 8.0);
 //!
 //! fn abs(x: &[f64]) -> f64 {
@@ -27,24 +26,25 @@
 //! }
 //! ```
 //!
-//! # Evaluators
+//! ## Expression
+//! A generic struct representing a mathematical expression.  
+//! Use [`Expr::<T>::compile`] to parse a string into a specialized [`Expr<T>`] depending
+//! on the provided [`Context`].
 //!
-//! Trait implemented by all the structs that can evaluate expressions.
-//! It needs the expression and a context struct to do the evaluation.
-//! The current available Evaluators are:
-//! - RpnEvaluator
+//! ## Context
+//! A struct that holds resolvers for variables and functions used in an expression.  
+//! Contexts can be **locked** to prevent reallocation of inner resolvers, allowing
+//! expressions to be evaluated using raw pointers instead of name lookups for maximum performance.
 //!
-//! # Resolvers
+//! ## Resolvers
+//! A [`Resolver`] maps variable or function names to their values/implementations.  
+//! Available resolvers include:
 //!
-//! The Resolver trait is implemented by all the objects that can resolve a variable or function name.
-//! The current available Resolvers are:
-//! - DefaultResolver
-//! - IndexedResolver
-//! - SmallResolver
-//! - ConstantResolver
-//! - EmptyResolver
-//!
-//! Each of which has its own pros and cons.
+//! - [`DefaultResolver`]: No size or naming restrictions, but slower than specialized resolvers.  
+//! - [`IndexedResolver`]: No size restrictions, but requires specific naming patterns. Very fast.  
+//! - [`SmallResolver`]: Restricted size, but allows arbitrary names with good performance.  
+//! - [`ConstantResolver`]: Always resolves to the same value; offers the best performance.  
+//! - [`EmptyResolver`]: Always resolves to `None`; useful for expressions without variables or functions.  
 
 #![forbid(clippy::unwrap_used)]
 

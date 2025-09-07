@@ -1,4 +1,4 @@
-# Fast Expression Evaluation
+# Fast Expression Evaluators
 
 [![Crates.io](https://img.shields.io/crates/v/fee.svg)](https://crates.io/crates/fee)
 [![Docs.rs](https://docs.rs/fee/badge.svg)](https://docs.rs/fee)
@@ -13,9 +13,6 @@ that must evaluate expressions which cannot be hardcoded in the
 source, either because the source code is not available to 
 recompile, or because you want to ship a closed/private tool.
 
-This is an early prototype (v0.1.0). While heavy optimizations
-are still pending, it already achieves impressive performance.
-
 Contributions, ideas, bug reports and recommendations are welcome.
 
 ## Usage
@@ -24,11 +21,7 @@ First step is add the dependency to your Cargo.toml.
 
 ```toml
 [dependencies]
-<<<<<<< HEAD
-fee = { version = "0.1.0" }
-=======
-fee = { version = "0.1.1" }
->>>>>>> v0.1.1
+fee = { version = "0.2.0" }
 ```
 
 The following code shows the default use case

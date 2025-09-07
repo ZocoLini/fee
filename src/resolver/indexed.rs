@@ -16,9 +16,8 @@ use super::Resolver;
 /// vector-of-vectors storage. The trade-off is the restricted naming convention.
 ///
 /// # Advantages
-/// - High performance due to O(1) lookup.
-/// - Efficient memory usage.
-/// - Fast variable and function resolution.
+/// - High performance due to indexed lookup.
+/// - Unlimited storage capacity.
 ///
 /// # Disadvantages
 /// - Limited naming convention.
@@ -31,28 +30,29 @@ use super::Resolver;
 /// # Examples
 /// ```rust
 /// use fee::prelude::*;
-/// use fee::{EmptyResolver, IndexedResolver, RpnEvaluator};
+/// use fee::{EmptyResolver, IndexedResolver};
 ///
-/// // Lotka-Volterra model
-/// let y0_dot_expr = "y0 * (p0 - p1*y1)";
-/// let y1_dot_expr = "-y1 * (p2 - p3*y0)";
+/// let y0_expr = "y0 * (p0 - p1*y1)";
+/// let y1_expr = "-y1 * (p2 - p3*y0)";
 ///
-/// let mut var_resolver = IndexedResolver::new_var_resolver();
-/// var_resolver.add_var_identifier('y', 2);
+/// let mut var_resolver = IndexedResolver::new();
+/// var_resolver.add_id('y', 2);
 /// var_resolver.set('y', 0, 1.0);
 /// var_resolver.set('y', 1, 2.0);
-/// var_resolver.add_var_identifier('p', 4);
+/// var_resolver.add_id('p', 4);
 /// var_resolver.set('p', 0, 1.0);
 /// var_resolver.set('p', 1, 0.0);
 /// var_resolver.set('p', 2, 1.0);
 /// var_resolver.set('p', 3, 0.0);
 ///
 /// let context = Context::new(var_resolver, EmptyResolver::new());
-/// let y0_eval = RpnEvaluator::new(y0_dot_expr).unwrap();
-/// let y1_eval = RpnEvaluator::new(y1_dot_expr).unwrap();
+/// let mut stack = Vec::new();
 ///
-/// assert_eq!(y0_eval.eval(&context), Ok(1.0));
-/// assert_eq!(y1_eval.eval(&context), Ok(-2.0));
+/// let y0_expr = Expr::compile(y0_expr, &context).unwrap();
+/// let y1_expr = Expr::compile(y1_expr, &context).unwrap();
+///
+/// assert_eq!(y0_expr.eval(&context, &mut stack), Ok(1.0));
+/// assert_eq!(y1_expr.eval(&context, &mut stack), Ok(-2.0));
 /// ```
 pub struct IndexedResolver<S: ResolverState, T>
 {

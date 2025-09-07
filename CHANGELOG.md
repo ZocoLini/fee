@@ -19,6 +19,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `DefaultVarResolver` and `SmallVarResolver` now allow keys other than String.
 - Improved public interfaces of several resolvers.
 - `Resolver`s can no longer be locked individually, locking is now managed by the owning `Context`.
+- `ExprFn` is no longer a type alias, it is now a struct.
+- Evaluating expressions now requires you to provide the stack.
 ### Removed
 - Removed the `Evaluator` concept and the `RpnEvaluator` struct.
 

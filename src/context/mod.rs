@@ -8,13 +8,25 @@ use crate::resolver::Unlocked;
 use crate::resolver::UnlockedResolver;
 use crate::{EmptyResolver, ExprFn, IndexedResolver, prelude::*};
 
-/// Container for the resolvers required to evaluate expressions containing variables or functions.
+/// Container for the resolvers required to compile and evaluate
+/// expressions.
 ///
 /// `Context` holds:
 /// - a variable resolver (`V`) that implements `Resolver<f64>`
 /// - a function resolver (`F`) that implements `Resolver<ExprFn>`
 ///
-/// This struct is passed to evaluators to provide variable values and function implementations.
+/// This struct is passed to evaluators to provide variable values and function
+/// implementations.
+///
+/// # Locking
+/// It is possible to 'lock' the resolvers held by the context to prevent
+/// them from being reallocated in memory. This can be done by calling the
+/// [`Context::lock`] method, allowing a better performance when evaluating
+/// expressions taking advantage of the use of pointers to the values held by
+/// the resolvers.
+///
+/// If the Context is locked, the user can obtain a [`Ptr`] to a value held
+/// by one of the resolvers and modify it directly.
 pub struct Context<S, V, F, LV, LF>
 where
     S: ResolverState,

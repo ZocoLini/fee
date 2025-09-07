@@ -28,16 +28,22 @@ pub trait UnlockedResolver<T, R: LockedResolver<T>>: Resolver<Unlocked, T>
     fn lock(self) -> R;
 }
 
+/// Trait representing the state of a resolver.
 pub trait ResolverState {}
 
-// TODO: Find a better name than Locked and Unlocked
-
+/// Unit struct representing a locked resolver state. This state means
+/// that the resolver cannot be reallocated in memory.
 pub struct Locked;
+/// Unit struct representing an unlocked resolver state. This state means
+/// that the resolver can be reallocated in memory.
 pub struct Unlocked;
 
 impl ResolverState for Locked {}
 impl ResolverState for Unlocked {}
 
+/// This struct holds a pointer to a value of type `T`. Used by
+/// locked resolvers to safely access and modify a value without
+/// having to resolve the name.
 #[derive(Debug, PartialEq)]
 pub struct Ptr<'a, T>
 {
@@ -68,25 +74,12 @@ where
 /// This trait can be implemented to resolve any type of value by a string key.
 /// Within this crate, it is primarily used for:
 /// - Resolving **expression variables** to `f64` values.
-/// - Resolving **function names** to `ExprFn` (functions taking a slice of `f64` and returning `f64`).
+/// - Resolving **function names** to [`ExprFn`] (functions taking a slice of `f64` and returning `f64`).
 ///
 /// Implementors of this trait provide the lookup logic, for example:
-/// - Using a `HashMap` or a small cache.
+/// - Using a [`HashMap`] or a small cache.
 /// - Providing a custom storage mechanism.
-/// - Or using a trivial resolver like `EmptyResolver`.
-///
-/// # Examples
-/// ```rust
-/// use fee::prelude::*;
-///
-/// pub struct ExampleResolver;
-///
-/// impl Resolver<f64> for ExampleResolver {
-///     fn resolve(&self, _name: &str) -> Option<&f64> {
-///         Some(&50.0)
-///     }
-/// }
-/// ```
+/// - Or using a trivial resolver like [`EmptyResolver`].
 pub trait Resolver<State, T>
 where
     State: ResolverState,

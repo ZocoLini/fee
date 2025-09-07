@@ -3,8 +3,7 @@ use crate::{
     resolver::{Locked, LockedResolver, ResolverState, Unlocked, UnlockedResolver},
 };
 
-/// For the cases where any variable or function name should resolve for the same value
-/// we encourage the use of this resolver instead of any other one.
+/// A resolver that always returns the same value regardless of the variable or function name.
 ///
 /// # Advantages
 /// - Best performance between all resolvers.
@@ -13,17 +12,19 @@ use crate::{
 /// - Always returns the same value regardless of the variable or function name.
 ///
 /// # Examples
+///
 /// ```rust
 /// use fee::prelude::*;
-/// use fee::{ RpnEvaluator, EmptyResolver, ConstantResolver };
+/// use fee::{ EmptyResolver, ConstantResolver };
 ///
 /// let expr = "x + y";
 ///
 /// let var_resolver = ConstantResolver::new(1.0);
 /// let context = Context::new(var_resolver, EmptyResolver::new());
+/// let mut stack = Vec::new();
 ///
-/// let evaluator = RpnEvaluator::new(expr).unwrap();
-/// let result = evaluator.eval(&context).unwrap();
+/// let expr = Expr::compile(expr, &context).unwrap();
+/// let result = expr.eval(&context, &mut stack).unwrap();
 /// assert_eq!(result, 2.0);
 /// ```
 pub struct ConstantResolver<S, T>

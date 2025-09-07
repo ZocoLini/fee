@@ -17,6 +17,13 @@ use crate::{
     context::Context, expr::infix::InfixToken, op::Op, prelude::*,
 };
 
+/// Represents the compiled expression.
+///
+/// This struct should be built by using the [`Expr::compile`] method. This
+/// method automatically returns the best available representation of the expression
+/// depending on the context you will be using it with.
+///
+/// After compilation, the expression can be evaluated using the [`Expr::eval`] method.
 #[derive(Debug, PartialEq)]
 pub struct Expr<Token>
 {

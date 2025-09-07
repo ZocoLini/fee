@@ -5,11 +5,8 @@ use crate::{
 
 /// A resolver that does not resolve any values.
 ///
-/// Every call to `resolve()` returns `None`.
+/// Every call to [`Resolver::resolve()`] returns `None`.
 /// This resolver is useful when expressions do not contain any variables or function calls.
-///
-/// When calling `eval_without_context()` on any `Evaluator`, the method internally calls
-/// `eval()` using a `Context` that contains two `EmptyResolver`s.
 pub struct EmptyResolver<S>
 where
     S: ResolverState,
