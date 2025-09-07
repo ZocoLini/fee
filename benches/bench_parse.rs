@@ -1,5 +1,5 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use fee::{DefaultResolver, IndexedResolver, SmallResolver, prelude::*};
+use fee::{EmptyResolver, IndexedResolver, SmallResolver, prelude::*};
 use std::hint::black_box;
 
 fn parsers(c: &mut Criterion)
@@ -27,7 +27,7 @@ fn parsers(c: &mut Criterion)
     });
 
     c.bench_function("internal/parse/lrpn", |b| {
-        let v_resolver = DefaultResolver::empty();
+        let v_resolver = EmptyResolver::new();
         let mut f_resolver = SmallResolver::new();
         f_resolver.insert("abs".to_string(), ExprFn::new(|_| 0.0));
         f_resolver.insert("sqrt".to_string(), ExprFn::new(|_| 0.0));

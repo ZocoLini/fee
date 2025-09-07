@@ -45,18 +45,21 @@ const CACHE_SIZE: usize = 10; // 30 is the 'limit'
 ///
 /// assert_eq!(*var_resolver.resolve("p0").unwrap(), 20.0);
 /// ```
-pub struct SmallResolver<S, T>
+pub struct SmallResolver<S, K, V>
 where
     S: ResolverState,
+    K: AsRef<str> + Eq,
 {
-    cache: Vec<(String, T)>,
+    cache: Vec<(K, V)>,
     _state: S,
 }
 
-impl<T> LockedResolver<T> for SmallResolver<Locked, T> {}
-impl<T> UnlockedResolver<T, SmallResolver<Locked, T>> for SmallResolver<Unlocked, T>
+impl<K, V> LockedResolver<V> for SmallResolver<Locked, K, V> where K: AsRef<str> + Eq {}
+impl<K, V> UnlockedResolver<V, SmallResolver<Locked, K, V>> for SmallResolver<Unlocked, K, V>
+where
+    K: AsRef<str> + Eq,
 {
-    fn lock(self) -> SmallResolver<Locked, T>
+    fn lock(self) -> SmallResolver<Locked, K, V>
     {
         SmallResolver {
             cache: self.cache,
@@ -65,14 +68,15 @@ impl<T> UnlockedResolver<T, SmallResolver<Locked, T>> for SmallResolver<Unlocked
     }
 }
 
-impl<S, T> Resolver<S, T> for SmallResolver<S, T>
+impl<S, K, V> Resolver<S, V> for SmallResolver<S, K, V>
 where
     S: ResolverState,
+    K: AsRef<str> + Eq,
 {
-    fn resolve(&self, name: &str) -> Option<&T>
+    fn resolve(&self, name: &str) -> Option<&V>
     {
         for (key, value) in &self.cache {
-            if key == name {
+            if key.as_ref() == name {
                 return Some(value);
             }
         }
@@ -80,7 +84,9 @@ where
     }
 }
 
-impl<T> SmallResolver<Unlocked, T>
+impl<K, V> SmallResolver<Unlocked, K, V>
+where
+    K: AsRef<str> + Eq,
 {
     pub fn new() -> Self
     {
@@ -90,7 +96,7 @@ impl<T> SmallResolver<Unlocked, T>
         }
     }
 
-    pub fn insert(&mut self, name: String, value: T)
+    pub fn insert(&mut self, name: K, value: V)
     {
         for (i, (key, _)) in self.cache.iter().enumerate() {
             if *key == name {

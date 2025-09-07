@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{borrow::Borrow, collections::HashMap, hash::Hash};
 
 use super::Resolver;
 use crate::{
@@ -41,18 +41,24 @@ use crate::{
 ///
 /// assert_eq!(*var_resolver.resolve("p0").unwrap(), 20.0);
 /// ```
-pub struct DefaultResolver<S, T>
+pub struct DefaultResolver<S, K, V>
 where
     S: ResolverState,
+    K: Borrow<str> + PartialEq<String> + Eq + Hash,
 {
-    vars: HashMap<String, T>,
+    vars: HashMap<K, V>,
     _state: S,
 }
 
-impl<T> LockedResolver<T> for DefaultResolver<Locked, T> {}
-impl<T> UnlockedResolver<T, DefaultResolver<Locked, T>> for DefaultResolver<Unlocked, T>
+impl<K, V> LockedResolver<V> for DefaultResolver<Locked, K, V> where
+    K: Borrow<str> + PartialEq<String> + Eq + Hash
 {
-    fn lock(self) -> DefaultResolver<Locked, T>
+}
+impl<K, V> UnlockedResolver<V, DefaultResolver<Locked, K, V>> for DefaultResolver<Unlocked, K, V>
+where
+    K: Borrow<str> + PartialEq<String> + Eq + Hash,
+{
+    fn lock(self) -> DefaultResolver<Locked, K, V>
     {
         DefaultResolver {
             vars: self.vars,
@@ -61,17 +67,20 @@ impl<T> UnlockedResolver<T, DefaultResolver<Locked, T>> for DefaultResolver<Unlo
     }
 }
 
-impl<S, T> Resolver<S, T> for DefaultResolver<S, T>
+impl<S, K, V> Resolver<S, V> for DefaultResolver<S, K, V>
 where
     S: ResolverState,
+    K: Borrow<str> + PartialEq<String> + Eq + Hash,
 {
-    fn resolve(&self, name: &str) -> Option<&T>
+    fn resolve(&self, name: &str) -> Option<&V>
     {
         self.vars.get(name)
     }
 }
 
-impl<T> DefaultResolver<Unlocked, T>
+impl<K, V> DefaultResolver<Unlocked, K, V>
+where
+    K: Borrow<str> + PartialEq<String> + Eq + Hash,
 {
     pub fn empty() -> Self
     {
@@ -81,13 +90,13 @@ impl<T> DefaultResolver<Unlocked, T>
         }
     }
 
-    pub fn insert(&mut self, name: String, val: T)
+    pub fn insert(&mut self, name: K, val: V)
     {
         self.vars.insert(name, val);
     }
 }
 
-impl DefaultResolver<Unlocked, f64>
+impl DefaultResolver<Unlocked, String, f64>
 {
     pub fn new_vars() -> Self
     {
@@ -105,7 +114,7 @@ impl DefaultResolver<Unlocked, f64>
     }
 }
 
-impl DefaultResolver<Unlocked, ExprFn>
+impl DefaultResolver<Unlocked, String, ExprFn>
 {
     pub fn new_fns() -> Self
     {

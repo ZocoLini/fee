@@ -5,7 +5,8 @@ pub mod ivrpn;
 pub mod lrpn;
 pub mod rpn;
 
-use std::borrow::Cow;
+use std::borrow::{Borrow, Cow};
+use std::hash::Hash;
 
 use smallvec::{SmallVec, smallvec};
 
@@ -31,9 +32,12 @@ impl<Token> Expr<Token>
 }
 
 trait NotIndexedResolver {}
-impl<S: ResolverState, T> NotIndexedResolver for DefaultResolver<S, T> {}
+impl<S: ResolverState, K: Borrow<str> + PartialEq<String> + Eq + Hash, T> NotIndexedResolver
+    for DefaultResolver<S, K, T>
+{
+}
 impl<S: ResolverState, T> NotIndexedResolver for ConstantResolver<S, T> {}
-impl<S: ResolverState, T> NotIndexedResolver for SmallResolver<S, T> {}
+impl<S: ResolverState, K: AsRef<str> + Eq, T> NotIndexedResolver for SmallResolver<S, K, T> {}
 impl<S: ResolverState> NotIndexedResolver for EmptyResolver<S> {}
 
 pub trait ExprCompiler<'e, 'c, S, V, F, LV, LF, T>
