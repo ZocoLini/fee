@@ -10,7 +10,6 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `Context::empty()` method that returns a context with `EmptyResolver`s
 - `RpnExpr`and `IRpnExpr` structs exposed to the library user.
 ### Fixed
-- Exponentiation had precedence over the unary minus operator.
 - Fixed parsing nested functions with multiple arguments.
 ### Changed
 - The `Expr` structs are now the ones that expose the specialized `eval()` method.
@@ -19,6 +18,12 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Removed the `Evaluator` concept and the `RpnEvaluator` struct.
 ### Security
 ### Deprecated
+
+## [0.1.1] - 2025-09-03
+
+### Fixed
+- `Unary minus (-)` operator no longer incorrectly takes precedence over 
+`exponentiation (^)`.
 
 ## [0.1.0] - 2025-09-02
 

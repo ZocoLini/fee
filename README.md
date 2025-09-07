@@ -24,7 +24,11 @@ First step is add the dependency to your Cargo.toml.
 
 ```toml
 [dependencies]
+<<<<<<< HEAD
 fee = { version = "0.1.0" }
+=======
+fee = { version = "0.1.1" }
+>>>>>>> v0.1.1
 ```
 
 The following code shows the default use case
