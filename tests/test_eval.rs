@@ -33,7 +33,7 @@ f3(-((p0^2 + (3 * p1 - (p2^3))) - (-(p3^2) + f0((p4 - p5)^2 + (p6^2))))
 
     // Default RPN
     {
-        let mut var_resolver = DefaultResolver::new_empty();
+        let mut var_resolver = DefaultResolver::empty();
         var_resolver.insert("p0".to_string(), 0.0);
         var_resolver.insert("p1".to_string(), 1.0);
         var_resolver.insert("p2".to_string(), 2.0);
@@ -47,7 +47,7 @@ f3(-((p0^2 + (3 * p1 - (p2^3))) - (-(p3^2) + f0((p4 - p5)^2 + (p6^2))))
         var_resolver.insert("p10".to_string(), 10.0);
         var_resolver.insert("p11".to_string(), 11.0);
 
-        let mut fn_resolver = DefaultResolver::new_empty();
+        let mut fn_resolver = DefaultResolver::empty();
         fn_resolver.insert("f0".to_string(), ExprFn::new(f0));
         fn_resolver.insert("f1".to_string(), ExprFn::new(f1));
         fn_resolver.insert("f2".to_string(), ExprFn::new(f2));
@@ -76,7 +76,7 @@ f3(-((p0^2 + (3 * p1 - (p2^3))) - (-(p3^2) + f0((p4 - p5)^2 + (p6^2))))
         var_resolver.set('p', 10, 10.0);
         var_resolver.set('p', 11, 11.0);
 
-        let mut fn_resolver = DefaultResolver::new_empty();
+        let mut fn_resolver = DefaultResolver::empty();
         fn_resolver.insert("f0".to_string(), ExprFn::new(f0));
         fn_resolver.insert("f1".to_string(), ExprFn::new(f1));
         fn_resolver.insert("f2".to_string(), ExprFn::new(f2));
@@ -90,7 +90,7 @@ f3(-((p0^2 + (3 * p1 - (p2^3))) - (-(p3^2) + f0((p4 - p5)^2 + (p6^2))))
 
     // Indexed Fns RPN
     {
-        let mut var_resolver = DefaultResolver::new_empty();
+        let mut var_resolver = DefaultResolver::empty();
         var_resolver.insert("p0".to_string(), 0.0);
         var_resolver.insert("p1".to_string(), 1.0);
         var_resolver.insert("p2".to_string(), 2.0);
@@ -149,7 +149,7 @@ f3(-((p0^2 + (3 * p1 - (p2^3))) - (-(p3^2) + f0((p4 - p5)^2 + (p6^2))))
 
     // Locked RPN
     {
-        let mut var_resolver = DefaultResolver::new_empty();
+        let mut var_resolver = DefaultResolver::empty();
         var_resolver.insert("p0".to_string(), 0.0);
         var_resolver.insert("p1".to_string(), 1.0);
         var_resolver.insert("p2".to_string(), 2.0);
@@ -163,7 +163,7 @@ f3(-((p0^2 + (3 * p1 - (p2^3))) - (-(p3^2) + f0((p4 - p5)^2 + (p6^2))))
         var_resolver.insert("p10".to_string(), 10.0);
         var_resolver.insert("p11".to_string(), 11.0);
 
-        let mut fn_resolver = DefaultResolver::new_empty();
+        let mut fn_resolver = DefaultResolver::empty();
         fn_resolver.insert("f0".to_string(), ExprFn::new(f0));
         fn_resolver.insert("f1".to_string(), ExprFn::new(f1));
         fn_resolver.insert("f2".to_string(), ExprFn::new(f2));

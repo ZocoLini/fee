@@ -73,7 +73,7 @@ where
 
 impl<T> DefaultResolver<Unlocked, T>
 {
-    pub fn new_empty() -> Self
+    pub fn empty() -> Self
     {
         DefaultResolver {
             vars: HashMap::new(),

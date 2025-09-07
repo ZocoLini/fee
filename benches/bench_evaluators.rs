@@ -9,10 +9,10 @@ fn rpn_evaluator(c: &mut Criterion)
     let mut stack = Vec::with_capacity(expr.len() / 2);
 
     c.bench_function("internal/eval/rpn/default_r", |b| {
-        let mut var_resolver = DefaultResolver::new_empty();
+        let mut var_resolver = DefaultResolver::empty();
         var_resolver.insert("p0".to_string(), 10.0);
 
-        let mut fn_resolver = DefaultResolver::new_empty();
+        let mut fn_resolver = DefaultResolver::empty();
         fn_resolver.insert("abs".to_string(), ExprFn::new(abs));
 
         let context = Context::new(var_resolver, fn_resolver);

@@ -27,7 +27,7 @@ fn parsers(c: &mut Criterion)
     });
 
     c.bench_function("internal/parse/lrpn", |b| {
-        let v_resolver = DefaultResolver::new_empty();
+        let v_resolver = DefaultResolver::empty();
         let mut f_resolver = SmallResolver::new();
         f_resolver.insert("abs".to_string(), ExprFn::new(|_| 0.0));
         f_resolver.insert("sqrt".to_string(), ExprFn::new(|_| 0.0));

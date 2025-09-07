@@ -6,7 +6,7 @@ use fee::{ConstantResolver, DefaultResolver, IndexedResolver, SmallResolver, pre
 fn var_resolver(c: &mut Criterion)
 {
     c.bench_function("internal/resolver/default", |b| {
-        let mut resolver = DefaultResolver::new_empty();
+        let mut resolver = DefaultResolver::empty();
         for i in 0..100 {
             resolver.insert(format!("p{}", i), 2.0);
         }
