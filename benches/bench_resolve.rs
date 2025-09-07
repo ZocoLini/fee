@@ -1,7 +1,7 @@
 use std::hint::black_box;
 
 use criterion::{Criterion, criterion_group, criterion_main};
-use fee::{ConstantResolver, DefaultResolver, IndexedResolver, SmallResolver, prelude::*};
+use fee::{prelude::*, ConstantResolver, DefaultResolver, EmptyResolver, IndexedResolver, SmallResolver};
 
 fn var_resolver(c: &mut Criterion)
 {
@@ -55,6 +55,19 @@ fn var_resolver(c: &mut Criterion)
         });
     });
 
+    c.bench_function("internal/resolver/ptr", |b| {
+        let resolver = ConstantResolver::new(2.0);
+        let context = Context::new(resolver, EmptyResolver::new()).lock();
+        
+        let ptr = context.get_var_ptr("").unwrap();
+        
+        b.iter(|| {
+            black_box(ptr.get());
+            black_box(ptr.get());
+            black_box(ptr.get());
+        });
+    });
+    
     c.bench_function("internal/resolver/rust", |b| {
         let resolver = vec![0.0; 100];
 

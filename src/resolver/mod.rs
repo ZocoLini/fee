@@ -56,6 +56,7 @@ impl<'a, T> Ptr<'a, T>
 where
     T: Copy,
 {
+    #[inline]
     pub fn set(&self, value: T)
     {
         unsafe {
@@ -63,6 +64,7 @@ where
         }
     }
 
+    #[inline]
     pub fn get(&self) -> T
     {
         unsafe { *self.ptr }
