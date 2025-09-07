@@ -142,7 +142,7 @@ where
                     let fn_ptr = ctx
                         .fns()
                         .get_ptr(name)
-                        .ok_or_else(|| Error::UnknownVar(Cow::Borrowed(name)))?;
+                        .ok_or_else(|| Error::UnknownFn(Cow::Borrowed(name)))?;
                     let fn_token = T::from((fn_ptr, args.len()));
 
                     for arg_tokens in args {
