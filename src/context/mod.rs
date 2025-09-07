@@ -45,7 +45,7 @@ pub type UContext<V, F, LV, LF> = Context<Unlocked, V, F, LV, LF>;
 /// Locked context type alias
 pub type LContext<LV, LF> = Context<Locked, LV, LF, LV, LF>;
 
-impl<V, F, LV, LF> Context<Unlocked, V, F, LV, LF>
+impl<V, F, LV, LF> UContext<V, F, LV, LF>
 where
     V: UnlockedResolver<f64, LV>,
     F: UnlockedResolver<ExprFn, LF>,
@@ -64,7 +64,7 @@ where
         }
     }
 
-    pub fn lock(self) -> Context<Locked, LV, LF, LV, LF>
+    pub fn lock(self) -> LContext<LV, LF>
     {
         Context {
             vars: self.vars.lock(),
@@ -159,8 +159,7 @@ where
 }
 
 impl
-    Context<
-        Unlocked,
+    UContext<
         EmptyResolver<Unlocked>,
         EmptyResolver<Unlocked>,
         EmptyResolver<Locked>,

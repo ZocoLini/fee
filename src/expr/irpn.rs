@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    Error, EvalError, IndexedResolver,
+    Error, EvalError, IndexedResolver, UContext,
     expr::ExprCompiler,
     op::Op,
     parsing,
@@ -70,8 +70,7 @@ impl<'e>
 {
     fn compile(
         expr: &'e str,
-        _ctx: &Context<
-            Unlocked,
+        _ctx: &UContext<
             IndexedResolver<Unlocked, f64>,
             IndexedResolver<Unlocked, ExprFn>,
             IndexedResolver<Locked, f64>,
@@ -95,8 +94,7 @@ impl<'e>
 {
     fn eval(
         &self,
-        ctx: &Context<
-            Unlocked,
+        ctx: &UContext<
             IndexedResolver<Unlocked, f64>,
             IndexedResolver<Unlocked, ExprFn>,
             IndexedResolver<Locked, f64>,

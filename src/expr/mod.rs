@@ -10,12 +10,12 @@ use std::hash::Hash;
 
 use smallvec::{SmallVec, smallvec};
 
-use crate::Ptr;
 use crate::resolver::{Locked, LockedResolver, ResolverState};
 use crate::{
     ConstantResolver, DefaultResolver, EmptyResolver, Error, ExprFn, SmallResolver,
     context::Context, expr::infix::Infix, op::Op, prelude::*,
 };
+use crate::{LContext, Ptr};
 
 /// Represents the compiled expression.
 ///
@@ -74,7 +74,7 @@ where
     }
 }
 
-impl<'e, T, V, F> TryFrom<(&'e str, &'e Context<Locked, V, F, V, F>)> for Expr<T>
+impl<'e, T, V, F> TryFrom<(&'e str, &'e LContext<V, F>)> for Expr<T>
 where
     T: From<f64> + From<Ptr<'e, f64>> + From<Op> + From<(Ptr<'e, ExprFn>, usize)>,
     V: Resolver<Locked, f64> + LockedResolver<f64>,
@@ -82,16 +82,14 @@ where
 {
     type Error = crate::Error<'e>;
 
-    fn try_from(
-        (input, ctx): (&'e str, &'e Context<Locked, V, F, V, F>),
-    ) -> Result<Self, Self::Error>
+    fn try_from((input, ctx): (&'e str, &'e LContext<V, F>)) -> Result<Self, Self::Error>
     {
         let infix_expr = Expr::<Infix>::try_from(input)?;
         Expr::<T>::try_from((infix_expr, ctx))
     }
 }
 
-impl<'e, T, V, F> TryFrom<(Expr<Infix<'e>>, &'e Context<Locked, V, F, V, F>)> for Expr<T>
+impl<'e, T, V, F> TryFrom<(Expr<Infix<'e>>, &'e LContext<V, F>)> for Expr<T>
 where
     T: From<f64> + From<Ptr<'e, f64>> + From<Op> + From<(Ptr<'e, ExprFn>, usize)>,
     V: Resolver<Locked, f64> + LockedResolver<f64>,
@@ -100,9 +98,7 @@ where
     type Error = Error<'e>;
 
     // shunting yard algorithm
-    fn try_from(
-        (expr, ctx): (Expr<Infix<'e>>, &'e Context<Locked, V, F, V, F>),
-    ) -> Result<Self, Self::Error>
+    fn try_from((expr, ctx): (Expr<Infix<'e>>, &'e LContext<V, F>)) -> Result<Self, Self::Error>
     {
         let mut f64_cache: SmallVec<[f64; 4]> = smallvec![];
         let mut output: Vec<T> = Vec::with_capacity(expr.len());

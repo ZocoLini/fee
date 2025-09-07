@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    Error, EvalError,
+    Error, EvalError, UContext,
     expr::{ExprCompiler, NotIndexedResolver},
     op::Op,
     prelude::*,
@@ -56,10 +56,7 @@ where
     LV: LockedResolver<f64>,
     LF: LockedResolver<ExprFn>,
 {
-    fn compile(
-        expr: &'e str,
-        _ctx: &Context<Unlocked, V, F, LV, LF>,
-    ) -> Result<Expr<Rpn<'e>>, Error<'e>>
+    fn compile(expr: &'e str, _ctx: &UContext<V, F, LV, LF>) -> Result<Expr<Rpn<'e>>, Error<'e>>
     {
         Expr::try_from(expr)
     }
@@ -72,11 +69,7 @@ where
     LV: LockedResolver<f64>,
     LF: LockedResolver<ExprFn>,
 {
-    fn eval(
-        &self,
-        ctx: &Context<Unlocked, V, F, LV, LF>,
-        stack: &mut Vec<f64>,
-    ) -> Result<f64, Error<'e>>
+    fn eval(&self, ctx: &UContext<V, F, LV, LF>, stack: &mut Vec<f64>) -> Result<f64, Error<'e>>
     {
         if self.tokens.len() == 1 {
             if let Rpn::Num(num) = &self.tokens[0] {

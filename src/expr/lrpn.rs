@@ -1,5 +1,5 @@
 use crate::{
-    Error, EvalError, Ptr,
+    Error, EvalError, LContext, Ptr,
     expr::ExprCompiler,
     op::Op,
     prelude::*,
@@ -52,10 +52,7 @@ where
     V: LockedResolver<f64>,
     F: LockedResolver<ExprFn>,
 {
-    fn compile(
-        expr: &'e str,
-        ctx: &'c Context<Locked, V, F, V, F>,
-    ) -> Result<Expr<LRpn<'c>>, Error<'e>>
+    fn compile(expr: &'e str, ctx: &'c LContext<V, F>) -> Result<Expr<LRpn<'c>>, Error<'e>>
     {
         Expr::try_from((expr, ctx))
     }
@@ -66,11 +63,7 @@ where
     V: LockedResolver<f64>,
     F: LockedResolver<ExprFn>,
 {
-    fn eval(
-        &self,
-        _ctx: &Context<Locked, V, F, V, F>,
-        stack: &mut Vec<f64>,
-    ) -> Result<f64, Error<'a>>
+    fn eval(&self, _ctx: &LContext<V, F>, stack: &mut Vec<f64>) -> Result<f64, Error<'a>>
     {
         if self.tokens.len() == 1 {
             if let LRpn::Num(num) = &self.tokens[0] {

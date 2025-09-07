@@ -1,7 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    Error, EvalError, IndexedResolver,
+    Error, EvalError, IndexedResolver, UContext,
     expr::{ExprCompiler, NotIndexedResolver},
     op::Op,
     parsing,
@@ -70,13 +70,7 @@ where
 {
     fn compile(
         expr: &'e str,
-        _ctx: &Context<
-            Unlocked,
-            IndexedResolver<Unlocked, f64>,
-            F,
-            IndexedResolver<Locked, f64>,
-            LF,
-        >,
+        _ctx: &UContext<IndexedResolver<Unlocked, f64>, F, IndexedResolver<Locked, f64>, LF>,
     ) -> Result<Expr<IVRpn<'e>>, Error<'e>>
     {
         Expr::try_from(expr)
@@ -92,13 +86,7 @@ where
 {
     fn eval(
         &self,
-        ctx: &Context<
-            Unlocked,
-            IndexedResolver<Unlocked, f64>,
-            F,
-            IndexedResolver<Locked, f64>,
-            LF,
-        >,
+        ctx: &UContext<IndexedResolver<Unlocked, f64>, F, IndexedResolver<Locked, f64>, LF>,
         stack: &mut Vec<f64>,
     ) -> Result<f64, Error<'e>>
     {
