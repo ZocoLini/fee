@@ -14,6 +14,7 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Fixed parsing nested functions with multiple arguments.
 ### Changed
 - The `Expr` structs are now the ones that expose the specialized `eval()` method.
+- `DefaultVarResolver` and `SmallVarResolver` allows keys different to String.
 ### Removed
 - Removed the `Evaluator` concept and the `RpnEvaluator` struct.
 ### Security
