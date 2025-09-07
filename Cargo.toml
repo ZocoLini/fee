@@ -35,15 +35,15 @@ overflow-checks = false
 incremental = false
 
 [[bench]]
-name = "bench_resolvers"
+name = "bench_resolve"
 harness = false
 
 [[bench]]
-name = "bench_evaluators"
+name = "bench_eval"
 harness = false
 
 [[bench]]
-name = "bench_parsers"
+name = "bench_parse"
 harness = false
 
 [[bench]]
