@@ -7,17 +7,20 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
-- `Context::empty()` method that returns a context with `EmptyResolver`s
-- `RpnExpr`and `IRpnExpr` structs exposed to the library user.
+- `Context::empty()` method returning a context with `EmptyResolver`s
+- `ExprCompiler` and `ExprEvaluator` traits for the different `Expr<T>` types.
+- `Ptr` struct for handling raw pointers to resolver contents.
+- New `Expr` variant optimized for locked `Context`s
+- New `Expr` variants optimized for indexed `Resolver`s
 ### Fixed
-- Fixed parsing nested functions with multiple arguments.
+- Parsing of nested functions with multiple arguments.
 ### Changed
-- The `Expr` structs are now the ones that expose the specialized `eval()` method.
-- `DefaultVarResolver` and `SmallVarResolver` allows keys different to String.
+- `Expr<T>` now directly exposes the specialized `eval()` and `compile()` methods.
+- `DefaultVarResolver` and `SmallVarResolver` now allow keys other than String.
+- Improved public interfaces of several resolvers.
+- `Resolver`s can no longer be locked individually, locking is now managed by the owning `Context`.
 ### Removed
 - Removed the `Evaluator` concept and the `RpnEvaluator` struct.
-### Security
-### Deprecated
 
 ## [0.1.1] - 2025-09-03
 
