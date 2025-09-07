@@ -3,11 +3,11 @@
 [![Crates.io](https://img.shields.io/crates/v/fee.svg)](https://crates.io/crates/fee)
 [![Docs.rs](https://docs.rs/fee/badge.svg)](https://docs.rs/fee)
 
-`fee` is a fast and flexible library for evaluating mathematical 
-expressions from strings. It focuses on **runtime performance** 
-while keeping parsing simple and efficient.  
+`fee` is a fast and flexible library for evaluating mathematical
+expressions from strings. It focuses on **runtime performance**
+while keeping parsing simple and efficient.
 
-This crate was born to power scientific and engineering software 
+This crate was born to power scientific and engineering software
 where expressions cannot be hardcoded:
 - The source code may be unavailable to recompile.
 - Or you may want to ship closed/private tools with configurable formulas.
@@ -31,7 +31,7 @@ use fee::{prelude::*, DefaultResolver};
 fn main()
 {
     let expr = "max((2 + 4) * 6 / (p1 + 2), sqrt(p0^2 + p1^2)) + abs(-2)";
-    
+
     let mut var_resolver = DefaultResolver::empty();
     var_resolver.insert("p0", 10.0);
     var_resolver.insert("p1", 4.0);
@@ -55,7 +55,7 @@ fn abs(x: &[f64]) -> f64 {
 
 ## Resolvers
 
-The resolvers are the objects that give meaning to the variables and 
+The resolvers are the objects that give meaning to the variables and
 functions used in an expression. They can be freely combined in a
 `Context` depending on your needs.
 
@@ -88,9 +88,9 @@ Example of a valid expression:
 ### Smart compilation
 
 One of the goals of this library is provide a simple but powerful API. To archive
-this, the `Expr::compile()` method, depending on the context provided and thanks to 
-Rust’s type system, it automatically picks the best `Expr<T>` specialization for 
-your `Context`. You only need to choose the right resolvers, and `fee` will compile 
+this, the `Expr::compile()` method, depending on the context provided and thanks to
+Rust’s type system, it automatically picks the best `Expr<T>` specialization for
+your `Context`. You only need to choose the right resolvers, and `fee` will compile
 to the most efficient form at **compile time**.
 
 The different types of `Expr` are:
@@ -144,3 +144,9 @@ taskset -c $CORES cargo bench cmp
 Right now, comparissions are being made against `evalexpr`, `meval`, and `fasteval`.
 It is planned to generate comparison plots to easily to visialize the speed difference,
 as well as a table with pros and cons of each crate.
+
+## Additional Resources
+
+- [Roadmap](ROADMAP.md)
+- [Changelog](CHANGELOG.md)
+- [Contributing](CONTRIBUTING.md)
