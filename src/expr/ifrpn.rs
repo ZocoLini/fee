@@ -10,7 +10,7 @@ use crate::{
 };
 
 #[derive(Debug, PartialEq)]
-pub enum IFRpnToken<'e>
+pub enum IFRpn<'e>
 {
     Num(f64),
     Var(&'e str),
@@ -18,38 +18,38 @@ pub enum IFRpnToken<'e>
     Op(Op),
 }
 
-impl From<f64> for IFRpnToken<'_>
+impl From<f64> for IFRpn<'_>
 {
     fn from(num: f64) -> Self
     {
-        IFRpnToken::Num(num)
+        IFRpn::Num(num)
     }
 }
 
-impl<'e> From<&'e str> for IFRpnToken<'e>
+impl<'e> From<&'e str> for IFRpn<'e>
 {
     fn from(name: &'e str) -> Self
     {
-        IFRpnToken::Var(name)
+        IFRpn::Var(name)
     }
 }
 
-impl From<Op> for IFRpnToken<'_>
+impl From<Op> for IFRpn<'_>
 {
     fn from(op: Op) -> Self
     {
-        IFRpnToken::Op(op)
+        IFRpn::Op(op)
     }
 }
 
-impl<'e> From<(&'e str, usize)> for IFRpnToken<'e>
+impl<'e> From<(&'e str, usize)> for IFRpn<'e>
 {
     fn from((name, argc): (&'e str, usize)) -> Self
     {
         let name_bytes = name.as_bytes();
         let letter = name_bytes[0] - b'a';
         let idx = parsing::parse_usize(&name_bytes[1..]);
-        IFRpnToken::Fn(letter as usize, idx, argc)
+        IFRpn::Fn(letter as usize, idx, argc)
     }
 }
 
@@ -62,8 +62,8 @@ impl<'e, V, LV>
         IndexedResolver<Unlocked, ExprFn>,
         LV,
         IndexedResolver<Locked, ExprFn>,
-        IFRpnToken<'e>,
-    > for Expr<IFRpnToken<'e>>
+        IFRpn<'e>,
+    > for Expr<IFRpn<'e>>
 where
     V: NotIndexedResolver + UnlockedResolver<f64, LV>,
     LV: LockedResolver<f64>,
@@ -77,7 +77,7 @@ where
             LV,
             IndexedResolver<Locked, ExprFn>,
         >,
-    ) -> Result<Expr<IFRpnToken<'e>>, Error<'e>>
+    ) -> Result<Expr<IFRpn<'e>>, Error<'e>>
     {
         Expr::try_from(expr)
     }
@@ -91,7 +91,7 @@ impl<'e, V, LV>
         IndexedResolver<Unlocked, ExprFn>,
         LV,
         IndexedResolver<Locked, ExprFn>,
-    > for Expr<IFRpnToken<'e>>
+    > for Expr<IFRpn<'e>>
 where
     V: NotIndexedResolver + UnlockedResolver<f64, LV>,
     LV: LockedResolver<f64>,
@@ -109,19 +109,19 @@ where
     ) -> Result<f64, Error<'e>>
     {
         if self.tokens.len() == 1 {
-            if let IFRpnToken::Num(num) = &self.tokens[0] {
+            if let IFRpn::Num(num) = &self.tokens[0] {
                 return Ok(*num);
             }
         }
 
         for tok in self.tokens.iter() {
             match tok {
-                IFRpnToken::Num(num) => stack.push(*num),
-                IFRpnToken::Var(name) => stack.push(
+                IFRpn::Num(num) => stack.push(*num),
+                IFRpn::Var(name) => stack.push(
                     *ctx.get_var(name)
                         .ok_or_else(|| Error::UnknownVar(Cow::Borrowed(name)))?,
                 ),
-                IFRpnToken::Fn(id, idx, argc) => {
+                IFRpn::Fn(id, idx, argc) => {
                     if *argc > stack.len() {
                         return Err(Error::EvalError(EvalError::RPNStackUnderflow));
                     }
@@ -139,7 +139,7 @@ where
                     stack.truncate(start);
                     stack.push(val);
                 }
-                IFRpnToken::Op(op) => {
+                IFRpn::Op(op) => {
                     let start = stack.len() - op.num_operands();
                     let res = op.apply(&stack[start..]);
                     stack.truncate(start);

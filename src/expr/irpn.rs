@@ -10,7 +10,7 @@ use crate::{
 };
 
 #[derive(Debug, PartialEq)]
-pub enum IRpnToken
+pub enum IRpn
 {
     Num(f64),
     Var(usize, usize),
@@ -18,41 +18,41 @@ pub enum IRpnToken
     Op(Op),
 }
 
-impl From<f64> for IRpnToken
+impl From<f64> for IRpn
 {
     fn from(num: f64) -> Self
     {
-        IRpnToken::Num(num)
+        IRpn::Num(num)
     }
 }
 
-impl From<&str> for IRpnToken
+impl From<&str> for IRpn
 {
     fn from(name: &str) -> Self
     {
         let name_bytes = name.as_bytes();
         let letter = name_bytes[0] - b'a';
         let idx = parsing::parse_usize(&name_bytes[1..]);
-        IRpnToken::Var(letter as usize, idx)
+        IRpn::Var(letter as usize, idx)
     }
 }
 
-impl From<Op> for IRpnToken
+impl From<Op> for IRpn
 {
     fn from(op: Op) -> Self
     {
-        IRpnToken::Op(op)
+        IRpn::Op(op)
     }
 }
 
-impl<'e> From<(&'e str, usize)> for IRpnToken
+impl<'e> From<(&'e str, usize)> for IRpn
 {
     fn from((name, argc): (&'e str, usize)) -> Self
     {
         let name_bytes = name.as_bytes();
         let letter = name_bytes[0] - b'a';
         let idx = parsing::parse_usize(&name_bytes[1..]);
-        IRpnToken::Fn(letter as usize, idx, argc)
+        IRpn::Fn(letter as usize, idx, argc)
     }
 }
 
@@ -65,8 +65,8 @@ impl<'e>
         IndexedResolver<Unlocked, ExprFn>,
         IndexedResolver<Locked, f64>,
         IndexedResolver<Locked, ExprFn>,
-        IRpnToken,
-    > for Expr<IRpnToken>
+        IRpn,
+    > for Expr<IRpn>
 {
     fn compile(
         expr: &'e str,
@@ -77,7 +77,7 @@ impl<'e>
             IndexedResolver<Locked, f64>,
             IndexedResolver<Locked, ExprFn>,
         >,
-    ) -> Result<Expr<IRpnToken>, Error<'e>>
+    ) -> Result<Expr<IRpn>, Error<'e>>
     {
         Expr::try_from(expr)
     }
@@ -91,7 +91,7 @@ impl<'e>
         IndexedResolver<Unlocked, ExprFn>,
         IndexedResolver<Locked, f64>,
         IndexedResolver<Locked, ExprFn>,
-    > for Expr<IRpnToken>
+    > for Expr<IRpn>
 {
     fn eval(
         &self,
@@ -106,15 +106,15 @@ impl<'e>
     ) -> Result<f64, Error<'e>>
     {
         if self.tokens.len() == 1 {
-            if let IRpnToken::Num(num) = &self.tokens[0] {
+            if let IRpn::Num(num) = &self.tokens[0] {
                 return Ok(*num);
             }
         }
 
         for tok in self.tokens.iter() {
             match tok {
-                IRpnToken::Num(num) => stack.push(*num),
-                IRpnToken::Var(id, idx) => {
+                IRpn::Num(num) => stack.push(*num),
+                IRpn::Var(id, idx) => {
                     stack.push(*ctx.get_var_by_index(*id, *idx).ok_or_else(|| {
                         Error::UnknownVar(Cow::Owned(format!(
                             "{}{}",
@@ -123,7 +123,7 @@ impl<'e>
                         )))
                     })?)
                 }
-                IRpnToken::Fn(id, idx, argc) => {
+                IRpn::Fn(id, idx, argc) => {
                     if *argc > stack.len() {
                         return Err(Error::EvalError(EvalError::RPNStackUnderflow));
                     }
@@ -140,7 +140,7 @@ impl<'e>
                     stack.truncate(start);
                     stack.push(val);
                 }
-                IRpnToken::Op(op) => {
+                IRpn::Op(op) => {
                     let start = stack.len() - op.num_operands();
                     let res = op.apply(&stack[start..]);
                     stack.truncate(start);
@@ -166,61 +166,61 @@ mod tests
     fn test_new()
     {
         let expr = "2 - (4 + (p19 - 2) * (p19 + 2))";
-        let rpn_expr = Expr::<IRpnToken>::try_from(expr).unwrap();
+        let rpn_expr = Expr::<IRpn>::try_from(expr).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
-                IRpnToken::Num(2.0),
-                IRpnToken::Num(4.0),
-                IRpnToken::Var((b'p' - b'a') as usize, 19),
-                IRpnToken::Num(2.0),
-                IRpnToken::Op(Op::Sub),
-                IRpnToken::Var((b'p' - b'a') as usize, 19),
-                IRpnToken::Num(2.0),
-                IRpnToken::Op(Op::Add),
-                IRpnToken::Op(Op::Mul),
-                IRpnToken::Op(Op::Add),
-                IRpnToken::Op(Op::Sub)
+                IRpn::Num(2.0),
+                IRpn::Num(4.0),
+                IRpn::Var((b'p' - b'a') as usize, 19),
+                IRpn::Num(2.0),
+                IRpn::Op(Op::Sub),
+                IRpn::Var((b'p' - b'a') as usize, 19),
+                IRpn::Num(2.0),
+                IRpn::Op(Op::Add),
+                IRpn::Op(Op::Mul),
+                IRpn::Op(Op::Add),
+                IRpn::Op(Op::Sub)
             ]
         );
 
         let expr = "f0((2 + 3) * 4, f1(5))";
-        let rpn_expr = Expr::<IRpnToken>::try_from(expr).unwrap();
+        let rpn_expr = Expr::<IRpn>::try_from(expr).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
-                IRpnToken::Num(20.0),
-                IRpnToken::Num(5.0),
-                IRpnToken::Fn((b'f' - b'a') as usize, 1, 1),
-                IRpnToken::Fn((b'f' - b'a') as usize, 0, 2),
+                IRpn::Num(20.0),
+                IRpn::Num(5.0),
+                IRpn::Fn((b'f' - b'a') as usize, 1, 1),
+                IRpn::Fn((b'f' - b'a') as usize, 0, 2),
             ]
         );
 
         let expr = "(2 * 21) + 3 + -35 - ((5 * 80) + 5) + 10 + -p0";
-        let rpn_expr = Expr::<IRpnToken>::try_from(expr).unwrap();
+        let rpn_expr = Expr::<IRpn>::try_from(expr).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
-                IRpnToken::Num(-385.0),
-                IRpnToken::Var((b'p' - b'a') as usize, 0),
-                IRpnToken::Op(Op::Neg),
-                IRpnToken::Op(Op::Add),
+                IRpn::Num(-385.0),
+                IRpn::Var((b'p' - b'a') as usize, 0),
+                IRpn::Op(Op::Neg),
+                IRpn::Op(Op::Add),
             ]
         );
 
         let expr = "-y1 * (p2 - p3*y0)";
-        let rpn_expr = Expr::<IRpnToken>::try_from(expr).unwrap();
+        let rpn_expr = Expr::<IRpn>::try_from(expr).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
-                IRpnToken::Var((b'y' - b'a') as usize, 1),
-                IRpnToken::Op(Op::Neg),
-                IRpnToken::Var((b'p' - b'a') as usize, 2),
-                IRpnToken::Var((b'p' - b'a') as usize, 3),
-                IRpnToken::Var((b'y' - b'a') as usize, 0),
-                IRpnToken::Op(Op::Mul),
-                IRpnToken::Op(Op::Sub),
-                IRpnToken::Op(Op::Mul),
+                IRpn::Var((b'y' - b'a') as usize, 1),
+                IRpn::Op(Op::Neg),
+                IRpn::Var((b'p' - b'a') as usize, 2),
+                IRpn::Var((b'p' - b'a') as usize, 3),
+                IRpn::Var((b'y' - b'a') as usize, 0),
+                IRpn::Op(Op::Mul),
+                IRpn::Op(Op::Sub),
+                IRpn::Op(Op::Mul),
             ]
         );
     }

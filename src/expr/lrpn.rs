@@ -7,7 +7,7 @@ use crate::{
 };
 
 #[derive(Debug, PartialEq)]
-pub enum LRpnToken<'a>
+pub enum LRpn<'a>
 {
     Num(f64),
     Var(Ptr<'a, f64>),
@@ -15,40 +15,39 @@ pub enum LRpnToken<'a>
     Op(Op),
 }
 
-impl<'a> From<f64> for LRpnToken<'a>
+impl<'a> From<f64> for LRpn<'a>
 {
     fn from(num: f64) -> Self
     {
-        LRpnToken::Num(num)
+        LRpn::Num(num)
     }
 }
 
-impl<'a> From<Ptr<'a, f64>> for LRpnToken<'a>
+impl<'a> From<Ptr<'a, f64>> for LRpn<'a>
 {
     fn from(ptr: Ptr<'a, f64>) -> Self
     {
-        LRpnToken::Var(ptr)
+        LRpn::Var(ptr)
     }
 }
 
-impl<'a> From<Op> for LRpnToken<'a>
+impl<'a> From<Op> for LRpn<'a>
 {
     fn from(op: Op) -> Self
     {
-        LRpnToken::Op(op)
+        LRpn::Op(op)
     }
 }
 
-impl<'a> From<(Ptr<'a, ExprFn>, usize)> for LRpnToken<'a>
+impl<'a> From<(Ptr<'a, ExprFn>, usize)> for LRpn<'a>
 {
     fn from((ptr, argc): (Ptr<'a, ExprFn>, usize)) -> Self
     {
-        LRpnToken::Fn(ptr, argc)
+        LRpn::Fn(ptr, argc)
     }
 }
 
-impl<'e: 'c, 'c: 'e, V, F> ExprCompiler<'e, 'c, Locked, V, F, V, F, LRpnToken<'c>>
-    for Expr<LRpnToken<'c>>
+impl<'e: 'c, 'c: 'e, V, F> ExprCompiler<'e, 'c, Locked, V, F, V, F, LRpn<'c>> for Expr<LRpn<'c>>
 where
     V: LockedResolver<f64>,
     F: LockedResolver<ExprFn>,
@@ -56,13 +55,13 @@ where
     fn compile(
         expr: &'e str,
         ctx: &'c Context<Locked, V, F, V, F>,
-    ) -> Result<Expr<LRpnToken<'c>>, Error<'e>>
+    ) -> Result<Expr<LRpn<'c>>, Error<'e>>
     {
         Expr::try_from((expr, ctx))
     }
 }
 
-impl<'a, V, F> ExprEvaluator<'a, Locked, V, F, V, F> for Expr<LRpnToken<'a>>
+impl<'a, V, F> ExprEvaluator<'a, Locked, V, F, V, F> for Expr<LRpn<'a>>
 where
     V: LockedResolver<f64>,
     F: LockedResolver<ExprFn>,
@@ -74,16 +73,16 @@ where
     ) -> Result<f64, Error<'a>>
     {
         if self.tokens.len() == 1 {
-            if let LRpnToken::Num(num) = &self.tokens[0] {
+            if let LRpn::Num(num) = &self.tokens[0] {
                 return Ok(*num);
             }
         }
 
         for tok in self.tokens.iter() {
             match tok {
-                LRpnToken::Num(num) => stack.push(*num),
-                LRpnToken::Var(ptr) => stack.push(ptr.get()),
-                LRpnToken::Fn(ptr, argc) => {
+                LRpn::Num(num) => stack.push(*num),
+                LRpn::Var(ptr) => stack.push(ptr.get()),
+                LRpn::Fn(ptr, argc) => {
                     if *argc > stack.len() {
                         return Err(Error::EvalError(EvalError::RPNStackUnderflow));
                     }
@@ -95,7 +94,7 @@ where
                     stack.truncate(start);
                     stack.push(val);
                 }
-                LRpnToken::Op(op) => {
+                LRpn::Op(op) => {
                     let start = stack.len() - op.num_operands();
                     let res = op.apply(&stack[start..]);
                     stack.truncate(start);

@@ -14,7 +14,7 @@ use crate::Ptr;
 use crate::resolver::{Locked, LockedResolver, ResolverState};
 use crate::{
     ConstantResolver, DefaultResolver, EmptyResolver, Error, ExprFn, SmallResolver,
-    context::Context, expr::infix::InfixToken, op::Op, prelude::*,
+    context::Context, expr::infix::Infix, op::Op, prelude::*,
 };
 
 /// Represents the compiled expression.
@@ -69,7 +69,7 @@ where
 
     fn try_from(input: &'e str) -> Result<Self, Self::Error>
     {
-        let infix_expr = Expr::<InfixToken>::try_from(input)?;
+        let infix_expr = Expr::<Infix>::try_from(input)?;
         Expr::<T>::try_from(infix_expr)
     }
 }
@@ -86,12 +86,12 @@ where
         (input, ctx): (&'e str, &'e Context<Locked, V, F, V, F>),
     ) -> Result<Self, Self::Error>
     {
-        let infix_expr = Expr::<InfixToken>::try_from(input)?;
+        let infix_expr = Expr::<Infix>::try_from(input)?;
         Expr::<T>::try_from((infix_expr, ctx))
     }
 }
 
-impl<'e, T, V, F> TryFrom<(Expr<InfixToken<'e>>, &'e Context<Locked, V, F, V, F>)> for Expr<T>
+impl<'e, T, V, F> TryFrom<(Expr<Infix<'e>>, &'e Context<Locked, V, F, V, F>)> for Expr<T>
 where
     T: From<f64> + From<Ptr<'e, f64>> + From<Op> + From<(Ptr<'e, ExprFn>, usize)>,
     V: Resolver<Locked, f64> + LockedResolver<f64>,
@@ -101,20 +101,20 @@ where
 
     // shunting yard algorithm
     fn try_from(
-        (expr, ctx): (Expr<InfixToken<'e>>, &'e Context<Locked, V, F, V, F>),
+        (expr, ctx): (Expr<Infix<'e>>, &'e Context<Locked, V, F, V, F>),
     ) -> Result<Self, Self::Error>
     {
         let mut f64_cache: SmallVec<[f64; 4]> = smallvec![];
         let mut output: Vec<T> = Vec::with_capacity(expr.len());
-        let mut ops: Vec<InfixToken> = Vec::new();
+        let mut ops: Vec<Infix> = Vec::new();
 
         for tok in expr.into_iter() {
             match tok {
-                InfixToken::Num(num) => {
+                Infix::Num(num) => {
                     output.push(num.into());
                     f64_cache.push(num);
                 }
-                InfixToken::Var(name) => {
+                Infix::Var(name) => {
                     let var_ptr = ctx
                         .vars()
                         .get_ptr(name)
@@ -122,34 +122,34 @@ where
                     output.push(T::from(var_ptr));
                     f64_cache.clear();
                 }
-                InfixToken::Op(op) => {
-                    while let Some(InfixToken::Op(top)) = ops.last() {
+                Infix::Op(op) => {
+                    while let Some(Infix::Op(top)) = ops.last() {
                         let prec = op.precedence();
                         let top_prec = top.precedence();
                         let should_pop =
                             top_prec > prec || (!op.is_right_associative() && top_prec == prec);
 
                         if should_pop {
-                            if let Some(InfixToken::Op(op)) = ops.pop() {
+                            if let Some(Infix::Op(op)) = ops.pop() {
                                 pre_evaluate(&mut output, &mut f64_cache, op);
                             }
                         } else {
                             break;
                         }
                     }
-                    ops.push(InfixToken::Op(op));
+                    ops.push(Infix::Op(op));
                 }
-                InfixToken::LParen => ops.push(tok),
-                InfixToken::RParen => {
+                Infix::LParen => ops.push(tok),
+                Infix::RParen => {
                     while let Some(top) = ops.pop() {
                         match top {
-                            InfixToken::LParen => break,
-                            InfixToken::Op(op) => pre_evaluate(&mut output, &mut f64_cache, op),
+                            Infix::LParen => break,
+                            Infix::Op(op) => pre_evaluate(&mut output, &mut f64_cache, op),
                             _ => unreachable!("no more elements should be inside ops"),
                         }
                     }
                 }
-                InfixToken::Fn(name, args) => {
+                Infix::Fn(name, args) => {
                     let fn_ptr = ctx
                         .fns()
                         .get_ptr(name)
@@ -167,7 +167,7 @@ where
             }
         }
 
-        while let Some(InfixToken::Op(op)) = ops.pop() {
+        while let Some(Infix::Op(op)) = ops.pop() {
             pre_evaluate(&mut output, &mut f64_cache, op);
         }
 
@@ -205,57 +205,57 @@ where
     }
 }
 
-impl<'e, T> TryFrom<Expr<InfixToken<'e>>> for Expr<T>
+impl<'e, T> TryFrom<Expr<Infix<'e>>> for Expr<T>
 where
     T: From<f64> + From<&'e str> + From<Op> + From<(&'e str, usize)>,
 {
     type Error = Error<'e>;
 
     // shunting yard algorithm
-    fn try_from(expr: Expr<InfixToken<'e>>) -> Result<Self, Self::Error>
+    fn try_from(expr: Expr<Infix<'e>>) -> Result<Self, Self::Error>
     {
         let mut f64_cache: SmallVec<[f64; 4]> = smallvec![];
         let mut output: Vec<T> = Vec::with_capacity(expr.len());
-        let mut ops: Vec<InfixToken> = Vec::new();
+        let mut ops: Vec<Infix> = Vec::new();
 
         for tok in expr.into_iter() {
             match tok {
-                InfixToken::Num(num) => {
+                Infix::Num(num) => {
                     output.push(num.into());
                     f64_cache.push(num);
                 }
-                InfixToken::Var(name) => {
+                Infix::Var(name) => {
                     output.push(name.into());
                     f64_cache.clear();
                 }
-                InfixToken::Op(op) => {
-                    while let Some(InfixToken::Op(top)) = ops.last() {
+                Infix::Op(op) => {
+                    while let Some(Infix::Op(top)) = ops.last() {
                         let prec = op.precedence();
                         let top_prec = top.precedence();
                         let should_pop =
                             top_prec > prec || (!op.is_right_associative() && top_prec == prec);
 
                         if should_pop {
-                            if let Some(InfixToken::Op(op)) = ops.pop() {
+                            if let Some(Infix::Op(op)) = ops.pop() {
                                 pre_evaluate(&mut output, &mut f64_cache, op);
                             }
                         } else {
                             break;
                         }
                     }
-                    ops.push(InfixToken::Op(op));
+                    ops.push(Infix::Op(op));
                 }
-                InfixToken::LParen => ops.push(tok),
-                InfixToken::RParen => {
+                Infix::LParen => ops.push(tok),
+                Infix::RParen => {
                     while let Some(top) = ops.pop() {
                         match top {
-                            InfixToken::LParen => break,
-                            InfixToken::Op(op) => pre_evaluate(&mut output, &mut f64_cache, op),
+                            Infix::LParen => break,
+                            Infix::Op(op) => pre_evaluate(&mut output, &mut f64_cache, op),
                             _ => unreachable!("no more elements should be inside ops"),
                         }
                     }
                 }
-                InfixToken::Fn(name, args) => {
+                Infix::Fn(name, args) => {
                     let fn_token = T::from((name, args.len()));
 
                     for arg_tokens in args {
@@ -269,7 +269,7 @@ where
             }
         }
 
-        while let Some(InfixToken::Op(op)) = ops.pop() {
+        while let Some(Infix::Op(op)) = ops.pop() {
             pre_evaluate(&mut output, &mut f64_cache, op);
         }
 

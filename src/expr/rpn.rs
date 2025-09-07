@@ -9,7 +9,7 @@ use crate::{
 };
 
 #[derive(Debug, PartialEq)]
-pub enum RpnToken<'e>
+pub enum Rpn<'e>
 {
     Num(f64),
     Var(&'e str),
@@ -17,40 +17,39 @@ pub enum RpnToken<'e>
     Op(Op),
 }
 
-impl From<f64> for RpnToken<'_>
+impl From<f64> for Rpn<'_>
 {
     fn from(num: f64) -> Self
     {
-        RpnToken::Num(num)
+        Rpn::Num(num)
     }
 }
 
-impl<'e> From<&'e str> for RpnToken<'e>
+impl<'e> From<&'e str> for Rpn<'e>
 {
     fn from(name: &'e str) -> Self
     {
-        RpnToken::Var(name)
+        Rpn::Var(name)
     }
 }
 
-impl From<Op> for RpnToken<'_>
+impl From<Op> for Rpn<'_>
 {
     fn from(op: Op) -> Self
     {
-        RpnToken::Op(op)
+        Rpn::Op(op)
     }
 }
 
-impl<'e> From<(&'e str, usize)> for RpnToken<'e>
+impl<'e> From<(&'e str, usize)> for Rpn<'e>
 {
     fn from((name, argc): (&'e str, usize)) -> Self
     {
-        RpnToken::Fn(name, argc)
+        Rpn::Fn(name, argc)
     }
 }
 
-impl<'e, V, F, LV, LF> ExprCompiler<'e, '_, Unlocked, V, F, LV, LF, RpnToken<'e>>
-    for Expr<RpnToken<'e>>
+impl<'e, V, F, LV, LF> ExprCompiler<'e, '_, Unlocked, V, F, LV, LF, Rpn<'e>> for Expr<Rpn<'e>>
 where
     V: NotIndexedResolver + UnlockedResolver<f64, LV>,
     F: NotIndexedResolver + UnlockedResolver<ExprFn, LF>,
@@ -60,13 +59,13 @@ where
     fn compile(
         expr: &'e str,
         _ctx: &Context<Unlocked, V, F, LV, LF>,
-    ) -> Result<Expr<RpnToken<'e>>, Error<'e>>
+    ) -> Result<Expr<Rpn<'e>>, Error<'e>>
     {
         Expr::try_from(expr)
     }
 }
 
-impl<'e, V, F, LV, LF> ExprEvaluator<'e, Unlocked, V, F, LV, LF> for Expr<RpnToken<'e>>
+impl<'e, V, F, LV, LF> ExprEvaluator<'e, Unlocked, V, F, LV, LF> for Expr<Rpn<'e>>
 where
     V: NotIndexedResolver + UnlockedResolver<f64, LV>,
     F: NotIndexedResolver + UnlockedResolver<ExprFn, LF>,
@@ -80,19 +79,19 @@ where
     ) -> Result<f64, Error<'e>>
     {
         if self.tokens.len() == 1 {
-            if let RpnToken::Num(num) = &self.tokens[0] {
+            if let Rpn::Num(num) = &self.tokens[0] {
                 return Ok(*num);
             }
         }
 
         for tok in self.tokens.iter() {
             match tok {
-                RpnToken::Num(num) => stack.push(*num),
-                RpnToken::Var(name) => stack.push(
+                Rpn::Num(num) => stack.push(*num),
+                Rpn::Var(name) => stack.push(
                     *ctx.get_var(name)
                         .ok_or_else(|| Error::UnknownVar(Cow::Borrowed(name)))?,
                 ),
-                RpnToken::Fn(name, argc) => {
+                Rpn::Fn(name, argc) => {
                     if *argc > stack.len() {
                         return Err(Error::EvalError(EvalError::RPNStackUnderflow));
                     }
@@ -108,7 +107,7 @@ where
                     stack.truncate(start);
                     stack.push(val);
                 }
-                RpnToken::Op(op) => {
+                Rpn::Op(op) => {
                     let start = stack.len() - op.num_operands();
                     let res = op.apply(&stack[start..]);
                     stack.truncate(start);
@@ -135,61 +134,61 @@ mod tests
     fn test_new()
     {
         let expr = "2 - (4 + (p19 - 2) * (p19 + 2))";
-        let rpn_expr = Expr::<RpnToken>::try_from(expr).unwrap();
+        let rpn_expr = Expr::<Rpn>::try_from(expr).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
-                RpnToken::Num(2.0),
-                RpnToken::Num(4.0),
-                RpnToken::Var("p19"),
-                RpnToken::Num(2.0),
-                RpnToken::Op(Op::Sub),
-                RpnToken::Var("p19"),
-                RpnToken::Num(2.0),
-                RpnToken::Op(Op::Add),
-                RpnToken::Op(Op::Mul),
-                RpnToken::Op(Op::Add),
-                RpnToken::Op(Op::Sub)
+                Rpn::Num(2.0),
+                Rpn::Num(4.0),
+                Rpn::Var("p19"),
+                Rpn::Num(2.0),
+                Rpn::Op(Op::Sub),
+                Rpn::Var("p19"),
+                Rpn::Num(2.0),
+                Rpn::Op(Op::Add),
+                Rpn::Op(Op::Mul),
+                Rpn::Op(Op::Add),
+                Rpn::Op(Op::Sub)
             ]
         );
 
         let expr = "abs((2 + 3) * 4, sqrt(5))";
-        let rpn_expr = Expr::<RpnToken>::try_from(expr).unwrap();
+        let rpn_expr = Expr::<Rpn>::try_from(expr).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
-                RpnToken::Num(20.0),
-                RpnToken::Num(5.0),
-                RpnToken::Fn("sqrt", 1),
-                RpnToken::Fn("abs", 2),
+                Rpn::Num(20.0),
+                Rpn::Num(5.0),
+                Rpn::Fn("sqrt", 1),
+                Rpn::Fn("abs", 2),
             ]
         );
 
         let expr = "(2 * 21) + 3 + -35 - ((5 * 80) + 5) + 10 + -p0";
-        let rpn_expr = Expr::<RpnToken>::try_from(expr).unwrap();
+        let rpn_expr = Expr::<Rpn>::try_from(expr).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
-                RpnToken::Num(-385.0),
-                RpnToken::Var("p0"),
-                RpnToken::Op(Op::Neg),
-                RpnToken::Op(Op::Add),
+                Rpn::Num(-385.0),
+                Rpn::Var("p0"),
+                Rpn::Op(Op::Neg),
+                Rpn::Op(Op::Add),
             ]
         );
 
         let expr = "-y1 * (p2 - p3*y0)";
-        let rpn_expr = Expr::<RpnToken>::try_from(expr).unwrap();
+        let rpn_expr = Expr::<Rpn>::try_from(expr).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
-                RpnToken::Var("y1"),
-                RpnToken::Op(Op::Neg),
-                RpnToken::Var("p2"),
-                RpnToken::Var("p3"),
-                RpnToken::Var("y0"),
-                RpnToken::Op(Op::Mul),
-                RpnToken::Op(Op::Sub),
-                RpnToken::Op(Op::Mul),
+                Rpn::Var("y1"),
+                Rpn::Op(Op::Neg),
+                Rpn::Var("p2"),
+                Rpn::Var("p3"),
+                Rpn::Var("y0"),
+                Rpn::Op(Op::Mul),
+                Rpn::Op(Op::Sub),
+                Rpn::Op(Op::Mul),
             ]
         );
     }
