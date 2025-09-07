@@ -59,7 +59,9 @@ pub mod prelude;
 
 use std::ops::Deref;
 
+pub use crate::context::{LContext, UContext};
 pub use crate::error::*;
+pub use crate::expr::{ifrpn::IFRpn, irpn::IRpn, ivrpn::IVRpn, lrpn::LRpn, rpn::Rpn};
 pub use crate::resolver::{
     ConstantResolver, DefaultResolver, EmptyResolver, IndexedResolver, Ptr, SmallResolver,
 };

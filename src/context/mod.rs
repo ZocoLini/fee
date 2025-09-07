@@ -39,6 +39,12 @@ where
     _locked_fns: PhantomData<LF>,
 }
 
+/// Unlocked context type alias
+pub type UContext<V, F, LV, LF> = Context<Unlocked, V, F, LV, LF>;
+
+/// Locked context type alias
+pub type LContext<LV, LF> = Context<Locked, LV, LF, LV, LF>;
+
 impl<V, F, LV, LF> Context<Unlocked, V, F, LV, LF>
 where
     V: UnlockedResolver<f64, LV>,
