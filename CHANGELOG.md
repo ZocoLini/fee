@@ -4,7 +4,7 @@ All the changes in this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [0.2.0] - 2025-09-08
 
 ### Added
 - `Context::empty()` method returning a context with `EmptyResolver`s
