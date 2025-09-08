@@ -141,9 +141,9 @@ CORES=0
 taskset -c $CORES cargo bench cmp
 ```
 
-Right now, comparissions are being made against `evalexpr`, `meval`, and `fasteval`.
-It is planned to generate comparison plots to easily to visialize the speed difference,
-as well as a table with pros and cons of each crate.
+![Parse comparations benchmarks](plots/cmp_parse_bench.png)
+![Eval comparations benchmarks](plots/cmp_eval_bench.png)
+
 
 ## Additional Resources
 
