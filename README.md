@@ -104,12 +104,12 @@ The different types of `Expr` are:
 ## Locking
 
 The context has a method called `lock()` that allows the context to lock
-the resolvers it held. The meaning of locking is that the resolvers will no
+the resolvers it holds. Locking implies that the resolvers will no
 longer be able to grow in size, avoiding any further reallocations. This enables
 the use of pointers to get and set the resolver's items values. Using a locked
 context, the expression can be compiled to a more optimized form, reducing the
 number of operations required to evaluate the expression in exchange of not being
-able to add the items to the resolvers.
+able to add new items to the resolvers.
 
 When building this type of expression, the context should be able to resolve
 the expression's variables and functions at compile time instead of eval time.
