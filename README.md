@@ -73,7 +73,7 @@ To learn more about their pros and cons read each struct's documentation.
 
 ### Supported Expressions
 
-- Binary operators: +, \*, -, /, ^
+- Binary operators: +, \*, -, /, ^, %
 - Unitary operators: -
 - Variables
 - Functions with no limit in the number of arguments.
