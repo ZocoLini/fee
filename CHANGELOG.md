@@ -4,6 +4,11 @@ All the changes in this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## Unreleased
+
+### Changed
+- Exponentiation (`^`) now uses powi internally in integer cases.
+
 ## [0.2.0] - 2025-09-08
 
 ### Added
