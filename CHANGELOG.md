@@ -6,6 +6,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## Unreleased
 
+### Added
+- Added support for the modulus operator (`%`)
 ### Changed
 - Exponentiation (`^`) now uses powi internally in integer cases.
 

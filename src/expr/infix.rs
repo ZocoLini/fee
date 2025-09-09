@@ -134,6 +134,7 @@ impl State
             '*' => output.push(Infix::Op(Op::Mul)),
             '/' => output.push(Infix::Op(Op::Div)),
             '^' => output.push(Infix::Op(Op::Pow)),
+            '%' => output.push(Infix::Op(Op::Mod)),
             _ => {
                 return Err(Error::ParseError(ParseError::UnexpectedChar(
                     Cow::Owned(c),

@@ -7,6 +7,7 @@ pub enum Op
     Div,
     Pow,
     Neg,
+    Mod,
 }
 
 impl Op
@@ -15,7 +16,7 @@ impl Op
     {
         match self {
             Op::Add | Op::Sub => 10,
-            Op::Mul | Op::Div => 20,
+            Op::Mul | Op::Div | Op::Mod => 20,
             Op::Neg => 30,
             Op::Pow => 40,
         }
@@ -24,7 +25,7 @@ impl Op
     pub fn num_operands(&self) -> usize
     {
         match self {
-            Op::Add | Op::Sub | Op::Mul | Op::Div | Op::Pow => 2,
+            Op::Add | Op::Sub | Op::Mul | Op::Div | Op::Pow | Op::Mod => 2,
             Op::Neg => 1,
         }
     }
@@ -47,6 +48,7 @@ impl Op
                 x[0].powf(x[1])
             },
             Op::Neg => -x[0],
+            Op::Mod => x[0] % x[1],
         }
     }
 }

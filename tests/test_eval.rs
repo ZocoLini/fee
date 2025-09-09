@@ -179,3 +179,13 @@ f3(-((p0^2 + (3 * p1 - (p2^3))) - (-(p3^2) + f0((p4 - p5)^2 + (p6^2))))
         assert_eq!(expr.eval(&context, &mut stack), Ok(528.0));
     };
 }
+
+#[test]
+fn test_eval_operators()
+{
+    let expr = "3 * 3 - (-4) / 3 + 4 % 2 - 3^(-4) + 4^3";
+    let ctx = Context::empty();
+    let mut stack = Vec::new();
+    let expr = Expr::compile(expr, &ctx).unwrap();
+    assert!(expr.eval(&ctx, &mut stack).unwrap() - 74.32 < 0.01);
+}
