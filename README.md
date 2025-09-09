@@ -115,10 +115,10 @@ When building this type of expression, the context should be able to resolve
 the expression's variables and functions at compile time instead of eval time.
 
 ```Rust
-let context = Context::new(var_resolver, fn_resolver);
+let context = Context::new(var_resolver, fn_resolver).lock();
 let mut stack = Vec::with_capacity(10);
 
-let expr = Expr::compile("abs(2 / p1) + abs(-2)", &context).unwrap().lock();
+let expr = Expr::compile("abs(2 / p1) + abs(-2)", &context).unwrap();
 ```
 
 ## Benchmarking
