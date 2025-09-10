@@ -53,8 +53,7 @@ where
     }
 }
 
-impl<'e, 'c, V, F, LV, LF> ExprCompiler<'e, 'c, Unlocked, V, F, LV, LF, Rpn<'e>>
-    for Expr<Rpn<'e>>
+impl<'e, 'c, V, F, LV, LF> ExprCompiler<'e, 'c, Unlocked, V, F, LV, LF, Rpn<'e>> for Expr<Rpn<'e>>
 where
     V: NotIndexedResolver + UnlockedResolver<f64, LV>,
     F: NotIndexedResolver + UnlockedResolver<ExprFn, LF>,
