@@ -6,10 +6,10 @@ use crate::{
     op::Op,
     parsing,
     prelude::*,
-    resolver::{Locked, LockedResolver, Unlocked, UnlockedResolver},
+    resolver::{Locked, LockedResolver, ResolverState, Unlocked, UnlockedResolver},
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum IFRpn<'e>
 {
     Num(f64),
@@ -26,14 +26,6 @@ impl From<f64> for IFRpn<'_>
     }
 }
 
-impl<'e> From<&'e str> for IFRpn<'e>
-{
-    fn from(name: &'e str) -> Self
-    {
-        IFRpn::Var(name)
-    }
-}
-
 impl From<Op> for IFRpn<'_>
 {
     fn from(op: Op) -> Self
@@ -42,9 +34,21 @@ impl From<Op> for IFRpn<'_>
     }
 }
 
-impl<'e> From<(&'e str, usize)> for IFRpn<'e>
+impl<'a, S, V, F, LV, LF> From<(&'a str, &'a Context<S, V, F, LV, LF>)> for IFRpn<'a>
+where
+    S: ResolverState,
 {
-    fn from((name, argc): (&'e str, usize)) -> Self
+    fn from((name, _): (&'a str, &'a Context<S, V, F, LV, LF>)) -> Self
+    {
+        IFRpn::Var(name)
+    }
+}
+
+impl<'a, S, V, F, LV, LF> From<(&'a str, usize, &'a Context<S, V, F, LV, LF>)> for IFRpn<'a>
+where
+    S: ResolverState,
+{
+    fn from((name, argc, _): (&'a str, usize, &'a Context<S, V, F, LV, LF>)) -> Self
     {
         let name_bytes = name.as_bytes();
         let letter = name_bytes[0] - b'a';
@@ -53,10 +57,10 @@ impl<'e> From<(&'e str, usize)> for IFRpn<'e>
     }
 }
 
-impl<'e, V, LV>
+impl<'e: 'c, 'c: 'e, V, LV>
     ExprCompiler<
         'e,
-        '_,
+        'c,
         Unlocked,
         V,
         IndexedResolver<Unlocked, ExprFn>,
@@ -70,10 +74,15 @@ where
 {
     fn compile(
         expr: &'e str,
-        _ctx: &UContext<V, IndexedResolver<Unlocked, ExprFn>, LV, IndexedResolver<Locked, ExprFn>>,
+        ctx: &'c UContext<
+            V,
+            IndexedResolver<Unlocked, ExprFn>,
+            LV,
+            IndexedResolver<Locked, ExprFn>,
+        >,
     ) -> Result<Expr<IFRpn<'e>>, Error<'e>>
     {
-        Expr::try_from(expr)
+        Expr::try_from((expr, ctx))
     }
 }
 

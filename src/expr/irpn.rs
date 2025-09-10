@@ -6,10 +6,10 @@ use crate::{
     op::Op,
     parsing,
     prelude::*,
-    resolver::{Locked, Unlocked},
+    resolver::{Locked, ResolverState, Unlocked},
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum IRpn
 {
     Num(f64),
@@ -26,17 +26,6 @@ impl From<f64> for IRpn
     }
 }
 
-impl From<&str> for IRpn
-{
-    fn from(name: &str) -> Self
-    {
-        let name_bytes = name.as_bytes();
-        let letter = name_bytes[0] - b'a';
-        let idx = parsing::parse_usize(&name_bytes[1..]);
-        IRpn::Var(letter as usize, idx)
-    }
-}
-
 impl From<Op> for IRpn
 {
     fn from(op: Op) -> Self
@@ -45,9 +34,24 @@ impl From<Op> for IRpn
     }
 }
 
-impl<'e> From<(&'e str, usize)> for IRpn
+impl<'a, S, V, F, LV, LF> From<(&'a str, &'a Context<S, V, F, LV, LF>)> for IRpn
+where
+    S: ResolverState,
 {
-    fn from((name, argc): (&'e str, usize)) -> Self
+    fn from((name, _): (&'a str, &'a Context<S, V, F, LV, LF>)) -> Self
+    {
+        let name_bytes = name.as_bytes();
+        let letter = name_bytes[0] - b'a';
+        let idx = parsing::parse_usize(&name_bytes[1..]);
+        IRpn::Var(letter as usize, idx)
+    }
+}
+
+impl<'a, S, V, F, LV, LF> From<(&'a str, usize, &'a Context<S, V, F, LV, LF>)> for IRpn
+where
+    S: ResolverState,
+{
+    fn from((name, argc, _): (&'a str, usize, &'a Context<S, V, F, LV, LF>)) -> Self
     {
         let name_bytes = name.as_bytes();
         let letter = name_bytes[0] - b'a';
@@ -56,10 +60,10 @@ impl<'e> From<(&'e str, usize)> for IRpn
     }
 }
 
-impl<'e>
+impl<'e: 'c, 'c: 'e>
     ExprCompiler<
         'e,
-        '_,
+        'c,
         Unlocked,
         IndexedResolver<Unlocked, f64>,
         IndexedResolver<Unlocked, ExprFn>,
@@ -70,7 +74,7 @@ impl<'e>
 {
     fn compile(
         expr: &'e str,
-        _ctx: &UContext<
+        ctx: &'c UContext<
             IndexedResolver<Unlocked, f64>,
             IndexedResolver<Unlocked, ExprFn>,
             IndexedResolver<Locked, f64>,
@@ -78,7 +82,7 @@ impl<'e>
         >,
     ) -> Result<Expr<IRpn>, Error<'e>>
     {
-        Expr::try_from(expr)
+        Expr::try_from((expr, ctx))
     }
 }
 
@@ -163,8 +167,10 @@ mod tests
     #[test]
     fn test_new()
     {
+        let ctx = Context::empty();
+
         let expr = "2 - (4 + (p19 - 2) * (p19 + 2))";
-        let rpn_expr = Expr::<IRpn>::try_from(expr).unwrap();
+        let rpn_expr = Expr::<IRpn>::try_from((expr, &ctx)).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
@@ -183,7 +189,7 @@ mod tests
         );
 
         let expr = "f0((2 + 3) * 4, f1(5))";
-        let rpn_expr = Expr::<IRpn>::try_from(expr).unwrap();
+        let rpn_expr = Expr::<IRpn>::try_from((expr, &ctx)).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
@@ -195,7 +201,7 @@ mod tests
         );
 
         let expr = "(2 * 21) + 3 + -35 - ((5 * 80) + 5) + 10 + -p0";
-        let rpn_expr = Expr::<IRpn>::try_from(expr).unwrap();
+        let rpn_expr = Expr::<IRpn>::try_from((expr, &ctx)).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
@@ -207,7 +213,7 @@ mod tests
         );
 
         let expr = "-y1 * (p2 - p3*y0)";
-        let rpn_expr = Expr::<IRpn>::try_from(expr).unwrap();
+        let rpn_expr = Expr::<IRpn>::try_from((expr, &ctx)).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![

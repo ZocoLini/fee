@@ -6,7 +6,7 @@ use crate::{
     resolver::{Locked, LockedResolver},
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum LRpn<'a>
 {
     Num(f64),
@@ -23,14 +23,6 @@ impl<'a> From<f64> for LRpn<'a>
     }
 }
 
-impl<'a> From<Ptr<'a, f64>> for LRpn<'a>
-{
-    fn from(ptr: Ptr<'a, f64>) -> Self
-    {
-        LRpn::Var(ptr)
-    }
-}
-
 impl<'a> From<Op> for LRpn<'a>
 {
     fn from(op: Op) -> Self
@@ -39,11 +31,26 @@ impl<'a> From<Op> for LRpn<'a>
     }
 }
 
-impl<'a> From<(Ptr<'a, ExprFn>, usize)> for LRpn<'a>
+// TODO: Return an error manin
+impl<'a, V, F> From<(&'a str, &'a LContext<V, F>)> for LRpn<'a>
+where
+    V: LockedResolver<f64>,
+    F: LockedResolver<ExprFn>,
 {
-    fn from((ptr, argc): (Ptr<'a, ExprFn>, usize)) -> Self
+    fn from((name, ctx): (&'a str, &'a LContext<V, F>)) -> Self
     {
-        LRpn::Fn(ptr, argc)
+        LRpn::Var(ctx.get_var_ptr(name).unwrap())
+    }
+}
+
+impl<'a, V, F> From<(&'a str, usize, &'a LContext<V, F>)> for LRpn<'a>
+where
+    V: LockedResolver<f64>,
+    F: LockedResolver<ExprFn>,
+{
+    fn from((name, argc, ctx): (&'a str, usize, &'a LContext<V, F>)) -> Self
+    {
+        LRpn::Fn(ctx.get_fn_ptr(name).unwrap(), argc)
     }
 }
 

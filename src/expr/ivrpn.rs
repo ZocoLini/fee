@@ -6,10 +6,10 @@ use crate::{
     op::Op,
     parsing,
     prelude::*,
-    resolver::{Locked, LockedResolver, Unlocked, UnlockedResolver},
+    resolver::{Locked, LockedResolver, ResolverState, Unlocked, UnlockedResolver},
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum IVRpn<'e>
 {
     Num(f64),
@@ -25,18 +25,6 @@ impl From<f64> for IVRpn<'_>
         IVRpn::Num(num)
     }
 }
-
-impl<'e> From<&'e str> for IVRpn<'e>
-{
-    fn from(name: &'e str) -> Self
-    {
-        let name_bytes = name.as_bytes();
-        let letter = name_bytes[0] - b'a';
-        let idx = parsing::parse_usize(&name_bytes[1..]);
-        IVRpn::Var(letter as usize, idx)
-    }
-}
-
 impl From<Op> for IVRpn<'_>
 {
     fn from(op: Op) -> Self
@@ -45,18 +33,33 @@ impl From<Op> for IVRpn<'_>
     }
 }
 
-impl<'e> From<(&'e str, usize)> for IVRpn<'e>
+impl<'a, S, V, F, LV, LF> From<(&'a str, &'a Context<S, V, F, LV, LF>)> for IVRpn<'a>
+where
+    S: ResolverState,
 {
-    fn from((name, argc): (&'e str, usize)) -> Self
+    fn from((name, _): (&'a str, &'a Context<S, V, F, LV, LF>)) -> Self
+    {
+        let name_bytes = name.as_bytes();
+        let letter = name_bytes[0] - b'a';
+        let idx = parsing::parse_usize(&name_bytes[1..]);
+        IVRpn::Var(letter as usize, idx)
+    }
+}
+
+impl<'a, S, V, F, LV, LF> From<(&'a str, usize, &'a Context<S, V, F, LV, LF>)> for IVRpn<'a>
+where
+    S: ResolverState,
+{
+    fn from((name, argc, _): (&'a str, usize, &'a Context<S, V, F, LV, LF>)) -> Self
     {
         IVRpn::Fn(name, argc)
     }
 }
 
-impl<'e, F, LF>
+impl<'e: 'c, 'c: 'e, F, LF>
     ExprCompiler<
         'e,
-        '_,
+        'c,
         Unlocked,
         IndexedResolver<Unlocked, f64>,
         F,
@@ -70,10 +73,10 @@ where
 {
     fn compile(
         expr: &'e str,
-        _ctx: &UContext<IndexedResolver<Unlocked, f64>, F, IndexedResolver<Locked, f64>, LF>,
+        ctx: &'c UContext<IndexedResolver<Unlocked, f64>, F, IndexedResolver<Locked, f64>, LF>,
     ) -> Result<Expr<IVRpn<'e>>, Error<'e>>
     {
-        Expr::try_from(expr)
+        Expr::try_from((expr, ctx))
     }
 }
 

@@ -44,7 +44,7 @@ impl ResolverState for Unlocked {}
 /// This struct holds a pointer to a value of type `T`. Used by
 /// locked resolvers to safely access and modify a value without
 /// having to resolve the name.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub struct Ptr<'a, T>
 {
     ptr: *mut T,

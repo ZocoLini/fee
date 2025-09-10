@@ -5,10 +5,10 @@ use crate::{
     expr::{ExprCompiler, NotIndexedResolver},
     op::Op,
     prelude::*,
-    resolver::{LockedResolver, Unlocked, UnlockedResolver},
+    resolver::{LockedResolver, ResolverState, Unlocked, UnlockedResolver},
 };
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum Rpn<'e>
 {
     Num(f64),
@@ -25,14 +25,6 @@ impl From<f64> for Rpn<'_>
     }
 }
 
-impl<'e> From<&'e str> for Rpn<'e>
-{
-    fn from(name: &'e str) -> Self
-    {
-        Rpn::Var(name)
-    }
-}
-
 impl From<Op> for Rpn<'_>
 {
     fn from(op: Op) -> Self
@@ -41,24 +33,37 @@ impl From<Op> for Rpn<'_>
     }
 }
 
-impl<'e> From<(&'e str, usize)> for Rpn<'e>
+impl<'a, S, V, F, LV, LF> From<(&'a str, &'a Context<S, V, F, LV, LF>)> for Rpn<'a>
+where
+    S: ResolverState,
 {
-    fn from((name, argc): (&'e str, usize)) -> Self
+    fn from((name, _): (&'a str, &'a Context<S, V, F, LV, LF>)) -> Self
+    {
+        Rpn::Var(name)
+    }
+}
+
+impl<'a, S, V, F, LV, LF> From<(&'a str, usize, &'a Context<S, V, F, LV, LF>)> for Rpn<'a>
+where
+    S: ResolverState,
+{
+    fn from((name, argc, _): (&'a str, usize, &'a Context<S, V, F, LV, LF>)) -> Self
     {
         Rpn::Fn(name, argc)
     }
 }
 
-impl<'e, V, F, LV, LF> ExprCompiler<'e, '_, Unlocked, V, F, LV, LF, Rpn<'e>> for Expr<Rpn<'e>>
+impl<'e: 'c, 'c: 'e, V, F, LV, LF> ExprCompiler<'e, 'c, Unlocked, V, F, LV, LF, Rpn<'e>>
+    for Expr<Rpn<'e>>
 where
     V: NotIndexedResolver + UnlockedResolver<f64, LV>,
     F: NotIndexedResolver + UnlockedResolver<ExprFn, LF>,
     LV: LockedResolver<f64>,
     LF: LockedResolver<ExprFn>,
 {
-    fn compile(expr: &'e str, _ctx: &UContext<V, F, LV, LF>) -> Result<Expr<Rpn<'e>>, Error<'e>>
+    fn compile(expr: &'e str, ctx: &'c UContext<V, F, LV, LF>) -> Result<Expr<Rpn<'e>>, Error<'e>>
     {
-        Expr::try_from(expr)
+        Expr::try_from((expr, ctx))
     }
 }
 
@@ -126,8 +131,10 @@ mod tests
     #[test]
     fn test_new()
     {
+        let ctx = Context::empty();
+
         let expr = "2 - (4 + (p19 - 2) * (p19 + 2))";
-        let rpn_expr = Expr::<Rpn>::try_from(expr).unwrap();
+        let rpn_expr = Expr::<Rpn>::try_from((expr, &ctx)).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
@@ -145,12 +152,16 @@ mod tests
             ]
         );
 
-        let expr = "abs((2 + 3) * 4, sqrt(5))";
-        let rpn_expr = Expr::<Rpn>::try_from(expr).unwrap();
+        let expr = "sqrt(5)";
+        let rpn_expr = Expr::<Rpn>::try_from((expr, &ctx)).unwrap();
+        assert_eq!(rpn_expr.tokens, vec![Rpn::Num(5.0), Rpn::Fn("sqrt", 1),]);
+
+        let expr = "abs(4, sqrt(5))";
+        let rpn_expr = Expr::<Rpn>::try_from((expr, &ctx)).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
-                Rpn::Num(20.0),
+                Rpn::Num(4.0),
                 Rpn::Num(5.0),
                 Rpn::Fn("sqrt", 1),
                 Rpn::Fn("abs", 2),
@@ -158,7 +169,7 @@ mod tests
         );
 
         let expr = "(2 * 21) + 3 + -35 - ((5 * 80) + 5) + 10 + -p0";
-        let rpn_expr = Expr::<Rpn>::try_from(expr).unwrap();
+        let rpn_expr = Expr::<Rpn>::try_from((expr, &ctx)).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![
@@ -170,7 +181,7 @@ mod tests
         );
 
         let expr = "-y1 * (p2 - p3*y0)";
-        let rpn_expr = Expr::<Rpn>::try_from(expr).unwrap();
+        let rpn_expr = Expr::<Rpn>::try_from((expr, &ctx)).unwrap();
         assert_eq!(
             rpn_expr.tokens,
             vec![

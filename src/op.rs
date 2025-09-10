@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Op
 {
     Add,
@@ -42,11 +42,13 @@ impl Op
             Op::Sub => x[0] - x[1],
             Op::Mul => x[0] * x[1],
             Op::Div => x[0] / x[1],
-            Op::Pow => if x[1] == x[1] as i64 as f64 {
-                x[0].powi(x[1] as i32)
-            } else {
-                x[0].powf(x[1])
-            },
+            Op::Pow => {
+                if x[1] == x[1] as i64 as f64 {
+                    x[0].powi(x[1] as i32)
+                } else {
+                    x[0].powf(x[1])
+                }
+            }
             Op::Neg => -x[0],
             Op::Mod => x[0] % x[1],
         }

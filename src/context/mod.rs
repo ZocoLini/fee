@@ -114,11 +114,10 @@ where
     }
 }
 
-impl<'a, S, V, F, LV, LF> Context<S, V, F, LV, LF>
+impl<'a, V, F> LContext<V, F>
 where
     V: LockedResolver<f64>,
     F: LockedResolver<ExprFn>,
-    S: ResolverState,
 {
     pub fn get_var_ptr(&'a self, name: &str) -> Option<Ptr<'a, f64>>
     {
