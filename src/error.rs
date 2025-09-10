@@ -16,6 +16,9 @@ pub enum Error<'a>
 
     #[error("eval error: {0}")]
     EvalError(EvalError),
+    
+    #[error("internal invariant: {0}")]
+    InternalInvariant(String)
 }
 
 #[derive(Debug, Error, PartialEq)]

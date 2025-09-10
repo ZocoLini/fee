@@ -127,7 +127,7 @@ impl<'e> Lexer<'e>
                                 break;
                             }
                             Infix::Op(op) => pre_evaluate(buffers, op),
-                            Infix::Fn(_, _) => panic!("BUUUGGG, return error"),
+                            Infix::Fn(_, _) => panic!("fn token popped while unfolding after rparen"),
                         }
                     }
                 }
@@ -144,7 +144,7 @@ impl<'e> Lexer<'e>
                                 buffers.ops.pop();
                                 pre_evaluate(buffers, op);
                             }
-                            Infix::Fn(_, _) => panic!("BUUUGGG, return error"),
+                            Infix::Fn(_, _) => panic!("fn token popped while unfolding after comma"),
                         }
                     }
                 }
