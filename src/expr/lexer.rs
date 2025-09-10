@@ -3,12 +3,10 @@ use std::{borrow::Cow, iter::Peekable, str::CharIndices};
 use smallvec::{SmallVec, smallvec};
 
 use crate::{
-    Error, ExprFn, ParseError,
-    context::Context,
-    expr::Expr,
-    op::Op,
+    Error, ParseError,
+    expr::Op,
     parsing,
-    prelude::{Locked, Resolver},
+    prelude::*,
     resolver::{LockedResolver, ResolverState},
 };
 

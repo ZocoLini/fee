@@ -1,9 +1,8 @@
 use crate::{
     Error, EvalError, LContext, Ptr,
-    expr::ExprCompiler,
-    op::Op,
+    expr::{ExprCompiler, Op},
     prelude::*,
-    resolver::{Locked, LockedResolver},
+    resolver::LockedResolver,
 };
 
 #[derive(Debug, PartialEq, Copy, Clone)]

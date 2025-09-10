@@ -14,6 +14,63 @@ use crate::{
     ConstantResolver, DefaultResolver, EmptyResolver, Error, SmallResolver, context::Context,
 };
 
+#[derive(Debug, PartialEq, Eq, Copy, Clone)]
+pub enum Op
+{
+    Add,
+    Sub,
+    Mul,
+    Div,
+    Pow,
+    Neg,
+    Mod,
+}
+
+impl Op
+{
+    fn precedence(&self) -> u8
+    {
+        match self {
+            Op::Add | Op::Sub => 10,
+            Op::Mul | Op::Div | Op::Mod => 20,
+            Op::Neg => 30,
+            Op::Pow => 40,
+        }
+    }
+
+    fn num_operands(&self) -> usize
+    {
+        match self {
+            Op::Add | Op::Sub | Op::Mul | Op::Div | Op::Pow | Op::Mod => 2,
+            Op::Neg => 1,
+        }
+    }
+
+    fn is_right_associative(&self) -> bool
+    {
+        matches!(self, Op::Pow)
+    }
+
+    fn apply(&self, x: &[f64]) -> f64
+    {
+        match self {
+            Op::Add => x[0] + x[1],
+            Op::Sub => x[0] - x[1],
+            Op::Mul => x[0] * x[1],
+            Op::Div => x[0] / x[1],
+            Op::Pow => {
+                if x[1] == x[1] as i64 as f64 {
+                    x[0].powi(x[1] as i32)
+                } else {
+                    x[0].powf(x[1])
+                }
+            }
+            Op::Neg => -x[0],
+            Op::Mod => x[0] % x[1],
+        }
+    }
+}
+
 /// Represents the compiled expression.
 ///
 /// This struct should be built by using the [`Expr::compile`] method. This

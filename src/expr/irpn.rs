@@ -2,11 +2,10 @@ use std::borrow::Cow;
 
 use crate::{
     Error, EvalError, IndexedResolver, UContext,
-    expr::ExprCompiler,
-    op::Op,
+    expr::{ExprCompiler, Op},
     parsing,
     prelude::*,
-    resolver::{Locked, ResolverState, Unlocked},
+    resolver::ResolverState,
 };
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -162,7 +161,6 @@ impl<'e>
 mod tests
 {
     use super::*;
-    use crate::op::Op;
 
     #[test]
     fn test_new()

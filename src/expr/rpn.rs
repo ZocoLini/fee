@@ -2,10 +2,9 @@ use std::borrow::Cow;
 
 use crate::{
     Error, EvalError, UContext,
-    expr::{ExprCompiler, NotIndexedResolver},
-    op::Op,
+    expr::{ExprCompiler, NotIndexedResolver, Op},
     prelude::*,
-    resolver::{LockedResolver, ResolverState, Unlocked, UnlockedResolver},
+    resolver::{LockedResolver, ResolverState, UnlockedResolver},
 };
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -123,8 +122,6 @@ where
 #[cfg(test)]
 mod tests
 {
-    use crate::op::Op;
-
     use super::*;
 
     #[test]

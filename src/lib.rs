@@ -51,7 +51,6 @@
 mod context;
 mod error;
 mod expr;
-mod op;
 mod parsing;
 mod resolver;
 

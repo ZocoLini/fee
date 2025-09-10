@@ -2,11 +2,10 @@ use std::borrow::Cow;
 
 use crate::{
     Error, EvalError, IndexedResolver, UContext,
-    expr::{ExprCompiler, NotIndexedResolver},
-    op::Op,
+    expr::{ExprCompiler, NotIndexedResolver, Op},
     parsing,
     prelude::*,
-    resolver::{Locked, LockedResolver, ResolverState, Unlocked, UnlockedResolver},
+    resolver::{LockedResolver, ResolverState, UnlockedResolver},
 };
 
 #[derive(Debug, PartialEq, Copy, Clone)]
