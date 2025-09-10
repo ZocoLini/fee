@@ -33,27 +33,27 @@ impl From<Op> for Rpn<'_>
     }
 }
 
-impl<'a, S, V, F, LV, LF> From<(&'a str, &'a Context<S, V, F, LV, LF>)> for Rpn<'a>
+impl<'a, 'c, S, V, F, LV, LF> From<(&'a str, &'c Context<S, V, F, LV, LF>)> for Rpn<'a>
 where
     S: ResolverState,
 {
-    fn from((name, _): (&'a str, &'a Context<S, V, F, LV, LF>)) -> Self
+    fn from((name, _): (&'a str, &'c Context<S, V, F, LV, LF>)) -> Self
     {
         Rpn::Var(name)
     }
 }
 
-impl<'a, S, V, F, LV, LF> From<(&'a str, usize, &'a Context<S, V, F, LV, LF>)> for Rpn<'a>
+impl<'a, 'c, S, V, F, LV, LF> From<(&'a str, usize, &'c Context<S, V, F, LV, LF>)> for Rpn<'a>
 where
     S: ResolverState,
 {
-    fn from((name, argc, _): (&'a str, usize, &'a Context<S, V, F, LV, LF>)) -> Self
+    fn from((name, argc, _): (&'a str, usize, &'c Context<S, V, F, LV, LF>)) -> Self
     {
         Rpn::Fn(name, argc)
     }
 }
 
-impl<'e: 'c, 'c: 'e, V, F, LV, LF> ExprCompiler<'e, 'c, Unlocked, V, F, LV, LF, Rpn<'e>>
+impl<'e, 'c, V, F, LV, LF> ExprCompiler<'e, 'c, Unlocked, V, F, LV, LF, Rpn<'e>>
     for Expr<Rpn<'e>>
 where
     V: NotIndexedResolver + UnlockedResolver<f64, LV>,

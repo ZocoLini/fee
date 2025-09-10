@@ -32,29 +32,29 @@ impl<'a> From<Op> for LRpn<'a>
 }
 
 // TODO: Return an error manin
-impl<'a, V, F> From<(&'a str, &'a LContext<V, F>)> for LRpn<'a>
+impl<'a, 'c, V, F> From<(&'a str, &'c LContext<V, F>)> for LRpn<'c>
 where
     V: LockedResolver<f64>,
     F: LockedResolver<ExprFn>,
 {
-    fn from((name, ctx): (&'a str, &'a LContext<V, F>)) -> Self
+    fn from((name, ctx): (&'a str, &'c LContext<V, F>)) -> Self
     {
         LRpn::Var(ctx.get_var_ptr(name).unwrap())
     }
 }
 
-impl<'a, V, F> From<(&'a str, usize, &'a LContext<V, F>)> for LRpn<'a>
+impl<'a, 'c, V, F> From<(&'a str, usize, &'c LContext<V, F>)> for LRpn<'c>
 where
     V: LockedResolver<f64>,
     F: LockedResolver<ExprFn>,
 {
-    fn from((name, argc, ctx): (&'a str, usize, &'a LContext<V, F>)) -> Self
+    fn from((name, argc, ctx): (&'a str, usize, &'c LContext<V, F>)) -> Self
     {
         LRpn::Fn(ctx.get_fn_ptr(name).unwrap(), argc)
     }
 }
 
-impl<'e: 'c, 'c: 'e, V, F> ExprCompiler<'e, 'c, Locked, V, F, V, F, LRpn<'c>> for Expr<LRpn<'c>>
+impl<'e, 'c, V, F> ExprCompiler<'e, 'c, Locked, V, F, V, F, LRpn<'c>> for Expr<LRpn<'c>>
 where
     V: LockedResolver<f64>,
     F: LockedResolver<ExprFn>,

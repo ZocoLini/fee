@@ -34,21 +34,21 @@ impl From<Op> for IFRpn<'_>
     }
 }
 
-impl<'a, S, V, F, LV, LF> From<(&'a str, &'a Context<S, V, F, LV, LF>)> for IFRpn<'a>
+impl<'a, 'c, S, V, F, LV, LF> From<(&'a str, &'c Context<S, V, F, LV, LF>)> for IFRpn<'a>
 where
     S: ResolverState,
 {
-    fn from((name, _): (&'a str, &'a Context<S, V, F, LV, LF>)) -> Self
+    fn from((name, _): (&'a str, &'c Context<S, V, F, LV, LF>)) -> Self
     {
         IFRpn::Var(name)
     }
 }
 
-impl<'a, S, V, F, LV, LF> From<(&'a str, usize, &'a Context<S, V, F, LV, LF>)> for IFRpn<'a>
+impl<'a, 'c, S, V, F, LV, LF> From<(&'a str, usize, &'c Context<S, V, F, LV, LF>)> for IFRpn<'_>
 where
     S: ResolverState,
 {
-    fn from((name, argc, _): (&'a str, usize, &'a Context<S, V, F, LV, LF>)) -> Self
+    fn from((name, argc, _): (&'a str, usize, &'c Context<S, V, F, LV, LF>)) -> Self
     {
         let name_bytes = name.as_bytes();
         let letter = name_bytes[0] - b'a';
@@ -57,7 +57,7 @@ where
     }
 }
 
-impl<'e: 'c, 'c: 'e, V, LV>
+impl<'e, 'c, V, LV>
     ExprCompiler<
         'e,
         'c,
