@@ -1,5 +1,4 @@
 pub mod ifrpn;
-pub mod infix;
 pub mod irpn;
 pub mod ivrpn;
 pub mod lrpn;
@@ -7,15 +6,18 @@ pub mod rpn;
 
 use std::borrow::{Borrow, Cow};
 use std::hash::Hash;
+use std::iter::Peekable;
+use std::marker::PhantomData;
+use std::str::CharIndices;
 
 use smallvec::{SmallVec, smallvec};
 
 use crate::resolver::{Locked, LockedResolver, ResolverState};
 use crate::{
     ConstantResolver, DefaultResolver, EmptyResolver, Error, ExprFn, SmallResolver,
-    context::Context, expr::infix::Infix, op::Op, prelude::*,
+    context::Context, op::Op, prelude::*,
 };
-use crate::{LContext, Ptr};
+use crate::{parsing, LContext, ParseError, Ptr};
 
 /// Represents the compiled expression.
 ///
@@ -300,5 +302,331 @@ where
                 f64_cache.clear();
             }
         }
+    }
+}
+
+// TODO: Move to a different module (lexer.rs)
+
+enum Infix
+{
+    Op(Op),
+    LParen,
+    RParen,
+}
+
+struct LexData<'e>
+{
+    input: &'e str,
+    chars: Peekable<CharIndices<'e>>,
+}
+
+struct LexBuffers<T>
+{
+    f64_cache: SmallVec<[f64; 4]>,
+    output: Vec<T>,
+    ops: Vec<Infix>,
+}
+
+struct Lexer<'e, 'c, T, S: 'c, V: 'c, F: 'c, LV: 'c, LF: 'c>
+where
+    T: From<f64>
+        + From<(&'e str, Option<&'c Context<S, V, F, LV, LF>>)>
+        + From<Op>
+        + From<(&'e str, usize, Option<&'c Context<S, V, F, LV, LF>>)>,
+    S: ResolverState,
+{
+    data: LexData<'e>,
+    buffers: LexBuffers<T>,
+    state: State,
+
+    _ctx_lifetime: PhantomData<&'c ()>,
+    _ctx_state: PhantomData<S>,
+    _ctx_var: PhantomData<V>,
+    _ctx_fn: PhantomData<F>,
+    _ctx_lk_var: PhantomData<LV>,
+    _ctx_lk_fn: PhantomData<LF>,
+}
+
+impl<'e, 'c, T, S: 'c, V: 'c, F: 'c, LV: 'c, LF: 'c> Lexer<'e, 'c, T, S, V, F, LV, LF>
+where
+    T: From<f64>
+        + From<(&'e str, Option<&'c Context<S, V, F, LV, LF>>)>
+        + From<Op>
+        + From<(&'e str, usize, Option<&'c Context<S, V, F, LV, LF>>)>,
+    S: ResolverState,
+{
+    fn new(expr: &'e str) -> Self
+    {
+        Lexer {
+            data: LexData {
+                input: expr,
+                chars: expr.char_indices().peekable(),
+            },
+            
+            state: State::Default,
+            
+            buffers: LexBuffers {
+                f64_cache: smallvec![],
+                output: Vec::with_capacity(expr.len() / 2),
+                ops: Vec::new(),
+            },
+            
+            _ctx_lifetime: PhantomData,
+            _ctx_state: PhantomData,
+            _ctx_var: PhantomData,
+            _ctx_fn: PhantomData,
+            _ctx_lk_var: PhantomData,
+            _ctx_lk_fn: PhantomData,
+        }
+    }
+
+    fn lex(&mut self, ctx: Option<&Context<S, V, F, LV, LF>>) -> Result<Vec<T>, Error<'e>>
+    {
+        let chars = &mut self.data.chars;
+        let input = self.data.input;
+
+        while let Some((i, c)) = chars.next() {
+            match c {
+                ' ' | '\t' | '\n' => {
+                    // Ignore whitespace
+                }
+                '(' | '[' => {
+                    self.buffers.ops.push(Infix::LParen);
+                }
+                ')' | ']' => {
+                    while let Some(top) = self.buffers.ops.pop() {
+                        match top {
+                            Infix::LParen => break,
+                            Infix::Op(op) => pre_evaluate(&mut self.buffers, op),
+                            _ => unreachable!("no more elements should be inside ops"),
+                        }
+                    }
+                }
+                _ => {
+                    let next_state = self.state.lex(self, ctx, i, c)?;
+                    self.state = next_state;
+                }
+            }
+        }
+
+        while let Some(Infix::Op(op)) = self.buffers.ops.pop() {
+            pre_evaluate(&mut self.buffers, op);
+        }
+        
+        debug_assert!(self.buffers.ops.is_empty());
+        
+        Ok(self.buffers.clone())
+    }
+}
+
+enum State
+{
+    Default,
+    ExpectingOperator,
+}
+
+impl State
+{
+    #[inline(always)]
+    fn lex<'e, 'c, T, S, V, F, LV, LF>(
+        &mut self,
+        lexer: &mut Lexer<'e, 'c, T, S, V, F, LV, LF>,
+        ctx: Option<&'c Context<S, V, F, LV, LF>>,
+        i: usize,
+        c: char,
+    ) -> Result<State, Error<'e>>
+    where 
+        S: ResolverState,
+        T: From<f64>
+            + From<(&'e str, Option<&'c Context<S, V, F, LV, LF>>)>
+            + From<Op>
+            + From<(&'e str, usize, Option<&'c Context<S, V, F, LV, LF>>)>,
+    {
+        match self {
+            State::ExpectingOperator => Self::handle_expecting_operator(lexer, i, c),
+            State::Default => Self::handle_default(lexer, ctx, i, c),
+        }
+    }
+
+    #[inline(always)]
+    fn handle_expecting_operator<'e, 'c, T, S, V, F, LV, LF>(
+        lexer: &mut Lexer<'e, 'c, T, S, V, F, LV, LF>,
+        i: usize,
+        c: char,
+    ) -> Result<State, Error<'e>>
+    where 
+        S: ResolverState,
+        T: From<f64>
+            + From<(&'e str, Option<&'c Context<S, V, F, LV, LF>>)>
+            + From<Op>
+            + From<(&'e str, usize, Option<&'c Context<S, V, F, LV, LF>>)>,
+    {
+        let op = match c {
+            '+' => Op::Add,
+            '-' => Op::Sub,
+            '*' => Op::Mul,
+            '/' => Op::Div,
+            '^' => Op::Pow,
+            '%' => Op::Mod,
+            _ => {
+                return Err(Error::ParseError(ParseError::UnexpectedChar(
+                    Cow::Owned(c),
+                    i,
+                )));
+            }
+        };
+
+        process_operator(&mut lexer.buffers, op);
+        
+        Ok(State::Default)
+    }
+
+    #[inline(always)]
+    fn handle_default<'e, 'c, T, S, V, F, LV, LF>(
+        lexer: &mut Lexer<'e, 'c, T, S, V, F, LV, LF>,
+        ctx: Option<&'c Context<S, V, F, LV, LF>>,
+        i: usize,
+        c: char,
+    ) -> Result<State, Error<'e>>
+    where 
+        S: ResolverState,
+        T: From<f64>
+            + From<(&'e str, Option<&'c Context<S, V, F, LV, LF>>)>
+            + From<Op>
+            + From<(&'e str, usize, Option<&'c Context<S, V, F, LV, LF>>)>,
+    {
+        return match c {
+            '-' => {
+                process_operator(&mut lexer.buffers, Op::Neg);
+                Ok(State::Default)
+            }
+            // numbers
+            '0'..='9' | '.' => {
+                let num = parsing::parse_uf64(c, &mut lexer.data.chars);
+
+                lexer.buffers.output.push(T::from(num));
+                lexer.buffers.f64_cache.push(num);
+                
+                Ok(State::ExpectingOperator)
+            }
+
+            // identifiers (variables or functions)
+            'a'..='z' | 'A'..='Z' | '_' => {
+                let start_index = i;
+                let end_index = lexer.data.input.len();
+
+                let token = loop {
+                    if let Some(&(i, d)) = lexer.data.chars.peek() {
+                        if d.is_alphanumeric() || d == '_' {
+                            lexer.data.chars.next();
+                            continue;
+                        }
+
+                        // function found, parse functions using the same lexer
+                        if d == '(' || d == '[' {
+                            let fn_name = &lexer.data.input[start_index..i];
+                            lexer.data.chars.next();
+
+                            let mut params = Vec::with_capacity(2);
+
+                            let mut depth = 1;
+                            let mut start_index = i + 1; // Skipping the opening bracket of the function call
+                            let mut end_index = lexer.data.input.len();
+
+                            while let Some((i, d)) = lexer.data.chars.next() {
+                                match d {
+                                    '(' | '[' => depth += 1,
+                                    ')' | ']' => depth -= 1,
+                                    // If depth is greater than 1, it is a parameter separator of a nested function call
+                                    ',' if depth == 1 => {
+                                        let param_expr =
+                                            Expr::<Infix>::try_from(&lexer.data.input[start_index..i])?;
+                                        params.push(param_expr);
+                                        start_index = i + 1;
+                                    }
+                                    _ => {}
+                                }
+
+                                if depth == 0 {
+                                    end_index = i;
+                                    break;
+                                }
+                            }
+
+                            if depth != 0 {
+                                return Err(Error::ParseError(ParseError::UnmatchedParentheses(i)));
+                            }
+
+                            let param_expr =
+                                Expr::<Infix>::try_from(&lexer.data.input[start_index..end_index])?;
+                            params.push(param_expr);
+
+                            Infix::Fn(fn_name, params);
+                        }
+
+                        break T::from((&lexer.data.input[start_index..i], ctx))
+                    } else {
+                        break T::from((&lexer.data.input[start_index..end_index], ctx))
+                    }
+                };
+
+                lexer.buffers.output.push(token);
+                lexer.buffers.f64_cache.clear();
+                Ok(State::ExpectingOperator)
+            }
+
+            _ => Err(Error::ParseError(ParseError::UnexpectedChar(
+                Cow::Owned(c),
+                i,
+            ))),
+        };
+    }
+}
+
+fn process_operator<T>(buffers: &mut LexBuffers<T>, op: Op)
+where
+    T: From<f64> + From<Op>,
+{
+    while let Some(Infix::Op(top)) = buffers.ops.last() {
+        let prec = op.precedence();
+        let top_prec = top.precedence();
+        let should_pop =
+            top_prec > prec || (!op.is_right_associative() && top_prec == prec);
+        
+        if should_pop {
+            if let Some(Infix::Op(op)) = buffers.ops.pop() {
+                pre_evaluate(buffers, op);
+            }
+        } else {
+            break;
+        }
+    }
+    buffers.ops.push(Infix::Op(op));
+}
+
+fn pre_evaluate<'e, T>(buffers: &mut LexBuffers<T>, op: Op)
+where
+    T: From<f64> + From<Op>,
+{
+    let n_operands = op.num_operands();
+
+    if buffers.f64_cache.len() >= n_operands {
+        let output_len = buffers.output.len();
+        let f64_cache_len = buffers.f64_cache.len();
+
+        let start = f64_cache_len - n_operands;
+        let num = op.apply(&buffers.f64_cache[start..]);
+
+        let token: T = num.into();
+
+        buffers.output.truncate(output_len - n_operands);
+        buffers.output.push(token);
+
+        buffers.f64_cache.truncate(f64_cache_len - n_operands);
+        buffers.f64_cache.push(num);
+    } else {
+        let token: T = op.into();
+        buffers.output.push(token);
+        buffers.f64_cache.clear();
     }
 }
