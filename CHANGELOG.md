@@ -10,6 +10,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added support for the modulus operator (`%`)
 ### Changed
 - Exponentiation (`^`) now uses powi internally in integer cases.
+- Parsing into RPN no longer makes an intermediate step through infix 
+notation, improving parsing performance by 40–75%.
 
 ## [0.2.0] - 2025-09-08
 
