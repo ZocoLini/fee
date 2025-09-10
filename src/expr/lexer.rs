@@ -135,7 +135,6 @@ impl<'e> Lexer<'e>
                     comma_count += 1;
                     self.state = State::Default;
 
-                    // TODO: Don't like this loop
                     while let Some(top) = buffers.ops.last() {
                         match top {
                             Infix::LParen(_) => break,
