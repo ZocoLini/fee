@@ -116,9 +116,11 @@ impl<'e> Lexer<'e>
                                         comma_count - commas + 1,
                                         ctx,
                                     ));
+                                    
+                                    buffers.f64_cache.clear();
                                     buffers.output.push(fn_token);
+                                    
                                     comma_count = commas;
-
                                     buffers.ops.pop();
                                 }
 
