@@ -16,18 +16,22 @@ pub enum IFRpn<'e>
 impl<'a, 'c, S, V, F, LV, LF> ParseableToken<'a, 'c, S, V, F, LV, LF> for IFRpn<'a>
 where S: ResolverState 
 {
+    #[inline]
     fn num(num: f64) -> Self {
         IFRpn::Num(num)
     }
 
+    #[inline]
     fn op(op: Op) -> Self {
         IFRpn::Op(op)
     }
 
+    #[inline]
     fn var(name: &'a str, _ctx: &'c Context<S, V, F, LV, LF>) -> Self {
         IFRpn::Var(name)
     }
 
+    #[inline]
     fn fun(name: &'a str, argc: usize, _ctx: &'c Context<S, V, F, LV, LF>) -> Self {
         let name_bytes = name.as_bytes();
         let letter = name_bytes[0] - b'a';

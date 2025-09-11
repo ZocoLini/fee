@@ -16,19 +16,23 @@ where
     V: LockedResolver<f64>,
     F: LockedResolver<ExprFn>,
 {
+    #[inline]
     fn num(num: f64) -> Self {
         LRpn::Num(num)
     }
 
+    #[inline]
     fn op(op: Op) -> Self {
         LRpn::Op(op)
     }
 
     // TODO: Return an error manin
+    #[inline]
     fn var(name: &'a str, ctx: &'c LContext<V, F>) -> Self {
         LRpn::Var(ctx.get_var_ptr(name).unwrap())
     }
 
+    #[inline]
     fn fun(name: &'a str, argc: usize, ctx: &'c LContext<V, F>) -> Self {
         LRpn::Fn(ctx.get_fn_ptr(name).unwrap(), argc)
     }

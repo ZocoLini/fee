@@ -16,18 +16,22 @@ pub enum Rpn<'e>
 impl<'a, 'c, S, V, F, LV, LF> ParseableToken<'a, 'c, S, V, F, LV, LF> for Rpn<'a>
 where S: ResolverState 
 {
+    #[inline]
     fn num(num: f64) -> Self {
         Rpn::Num(num)
     }
 
+    #[inline]
     fn op(op: Op) -> Self {
         Rpn::Op(op)
     }
 
+    #[inline]
     fn var(name: &'a str, _ctx: &'c Context<S, V, F, LV, LF>) -> Self {
         Rpn::Var(name)
     }
 
+    #[inline]
     fn fun(name: &'a str, argc: usize, _ctx: &'c Context<S, V, F, LV, LF>) -> Self {
         Rpn::Fn(name, argc)
     }

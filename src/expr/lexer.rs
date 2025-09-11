@@ -164,7 +164,7 @@ enum State
 
 impl State
 {
-    #[inline(always)]
+    #[inline]
     fn lex<'e, 'c, T, S, V, F, LV, LF>(
         &mut self,
         data: &mut LexData<'e>,
@@ -183,7 +183,7 @@ impl State
         }
     }
 
-    #[inline(always)]
+    #[inline]
     fn handle_expecting_operator<'e, 'c, T, S: 'c, V: 'c, F: 'c, LV: 'c, LF: 'c>(
         _data: &mut LexData<'e>,
         buffers: &mut LexBuffers<T>,
@@ -214,7 +214,7 @@ impl State
         Ok(State::Default)
     }
 
-    #[inline(always)]
+    #[inline]
     fn handle_default<'e, 'c, T, S, V, F, LV, LF>(
         data: &mut LexData<'e>,
         buffers: &mut LexBuffers<T>,
