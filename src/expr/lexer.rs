@@ -3,11 +3,7 @@ use std::{borrow::Cow, iter::Peekable, str::CharIndices};
 use smallvec::{SmallVec, smallvec};
 
 use crate::{
-    Error, ParseError,
-    expr::Op,
-    parsing,
-    prelude::*,
-    resolver::{LockedResolver, ResolverState},
+    expr::{ParseableToken, Op}, parsing, prelude::*, resolver::{LockedResolver, ResolverState}, Error, ParseError
 };
 
 enum Infix
@@ -41,11 +37,7 @@ struct Lexer<'e>
 
 impl<'e, 'c, T, S, V, F, LV, LF> TryFrom<(&'e str, &'c Context<S, V, F, LV, LF>)> for Expr<T>
 where
-    T: From<f64>
-        + From<(&'e str, &'c Context<S, V, F, LV, LF>)>
-        + From<Op>
-        + From<(&'e str, usize, &'c Context<S, V, F, LV, LF>)>
-        + Copy,
+    T: ParseableToken<'e, 'c, S, V, F, LV, LF> + Copy,
     S: ResolverState,
     V: Resolver<S, f64>,
     F: Resolver<S, ExprFn>,
@@ -90,11 +82,7 @@ impl<'e> Lexer<'e>
     ) -> Result<Vec<T>, Error<'e>>
     where
         S: ResolverState,
-        T: From<f64>
-            + From<(&'e str, &'c Context<S, V, F, LV, LF>)>
-            + From<Op>
-            + From<(&'e str, usize, &'c Context<S, V, F, LV, LF>)>
-            + Copy,
+        T: ParseableToken<'e, 'c, S, V, F, LV, LF> + Copy,
     {
         let mut comma_count = 0;
 
@@ -111,11 +99,11 @@ impl<'e> Lexer<'e>
                         match top {
                             Infix::LParen(commas) => {
                                 if let Some(Infix::Fn(start, end)) = buffers.ops.last() {
-                                    let fn_token = T::from((
+                                    let fn_token = T::fun(
                                         &self.data.input[*start..*end],
                                         comma_count - commas + 1,
                                         ctx,
-                                    ));
+                                    );
                                     
                                     buffers.f64_cache.clear();
                                     buffers.output.push(fn_token);
@@ -187,10 +175,7 @@ impl State
     ) -> Result<State, Error<'e>>
     where
         S: ResolverState,
-        T: From<f64>
-            + From<(&'e str, &'c Context<S, V, F, LV, LF>)>
-            + From<Op>
-            + From<(&'e str, usize, &'c Context<S, V, F, LV, LF>)>,
+        T: ParseableToken<'e, 'c, S, V, F, LV, LF>
     {
         match self {
             State::ExpectingOperator => Self::handle_expecting_operator(data, buffers, i, c),
@@ -207,10 +192,7 @@ impl State
     ) -> Result<State, Error<'e>>
     where
         S: ResolverState,
-        T: From<f64>
-            + From<(&'e str, &'c Context<S, V, F, LV, LF>)>
-            + From<Op>
-            + From<(&'e str, usize, &'c Context<S, V, F, LV, LF>)>,
+        T: ParseableToken<'e, 'c, S, V, F, LV, LF>
     {
         let op = match c {
             '+' => Op::Add,
@@ -242,10 +224,7 @@ impl State
     ) -> Result<State, Error<'e>>
     where
         S: ResolverState,
-        T: From<f64>
-            + From<(&'e str, &'c Context<S, V, F, LV, LF>)>
-            + From<Op>
-            + From<(&'e str, usize, &'c Context<S, V, F, LV, LF>)>,
+        T: ParseableToken<'e, 'c, S, V, F, LV, LF>
     {
         return match c {
             '-' => {
@@ -256,7 +235,7 @@ impl State
             '0'..='9' | '.' => {
                 let num = parsing::parse_uf64(c, &mut data.chars);
 
-                buffers.output.push(T::from(num));
+                buffers.output.push(T::num(num));
                 buffers.f64_cache.push(num);
 
                 Ok(State::ExpectingOperator)
@@ -280,9 +259,9 @@ impl State
                             return Ok(State::Default);
                         }
 
-                        break T::from((&data.input[start_index..i], ctx));
+                        break T::var(&data.input[start_index..i], ctx);
                     } else {
-                        break T::from((&data.input[start_index..end_index], ctx));
+                        break T::var(&data.input[start_index..end_index], ctx);
                     }
                 };
 
@@ -300,9 +279,10 @@ impl State
 }
 
 #[inline]
-fn process_operator<T>(buffers: &mut LexBuffers<T>, op: Op)
+fn process_operator<'e, 'c, T, S, V, F, LV, LF>(buffers: &mut LexBuffers<T>, op: Op)
 where
-    T: From<f64> + From<Op>,
+    S: ResolverState,
+    T: ParseableToken<'e, 'c, S, V, F, LV, LF>
 {
     while let Some(Infix::Op(top)) = buffers.ops.last() {
         let prec = op.precedence();
@@ -320,9 +300,10 @@ where
 }
 
 #[inline]
-fn pre_evaluate<'e, T>(buffers: &mut LexBuffers<T>, op: Op)
+fn pre_evaluate<'e, 'c, T, S, V, F, LV, LF>(buffers: &mut LexBuffers<T>, op: Op)
 where
-    T: From<f64> + From<Op>,
+    S: ResolverState,
+    T: ParseableToken<'e, 'c, S, V, F, LV, LF>
 {
     let n_operands = op.num_operands();
 
@@ -333,7 +314,7 @@ where
         let start = f64_cache_len - n_operands;
         let num = op.apply(&buffers.f64_cache[start..]);
 
-        let token: T = num.into();
+        let token: T = T::num(num);
 
         buffers.output.truncate(output_len - n_operands);
         buffers.output.push(token);
@@ -341,7 +322,7 @@ where
         buffers.f64_cache.truncate(f64_cache_len - n_operands);
         buffers.f64_cache.push(num);
     } else {
-        let token: T = op.into();
+        let token: T = T::op(op);
         buffers.output.push(token);
         buffers.f64_cache.clear();
     }

@@ -1,10 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    Error, EvalError, UContext,
-    expr::{ExprCompiler, NotIndexedResolver, Op},
-    prelude::*,
-    resolver::{LockedResolver, ResolverState, UnlockedResolver},
+    expr::{ParseableToken, ExprCompiler, NotIndexedResolver, Op}, prelude::*, resolver::{LockedResolver, ResolverState, UnlockedResolver}, Error, EvalError, UContext
 };
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -16,38 +13,22 @@ pub enum Rpn<'e>
     Op(Op),
 }
 
-impl From<f64> for Rpn<'_>
+impl<'a, 'c, S, V, F, LV, LF> ParseableToken<'a, 'c, S, V, F, LV, LF> for Rpn<'a>
+where S: ResolverState 
 {
-    fn from(num: f64) -> Self
-    {
+    fn num(num: f64) -> Self {
         Rpn::Num(num)
     }
-}
 
-impl From<Op> for Rpn<'_>
-{
-    fn from(op: Op) -> Self
-    {
+    fn op(op: Op) -> Self {
         Rpn::Op(op)
     }
-}
 
-impl<'a, 'c, S, V, F, LV, LF> From<(&'a str, &'c Context<S, V, F, LV, LF>)> for Rpn<'a>
-where
-    S: ResolverState,
-{
-    fn from((name, _): (&'a str, &'c Context<S, V, F, LV, LF>)) -> Self
-    {
+    fn var(name: &'a str, _ctx: &'c Context<S, V, F, LV, LF>) -> Self {
         Rpn::Var(name)
     }
-}
 
-impl<'a, 'c, S, V, F, LV, LF> From<(&'a str, usize, &'c Context<S, V, F, LV, LF>)> for Rpn<'a>
-where
-    S: ResolverState,
-{
-    fn from((name, argc, _): (&'a str, usize, &'c Context<S, V, F, LV, LF>)) -> Self
-    {
+    fn fun(name: &'a str, argc: usize, _ctx: &'c Context<S, V, F, LV, LF>) -> Self {
         Rpn::Fn(name, argc)
     }
 }

@@ -1,11 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    Error, EvalError, IndexedResolver, UContext,
-    expr::{ExprCompiler, NotIndexedResolver, Op},
-    parsing,
-    prelude::*,
-    resolver::{LockedResolver, ResolverState, UnlockedResolver},
+    expr::{ParseableToken, ExprCompiler, NotIndexedResolver, Op}, parsing, prelude::*, resolver::{LockedResolver, ResolverState, UnlockedResolver}, Error, EvalError, IndexedResolver, UContext
 };
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -17,40 +13,25 @@ pub enum IVRpn<'e>
     Op(Op),
 }
 
-impl From<f64> for IVRpn<'_>
+impl<'a, 'c, S, V, F, LV, LF> ParseableToken<'a, 'c, S, V, F, LV, LF> for IVRpn<'a>
+where S: ResolverState 
 {
-    fn from(num: f64) -> Self
-    {
+    fn num(num: f64) -> Self {
         IVRpn::Num(num)
     }
-}
-impl From<Op> for IVRpn<'_>
-{
-    fn from(op: Op) -> Self
-    {
+
+    fn op(op: Op) -> Self {
         IVRpn::Op(op)
     }
-}
 
-impl<'a, 'c, S, V, F, LV, LF> From<(&'a str, &'c Context<S, V, F, LV, LF>)> for IVRpn<'_>
-where
-    S: ResolverState,
-{
-    fn from((name, _): (&'a str, &'c Context<S, V, F, LV, LF>)) -> Self
-    {
+    fn var(name: &'a str, _ctx: &'c Context<S, V, F, LV, LF>) -> Self {
         let name_bytes = name.as_bytes();
         let letter = name_bytes[0] - b'a';
         let idx = parsing::parse_usize(&name_bytes[1..]);
         IVRpn::Var(letter as usize, idx)
     }
-}
 
-impl<'a, 'c, S, V, F, LV, LF> From<(&'a str, usize, &'c Context<S, V, F, LV, LF>)> for IVRpn<'a>
-where
-    S: ResolverState,
-{
-    fn from((name, argc, _): (&'a str, usize, &'c Context<S, V, F, LV, LF>)) -> Self
-    {
+    fn fun(name: &'a str, argc: usize, _ctx: &'c Context<S, V, F, LV, LF>) -> Self {
         IVRpn::Fn(name, argc)
     }
 }

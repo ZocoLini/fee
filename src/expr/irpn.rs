@@ -1,11 +1,7 @@
 use std::borrow::Cow;
 
 use crate::{
-    Error, EvalError, IndexedResolver, UContext,
-    expr::{ExprCompiler, Op},
-    parsing,
-    prelude::*,
-    resolver::ResolverState,
+    expr::{ParseableToken, ExprCompiler, Op}, parsing, prelude::*, resolver::ResolverState, Error, EvalError, IndexedResolver, UContext
 };
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -17,41 +13,25 @@ pub enum IRpn
     Op(Op),
 }
 
-impl From<f64> for IRpn
+impl<'a, 'c, S, V, F, LV, LF> ParseableToken<'a, 'c, S, V, F, LV, LF> for IRpn
+where S: ResolverState 
 {
-    fn from(num: f64) -> Self
-    {
+    fn num(num: f64) -> Self {
         IRpn::Num(num)
     }
-}
 
-impl From<Op> for IRpn
-{
-    fn from(op: Op) -> Self
-    {
+    fn op(op: Op) -> Self {
         IRpn::Op(op)
     }
-}
 
-impl<'a, 'c, S, V, F, LV, LF> From<(&'a str, &'c Context<S, V, F, LV, LF>)> for IRpn
-where
-    S: ResolverState,
-{
-    fn from((name, _): (&'a str, &'c Context<S, V, F, LV, LF>)) -> Self
-    {
+    fn var(name: &'a str, _ctx: &'c Context<S, V, F, LV, LF>) -> Self {
         let name_bytes = name.as_bytes();
         let letter = name_bytes[0] - b'a';
         let idx = parsing::parse_usize(&name_bytes[1..]);
         IRpn::Var(letter as usize, idx)
     }
-}
 
-impl<'a, 'c, S, V, F, LV, LF> From<(&'a str, usize, &'c Context<S, V, F, LV, LF>)> for IRpn
-where
-    S: ResolverState,
-{
-    fn from((name, argc, _): (&'a str, usize, &'c Context<S, V, F, LV, LF>)) -> Self
-    {
+    fn fun(name: &'a str, argc: usize, _ctx: &'c Context<S, V, F, LV, LF>) -> Self {
         let name_bytes = name.as_bytes();
         let letter = name_bytes[0] - b'a';
         let idx = parsing::parse_usize(&name_bytes[1..]);

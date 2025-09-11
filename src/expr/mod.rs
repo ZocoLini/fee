@@ -101,6 +101,15 @@ impl<S: ResolverState, T> NotIndexedResolver for ConstantResolver<S, T> {}
 impl<S: ResolverState, K: AsRef<str> + Eq, T> NotIndexedResolver for SmallResolver<S, K, T> {}
 impl<S: ResolverState> NotIndexedResolver for EmptyResolver<S> {}
 
+trait ParseableToken<'a, 'c, S, V, F, LV, LF>
+where S: ResolverState
+{
+    fn num(num: f64) -> Self;
+    fn op(op: Op) -> Self;
+    fn var(name: &'a str, ctx: &'c Context<S, V, F, LV, LF>) -> Self;
+    fn fun(name: &'a str, argc: usize, ctx: &'c Context<S, V, F, LV, LF>) -> Self;
+}
+
 pub trait ExprCompiler<'e, 'c, S, V, F, LV, LF, T>
 where
     S: ResolverState,

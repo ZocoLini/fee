@@ -1,8 +1,5 @@
 use crate::{
-    Error, EvalError, LContext, Ptr,
-    expr::{ExprCompiler, Op},
-    prelude::*,
-    resolver::LockedResolver,
+    expr::{ParseableToken, Op}, prelude::*, resolver::{LockedResolver}, Error, EvalError, LContext, Ptr
 };
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -14,41 +11,25 @@ pub enum LRpn<'a>
     Op(Op),
 }
 
-impl<'a> From<f64> for LRpn<'a>
+impl<'a, 'c, V, F> ParseableToken<'a, 'c, Locked, V, F, V, F> for LRpn<'c>
+where
+    V: LockedResolver<f64>,
+    F: LockedResolver<ExprFn>,
 {
-    fn from(num: f64) -> Self
-    {
+    fn num(num: f64) -> Self {
         LRpn::Num(num)
     }
-}
 
-impl<'a> From<Op> for LRpn<'a>
-{
-    fn from(op: Op) -> Self
-    {
+    fn op(op: Op) -> Self {
         LRpn::Op(op)
     }
-}
 
-// TODO: Return an error manin
-impl<'a, 'c, V, F> From<(&'a str, &'c LContext<V, F>)> for LRpn<'c>
-where
-    V: LockedResolver<f64>,
-    F: LockedResolver<ExprFn>,
-{
-    fn from((name, ctx): (&'a str, &'c LContext<V, F>)) -> Self
-    {
+    // TODO: Return an error manin
+    fn var(name: &'a str, ctx: &'c LContext<V, F>) -> Self {
         LRpn::Var(ctx.get_var_ptr(name).unwrap())
     }
-}
 
-impl<'a, 'c, V, F> From<(&'a str, usize, &'c LContext<V, F>)> for LRpn<'c>
-where
-    V: LockedResolver<f64>,
-    F: LockedResolver<ExprFn>,
-{
-    fn from((name, argc, ctx): (&'a str, usize, &'c LContext<V, F>)) -> Self
-    {
+    fn fun(name: &'a str, argc: usize, ctx: &'c LContext<V, F>) -> Self {
         LRpn::Fn(ctx.get_fn_ptr(name).unwrap(), argc)
     }
 }
