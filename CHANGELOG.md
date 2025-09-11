@@ -4,6 +4,12 @@ All the changes in this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## Unreleased
+
+## Added
+- Stack underflow error now is thrown when an operator doesn't
+have enough elements in the stack.
+
 ## [0.2.1] - 2025-09-11
 
 ### Added

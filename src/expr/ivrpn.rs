@@ -101,7 +101,7 @@ where
                     }
 
                     let start = stack.len() - argc;
-                    let args = &stack[start..];
+                    let args = unsafe { stack.get_unchecked(start..) };
                     let val = ctx
                         .get_fn(name)
                         .ok_or_else(|| Error::UnknownFn(Cow::Borrowed(name)))?(
@@ -112,8 +112,13 @@ where
                     stack.push(val);
                 }
                 IVRpn::Op(op) => {
+                    if op.num_operands() > stack.len() {
+                        return Err(Error::EvalError(EvalError::RPNStackUnderflow));
+                    }
+
                     let start = stack.len() - op.num_operands();
-                    let res = op.apply(&stack[start..]);
+                    let args = unsafe { stack.get_unchecked(start..) };
+                    let res = op.apply(args);
                     stack.truncate(start);
                     stack.push(res);
                 }

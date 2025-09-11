@@ -1,7 +1,10 @@
 use std::borrow::Cow;
 
 use crate::{
-    expr::{ParseableToken, ExprCompiler, NotIndexedResolver, Op}, prelude::*, resolver::{LockedResolver, ResolverState, UnlockedResolver}, Error, EvalError, UContext
+    Error, EvalError, UContext,
+    expr::{ExprCompiler, NotIndexedResolver, Op, ParseableToken},
+    prelude::*,
+    resolver::{LockedResolver, ResolverState, UnlockedResolver},
 };
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -14,25 +17,30 @@ pub enum Rpn<'e>
 }
 
 impl<'a, 'c, S, V, F, LV, LF> ParseableToken<'a, 'c, S, V, F, LV, LF> for Rpn<'a>
-where S: ResolverState 
+where
+    S: ResolverState,
 {
     #[inline]
-    fn num(num: f64) -> Self {
+    fn num(num: f64) -> Self
+    {
         Rpn::Num(num)
     }
 
     #[inline]
-    fn op(op: Op) -> Self {
+    fn op(op: Op) -> Self
+    {
         Rpn::Op(op)
     }
 
     #[inline]
-    fn var(name: &'a str, _ctx: &'c Context<S, V, F, LV, LF>) -> Self {
+    fn var(name: &'a str, _ctx: &'c Context<S, V, F, LV, LF>) -> Self
+    {
         Rpn::Var(name)
     }
 
     #[inline]
-    fn fun(name: &'a str, argc: usize, _ctx: &'c Context<S, V, F, LV, LF>) -> Self {
+    fn fun(name: &'a str, argc: usize, _ctx: &'c Context<S, V, F, LV, LF>) -> Self
+    {
         Rpn::Fn(name, argc)
     }
 }
@@ -78,7 +86,7 @@ where
                     }
 
                     let start = stack.len() - argc;
-                    let args = &stack[start..];
+                    let args = unsafe { stack.get_unchecked(start..) };
                     let val = ctx
                         .get_fn(name)
                         .ok_or_else(|| Error::UnknownFn(Cow::Borrowed(name)))?(
@@ -89,8 +97,13 @@ where
                     stack.push(val);
                 }
                 Rpn::Op(op) => {
+                    if op.num_operands() > stack.len() {
+                        return Err(Error::EvalError(EvalError::RPNStackUnderflow));
+                    }
+
                     let start = stack.len() - op.num_operands();
-                    let res = op.apply(&stack[start..]);
+                    let args = unsafe { stack.get_unchecked(start..) };
+                    let res = op.apply(args);
                     stack.truncate(start);
                     stack.push(res);
                 }

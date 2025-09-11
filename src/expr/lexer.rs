@@ -312,7 +312,8 @@ where
         let f64_cache_len = buffers.f64_cache.len();
 
         let start = f64_cache_len - n_operands;
-        let num = op.apply(&buffers.f64_cache[start..]);
+        let args = unsafe { buffers.f64_cache.get_unchecked(start..) };
+        let num = op.apply(args);
 
         let token: T = T::num(num);
 

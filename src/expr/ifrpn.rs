@@ -107,7 +107,7 @@ where
                     }
 
                     let start = stack.len() - argc;
-                    let args = &stack[start..];
+                    let args = unsafe { stack.get_unchecked(start..) };
                     let val = ctx.call_fn_by_index(*id, *idx, args).ok_or_else(|| {
                         Error::UnknownFn(Cow::Owned(format!(
                             "{}{}",
@@ -120,8 +120,13 @@ where
                     stack.push(val);
                 }
                 IFRpn::Op(op) => {
+                    if op.num_operands() > stack.len() {
+                        return Err(Error::EvalError(EvalError::RPNStackUnderflow));
+                    }
+
                     let start = stack.len() - op.num_operands();
-                    let res = op.apply(&stack[start..]);
+                    let args = unsafe { stack.get_unchecked(start..) };
+                    let res = op.apply(args);
                     stack.truncate(start);
                     stack.push(res);
                 }
