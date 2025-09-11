@@ -1,10 +1,10 @@
 [package]
 name = "fee"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2024"
 
 authors = ["Borja Castellano <borjacastellano1@gmail.com>"]
-description = "The fastest expression evaluators"
+description = "Fast expression evaluator and parser"
 keywords = ["math", "expression", "parser", "evaluator", "scientific"]
 categories = ["mathematics", "science", "parser-implementations"]
 repository = "https://github.com/ZocoLini/fee"

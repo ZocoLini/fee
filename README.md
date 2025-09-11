@@ -1,4 +1,4 @@
-# Fast Expression Evaluators
+# Fast Expression Evaluator
 
 [![Crates.io](https://img.shields.io/crates/v/fee.svg)](https://crates.io/crates/fee)
 [![Docs.rs](https://docs.rs/fee/badge.svg)](https://docs.rs/fee)
@@ -20,7 +20,7 @@ First step is add the dependency to your Cargo.toml.
 
 ```toml
 [dependencies]
-fee = { version = "0.2.0" }
+fee = { version = "0.2.1" }
 ```
 
 The following code shows the default use case
@@ -116,8 +116,6 @@ the expression's variables and functions at compile time instead of eval time.
 
 ```Rust
 let context = Context::new(var_resolver, fn_resolver).lock();
-let mut stack = Vec::with_capacity(10);
-
 let expr = Expr::compile("abs(2 / p1) + abs(-2)", &context).unwrap();
 ```
 
