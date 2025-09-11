@@ -3,7 +3,11 @@ use std::{borrow::Cow, iter::Peekable, str::CharIndices};
 use smallvec::{SmallVec, smallvec};
 
 use crate::{
-    expr::{ParseableToken, Op}, parsing, prelude::*, resolver::{LockedResolver, ResolverState}, Error, ParseError
+    Error, ParseError,
+    expr::{Op, ParseableToken},
+    parsing,
+    prelude::*,
+    resolver::{LockedResolver, ResolverState},
 };
 
 enum Infix
@@ -41,8 +45,8 @@ where
     S: ResolverState,
     V: Resolver<S, f64>,
     F: Resolver<S, ExprFn>,
-    LV: Resolver<Locked, f64> + LockedResolver<f64>,
-    LF: Resolver<Locked, ExprFn> + LockedResolver<ExprFn>,
+    LV: LockedResolver<f64>,
+    LF: LockedResolver<ExprFn>,
 {
     type Error = crate::Error<'e>;
 
@@ -104,10 +108,10 @@ impl<'e> Lexer<'e>
                                         comma_count - commas + 1,
                                         ctx,
                                     );
-                                    
+
                                     buffers.f64_cache.clear();
                                     buffers.output.push(fn_token);
-                                    
+
                                     comma_count = commas;
                                     buffers.ops.pop();
                                 }
@@ -175,7 +179,7 @@ impl State
     ) -> Result<State, Error<'e>>
     where
         S: ResolverState,
-        T: ParseableToken<'e, 'c, S, V, F, LV, LF>
+        T: ParseableToken<'e, 'c, S, V, F, LV, LF>,
     {
         match self {
             State::ExpectingOperator => Self::handle_expecting_operator(data, buffers, i, c),
@@ -192,7 +196,7 @@ impl State
     ) -> Result<State, Error<'e>>
     where
         S: ResolverState,
-        T: ParseableToken<'e, 'c, S, V, F, LV, LF>
+        T: ParseableToken<'e, 'c, S, V, F, LV, LF>,
     {
         let op = match c {
             '+' => Op::Add,
@@ -224,7 +228,7 @@ impl State
     ) -> Result<State, Error<'e>>
     where
         S: ResolverState,
-        T: ParseableToken<'e, 'c, S, V, F, LV, LF>
+        T: ParseableToken<'e, 'c, S, V, F, LV, LF>,
     {
         return match c {
             '-' => {
@@ -282,7 +286,7 @@ impl State
 fn process_operator<'e, 'c, T, S, V, F, LV, LF>(buffers: &mut LexBuffers<T>, op: Op)
 where
     S: ResolverState,
-    T: ParseableToken<'e, 'c, S, V, F, LV, LF>
+    T: ParseableToken<'e, 'c, S, V, F, LV, LF>,
 {
     while let Some(Infix::Op(top)) = buffers.ops.last() {
         let prec = op.precedence();
@@ -303,7 +307,7 @@ where
 fn pre_evaluate<'e, 'c, T, S, V, F, LV, LF>(buffers: &mut LexBuffers<T>, op: Op)
 where
     S: ResolverState,
-    T: ParseableToken<'e, 'c, S, V, F, LV, LF>
+    T: ParseableToken<'e, 'c, S, V, F, LV, LF>,
 {
     let n_operands = op.num_operands();
 

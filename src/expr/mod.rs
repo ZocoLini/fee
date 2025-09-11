@@ -102,7 +102,8 @@ impl<S: ResolverState, K: AsRef<str> + Eq, T> NotIndexedResolver for SmallResolv
 impl<S: ResolverState> NotIndexedResolver for EmptyResolver<S> {}
 
 trait ParseableToken<'a, 'c, S, V, F, LV, LF>
-where S: ResolverState
+where
+    S: ResolverState,
 {
     fn num(num: f64) -> Self;
     fn op(op: Op) -> Self;

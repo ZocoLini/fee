@@ -1,7 +1,11 @@
 use std::borrow::Cow;
 
 use crate::{
-    expr::{ParseableToken, ExprCompiler, Op}, parsing, prelude::*, resolver::ResolverState, Error, EvalError, IndexedResolver, UContext
+    Error, EvalError, IndexedResolver, UContext,
+    expr::{ExprCompiler, Op, ParseableToken},
+    parsing,
+    prelude::*,
+    resolver::ResolverState,
 };
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -14,20 +18,24 @@ pub enum IRpn
 }
 
 impl<'a, 'c, S, V, F, LV, LF> ParseableToken<'a, 'c, S, V, F, LV, LF> for IRpn
-where S: ResolverState 
+where
+    S: ResolverState,
 {
     #[inline]
-    fn num(num: f64) -> Self {
+    fn num(num: f64) -> Self
+    {
         IRpn::Num(num)
     }
 
     #[inline]
-    fn op(op: Op) -> Self {
+    fn op(op: Op) -> Self
+    {
         IRpn::Op(op)
     }
 
     #[inline]
-    fn var(name: &'a str, _ctx: &'c Context<S, V, F, LV, LF>) -> Self {
+    fn var(name: &'a str, _ctx: &'c Context<S, V, F, LV, LF>) -> Self
+    {
         let name_bytes = name.as_bytes();
         let letter = name_bytes[0] - b'a';
         let idx = parsing::parse_usize(&name_bytes[1..]);
@@ -35,7 +43,8 @@ where S: ResolverState
     }
 
     #[inline]
-    fn fun(name: &'a str, argc: usize, _ctx: &'c Context<S, V, F, LV, LF>) -> Self {
+    fn fun(name: &'a str, argc: usize, _ctx: &'c Context<S, V, F, LV, LF>) -> Self
+    {
         let name_bytes = name.as_bytes();
         let letter = name_bytes[0] - b'a';
         let idx = parsing::parse_usize(&name_bytes[1..]);

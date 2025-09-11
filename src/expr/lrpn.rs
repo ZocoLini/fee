@@ -1,5 +1,8 @@
 use crate::{
-    expr::{ParseableToken, Op}, prelude::*, resolver::{LockedResolver}, Error, EvalError, LContext, Ptr
+    Error, EvalError, LContext, Ptr,
+    expr::{Op, ParseableToken},
+    prelude::*,
+    resolver::LockedResolver,
 };
 
 #[derive(Debug, PartialEq, Copy, Clone)]
@@ -17,23 +20,27 @@ where
     F: LockedResolver<ExprFn>,
 {
     #[inline]
-    fn num(num: f64) -> Self {
+    fn num(num: f64) -> Self
+    {
         LRpn::Num(num)
     }
 
     #[inline]
-    fn op(op: Op) -> Self {
+    fn op(op: Op) -> Self
+    {
         LRpn::Op(op)
     }
 
     // TODO: Return an error manin
     #[inline]
-    fn var(name: &'a str, ctx: &'c LContext<V, F>) -> Self {
+    fn var(name: &'a str, ctx: &'c LContext<V, F>) -> Self
+    {
         LRpn::Var(ctx.get_var_ptr(name).unwrap())
     }
 
     #[inline]
-    fn fun(name: &'a str, argc: usize, ctx: &'c LContext<V, F>) -> Self {
+    fn fun(name: &'a str, argc: usize, ctx: &'c LContext<V, F>) -> Self
+    {
         LRpn::Fn(ctx.get_fn_ptr(name).unwrap(), argc)
     }
 }
