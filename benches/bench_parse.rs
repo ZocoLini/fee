@@ -1,5 +1,5 @@
 use criterion::{Criterion, criterion_group, criterion_main};
-use fee::{EmptyResolver, IndexedResolver, SmallResolver, prelude::*};
+use fee::{IndexedResolver, SmallResolver, prelude::*};
 use std::hint::black_box;
 
 fn parsers(c: &mut Criterion)
@@ -7,7 +7,7 @@ fn parsers(c: &mut Criterion)
     let expr = "(2 * 21)
         + abs((2 + 3) * 4, sqrt(5))
         + 3 - 35 - ((5 * 80) + 5)
-        + 10
+        + 10 + p0 - p0^p0 * p1
         - abs((2 + 3) * 4, sqrt(5))";
 
     c.bench_function("internal/parse/rpn", |b| {
@@ -27,7 +27,9 @@ fn parsers(c: &mut Criterion)
     });
 
     c.bench_function("internal/parse/lrpn", |b| {
-        let v_resolver = EmptyResolver::new();
+        let mut v_resolver = SmallResolver::new();
+        v_resolver.insert("p0", 1.0);
+        v_resolver.insert("p1", 2.0);
         let mut f_resolver = SmallResolver::new();
         f_resolver.insert("abs".to_string(), ExprFn::new(|_| 0.0));
         f_resolver.insert("sqrt".to_string(), ExprFn::new(|_| 0.0));
