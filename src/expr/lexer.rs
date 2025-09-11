@@ -297,6 +297,7 @@ impl State
     }
 }
 
+#[inline]
 fn process_operator<T>(buffers: &mut LexBuffers<T>, op: Op)
 where
     T: From<f64> + From<Op>,
@@ -307,9 +308,8 @@ where
         let should_pop = top_prec > prec || (!op.is_right_associative() && top_prec == prec);
 
         if should_pop {
-            if let Some(Infix::Op(op)) = buffers.ops.pop() {
-                pre_evaluate(buffers, op);
-            }
+            pre_evaluate(buffers, *top);
+            buffers.ops.pop();
         } else {
             break;
         }
@@ -317,6 +317,7 @@ where
     buffers.ops.push(Infix::Op(op));
 }
 
+#[inline]
 fn pre_evaluate<'e, T>(buffers: &mut LexBuffers<T>, op: Op)
 where
     T: From<f64> + From<Op>,
