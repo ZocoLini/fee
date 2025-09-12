@@ -7,13 +7,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## Unreleased
 
 ## Added
-- Stack underflow error now is returned when an operator doesn't
+- Added `stack underflow error` now is returned when an operator doesn't
 have enough elements in the stack.
+- Added support for `logical operators`, `comparisons`, and `bitwise operations`.
+- Added `true` and `false` keywords.
 
 ## [0.2.1] - 2025-09-11
 
 ### Added
-- Added support for the modulus operator (`%`)
+- Added support for the module operator (`%`)
 ### Changed
 - Exponentiation (`^`) now uses powi internally in integer cases.
 - Parsing into RPN no longer makes an intermediate step through infix 

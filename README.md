@@ -74,7 +74,12 @@ To learn more about their pros and cons read each struct's documentation.
 ### Supported Expressions
 
 - Binary operators: +, \*, -, /, ^, %
-- Unitary operators: -
+- Logical operators: &&, ||
+- Comparisons: >, <, ==, !=, <=, >=
+- Bitwise: &, |, ^^
+- Shifts: <<, >>
+- Unitary operators: -, !
+- Keywords: true, false
 - Variables
 - Functions with no limit in the number of arguments.
 - f64 operations.
@@ -143,7 +148,7 @@ taskset -c $CORES cargo bench cmp
 - Power Expr -> 2 ^ 3 ^ 4
 - Var Expr -> x0 * 2
 - Trig Expr -> s0(x0) + c0(x0)
-- Quadratic Expr -> (-x2 + (x2^2 - 4*x0*x1)^0.5) / (2*x0)
+- Quadratic Expr -> (-x2 + (x2^2 - 4\*x0\*x1)^0.5) / (2*x0)
 - Large Expr -> ((((87))) - 73) + (97 + (((15 / 55 * ((31)) + 35))) + (15 - (9)) - (39 / 26) / 20 / 91 + 27 / (33 * 26 + 28 - (7) / 10 + 66 * 6) + 60 / 35 - ((29) - (69) / 44 / (92)) / (89) + 2 + 87 / 47 * ((2)) * 83 / 98 * 42 / (((67)) * ((97))) / (34 / 89 + 77) - 29 + 70 * (20)) + ((((((92))) + 23 * (98) / (95) + (((99) * (41))) + (5 + 41) + 10) - (36) / (6 + 80 * 52 + (90))))
 
 

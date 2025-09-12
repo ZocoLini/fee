@@ -32,6 +32,9 @@ pub enum ParseError<'a>
 
     #[error("unmatched parentheses at {0}")]
     UnmatchedParentheses(usize),
+
+    #[error("unexpected expresison end")]
+    UnexpectedEnd,
 }
 
 #[derive(Debug, Error, PartialEq)]

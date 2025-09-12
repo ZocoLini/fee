@@ -189,7 +189,7 @@ impl State
 
     #[inline]
     fn handle_expecting_operator<'e, 'c, T, S: 'c, V: 'c, F: 'c, LV: 'c, LF: 'c>(
-        _data: &mut LexData<'e>,
+        data: &mut LexData<'e>,
         buffers: &mut LexBuffers<T>,
         i: usize,
         c: char,
@@ -198,13 +198,91 @@ impl State
         S: ResolverState,
         T: ParseableToken<'e, 'c, S, V, F, LV, LF>,
     {
+        let chars = &mut data.chars;
+
+        let &(_, second_char) = chars
+            .peek()
+            .ok_or_else(|| Error::ParseError(ParseError::UnexpectedEnd))?;
+
         let op = match c {
             '+' => Op::Add,
             '-' => Op::Sub,
             '*' => Op::Mul,
             '/' => Op::Div,
-            '^' => Op::Pow,
+            '^' => match second_char {
+                '^' => {
+                    chars.next();
+                    Op::BitXor
+                }
+                _ => Op::Pow,
+            },
             '%' => Op::Mod,
+            '!' => match second_char {
+                '=' => {
+                    chars.next();
+                    Op::NotEq
+                }
+                _ => {
+                    return Err(Error::ParseError(ParseError::UnexpectedChar(
+                        Cow::Owned(second_char),
+                        i,
+                    )));
+                }
+            },
+            '>' => match second_char {
+                '=' => {
+                    chars.next();
+                    Op::GreatEq
+                }
+                '>' => {
+                    chars.next();
+                    Op::Shr
+                }
+                _ => Op::Great,
+            },
+            '<' => match second_char {
+                '=' => {
+                    chars.next();
+                    Op::LowEq
+                }
+                '<' => {
+                    chars.next();
+                    Op::Shl
+                }
+                _ => Op::Low,
+            },
+            '=' => match second_char {
+                '=' => {
+                    chars.next();
+                    Op::Eq
+                }
+                _ => {
+                    return Err(Error::ParseError(ParseError::UnexpectedChar(
+                        Cow::Owned(second_char),
+                        i,
+                    )));
+                }
+            },
+            '&' => match second_char {
+                '&' => {
+                    chars.next();
+                    Op::And
+                }
+                _ => {
+                    chars.next();
+                    Op::BitAnd
+                }
+            },
+            '|' => match second_char {
+                '|' => {
+                    chars.next();
+                    Op::Or
+                }
+                _ => {
+                    chars.next();
+                    Op::BitOr
+                }
+            },
             _ => {
                 return Err(Error::ParseError(ParseError::UnexpectedChar(
                     Cow::Owned(c),
@@ -233,6 +311,10 @@ impl State
         return match c {
             '-' => {
                 process_operator(buffers, Op::Neg);
+                Ok(State::Default)
+            }
+            '!' => {
+                process_operator(buffers, Op::Not);
                 Ok(State::Default)
             }
             // numbers

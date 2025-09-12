@@ -14,13 +14,6 @@ use crate::{
     ConstantResolver, DefaultResolver, EmptyResolver, Error, SmallResolver, context::Context,
 };
 
-pub enum Operand
-{
-    F64(f64),
-    I64(i64),
-    Bool(bool),
-}
-
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Op
 {
@@ -42,7 +35,14 @@ pub enum Op
     LowEq,
     GreatEq,
     Eq,
-    Diff,
+    NotEq,
+
+    BitAnd,
+    BitOr,
+    BitXor,
+
+    Shl,
+    Shr,
 }
 
 impl Op
@@ -51,12 +51,15 @@ impl Op
     fn precedence(&self) -> u8
     {
         match self {
-            Op::Or | Op::And => 0,
-            Op::Low | Op::Great | Op::LowEq | Op::GreatEq | Op::Eq | Op::Diff => 5,
-            Op::Add | Op::Sub => 10,
-            Op::Mul | Op::Div | Op::Mod => 20,
-            Op::Neg | Op::Not => 30,
-            Op::Pow => 40,
+            Op::Or => 0,
+            Op::And => 1,
+            Op::Low | Op::Great | Op::LowEq | Op::GreatEq | Op::Eq | Op::NotEq => 2,
+            Op::BitAnd | Op::BitOr | Op::BitXor => 3,
+            Op::Shl | Op::Shr => 4,
+            Op::Add | Op::Sub => 5,
+            Op::Mul | Op::Div | Op::Mod => 6,
+            Op::Neg | Op::Not => 7,
+            Op::Pow => 8,
         }
     }
 
@@ -84,31 +87,47 @@ impl Op
             Op::Mul => x[0] * x[1],
             Op::Div => x[0] / x[1],
             Op::Pow => {
-                if x[1] == x[1] as i64 as f64 {
+                if f64_is_i64(x[1]) {
                     x[0].powi(x[1] as i32)
                 } else {
                     x[0].powf(x[1])
                 }
             }
-            Op::Neg => -x[0],
             Op::Mod => x[0] % x[1],
+
+            Op::Neg => -x[0],
             Op::Not => bool_to_f64(!f64_to_bool(x[0])),
+
             Op::Or => bool_to_f64(f64_to_bool(x[0]) || f64_to_bool(x[1])),
             Op::And => bool_to_f64(f64_to_bool(x[0]) && f64_to_bool(x[1])),
+
             Op::Low => bool_to_f64(x[0] < x[1]),
             Op::Great => bool_to_f64(x[0] > x[1]),
             Op::LowEq => bool_to_f64(x[0] <= x[1]),
             Op::GreatEq => bool_to_f64(x[0] >= x[1]),
             Op::Eq => bool_to_f64(x[0] == x[1]),
-            Op::Diff => bool_to_f64(x[0] != x[1]),
+            Op::NotEq => bool_to_f64(x[0] != x[1]),
+
+            Op::BitAnd => ((x[0] as i64) & (x[1] as i64)) as f64,
+            Op::BitOr => ((x[0] as i64) | (x[1] as i64)) as f64,
+            Op::BitXor => ((x[0] as i64) ^ (x[1] as i64)) as f64,
+
+            Op::Shl => ((x[0] as i64) << (x[1] as i64)) as f64,
+            Op::Shr => ((x[0] as i64) >> (x[1] as i64)) as f64,
         }
     }
 }
 
 #[inline]
+fn f64_is_i64(num: f64) -> bool
+{
+    num == num as i64 as f64
+}
+
+#[inline]
 fn f64_to_bool(num: f64) -> bool
 {
-    num == 0.0
+    num != 0.0
 }
 
 #[inline]
@@ -147,6 +166,7 @@ impl<S: ResolverState, T> NotIndexedResolver for ConstantResolver<S, T> {}
 impl<S: ResolverState, K: AsRef<str> + Eq, T> NotIndexedResolver for SmallResolver<S, K, T> {}
 impl<S: ResolverState> NotIndexedResolver for EmptyResolver<S> {}
 
+#[allow(unused)]
 trait ParseableToken<'a, 'c, S, V, F, LV, LF>
 where
     S: ResolverState,
