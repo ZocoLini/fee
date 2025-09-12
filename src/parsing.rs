@@ -8,14 +8,9 @@ pub fn parse_uf64(c: char, chars: &mut Peekable<CharIndices>) -> f64
 
     match c {
         '0'..='9' => {
-            if is_fraction {
-                value += (c as u8 - b'0') as f64 * frac;
-                frac *= 0.1;
-            } else {
-                value = value * 10.0 + (c as u8 - b'0') as f64;
-            }
+            value = value * 10.0 + (c as u8 - b'0') as f64;
         }
-        '.' if !is_fraction => {
+        '.' => {
             is_fraction = true;
         }
         _ => unreachable!("can't happend"),

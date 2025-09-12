@@ -14,6 +14,13 @@ use crate::{
     ConstantResolver, DefaultResolver, EmptyResolver, Error, SmallResolver, context::Context,
 };
 
+pub enum Operand
+{
+    F64(f64),
+    I64(i64),
+    Bool(bool)
+}
+
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
 pub enum Op
 {
@@ -105,7 +112,9 @@ trait ParseableToken<'a, 'c, S, V, F, LV, LF>
 where
     S: ResolverState,
 {
-    fn num(num: f64) -> Self;
+    fn f64(num: f64) -> Self;
+    fn i64(num: i64) -> Self;
+    fn bool(val: bool) -> Self;
     fn op(op: Op) -> Self;
     fn var(name: &'a str, ctx: &'c Context<S, V, F, LV, LF>) -> Self;
     fn fun(name: &'a str, argc: usize, ctx: &'c Context<S, V, F, LV, LF>) -> Self;

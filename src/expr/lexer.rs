@@ -239,18 +239,18 @@ impl State
             '0'..='9' | '.' => {
                 let num = parsing::parse_uf64(c, &mut data.chars);
 
-                buffers.output.push(T::num(num));
+                buffers.output.push(T::f64(num));
                 buffers.f64_cache.push(num);
 
                 Ok(State::ExpectingOperator)
             }
 
-            // identifiers (variables or functions)
+            // identifiers (variables, functions or keywords)
             'a'..='z' | 'A'..='Z' | '_' => {
                 let start_index = i;
                 let end_index = data.input.len();
 
-                let token = loop {
+                let identifier = loop {
                     if let Some(&(i, d)) = data.chars.peek() {
                         if d.is_alphanumeric() || d == '_' {
                             data.chars.next();
@@ -263,12 +263,18 @@ impl State
                             return Ok(State::Default);
                         }
 
-                        break T::var(&data.input[start_index..i], ctx);
+                        break &data.input[start_index..i];
                     } else {
-                        break T::var(&data.input[start_index..end_index], ctx);
+                        break &data.input[start_index..end_index];
                     }
                 };
 
+                let token = match identifier {
+                    "true" => T::bool(true),
+                    "false" => T::bool(false),
+                    _ => T::var(identifier, ctx)
+                };
+                
                 buffers.output.push(token);
                 buffers.f64_cache.clear();
                 Ok(State::ExpectingOperator)
@@ -319,7 +325,7 @@ where
         let args = unsafe { buffers.f64_cache.get_unchecked(start..) };
         let num = op.apply(args);
 
-        let token: T = T::num(num);
+        let token: T = T::f64(num);
 
         buffers.output.truncate(output_len - n_operands);
         buffers.output.push(token);

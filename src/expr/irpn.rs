@@ -22,9 +22,21 @@ where
     S: ResolverState,
 {
     #[inline]
-    fn num(num: f64) -> Self
+    fn f64(num: f64) -> Self
     {
         IRpn::Num(num)
+    }
+
+    #[inline]
+    fn i64(num: i64) -> Self
+    {
+        IRpn::Num(num as f64)
+    }
+
+    #[inline]
+    fn bool(val: bool) -> Self
+    {
+        IRpn::Num(if val { 1.0 } else { 0.0 })
     }
 
     #[inline]
