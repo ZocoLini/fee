@@ -86,6 +86,8 @@ impl<'e> Lexer<'e>
     ) -> Result<Vec<T>, Error<'e>>
     where
         S: ResolverState,
+        V: Resolver<S, f64>,
+        F: Resolver<S, ExprFn>,
         T: ParseableToken<'e, 'c, S, V, F, LV, LF> + Copy,
     {
         let mut comma_count = 0;
@@ -179,6 +181,8 @@ impl State
     ) -> Result<State, Error<'e>>
     where
         S: ResolverState,
+        V: Resolver<S, f64>,
+        F: Resolver<S, ExprFn>,
         T: ParseableToken<'e, 'c, S, V, F, LV, LF>,
     {
         match self {
@@ -196,6 +200,8 @@ impl State
     ) -> Result<State, Error<'e>>
     where
         S: ResolverState,
+        V: Resolver<S, f64>,
+        F: Resolver<S, ExprFn>,
         T: ParseableToken<'e, 'c, S, V, F, LV, LF>,
     {
         let chars = &mut data.chars;
@@ -306,6 +312,8 @@ impl State
     ) -> Result<State, Error<'e>>
     where
         S: ResolverState,
+        V: Resolver<S, f64>,
+        F: Resolver<S, ExprFn>,
         T: ParseableToken<'e, 'c, S, V, F, LV, LF>,
     {
         return match c {
@@ -374,6 +382,8 @@ impl State
 fn process_operator<'e, 'c, T, S, V, F, LV, LF>(buffers: &mut LexBuffers<T>, op: Op)
 where
     S: ResolverState,
+    V: Resolver<S, f64>,
+    F: Resolver<S, ExprFn>,
     T: ParseableToken<'e, 'c, S, V, F, LV, LF>,
 {
     while let Some(Infix::Op(top)) = buffers.ops.last() {
@@ -395,6 +405,8 @@ where
 fn pre_evaluate<'e, 'c, T, S, V, F, LV, LF>(buffers: &mut LexBuffers<T>, op: Op)
 where
     S: ResolverState,
+    V: Resolver<S, f64>,
+    F: Resolver<S, ExprFn>,
     T: ParseableToken<'e, 'c, S, V, F, LV, LF>,
 {
     let n_operands = op.num_operands();

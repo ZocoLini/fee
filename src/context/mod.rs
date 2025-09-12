@@ -30,6 +30,8 @@ use crate::{EmptyResolver, ExprFn, IndexedResolver, prelude::*};
 pub struct Context<S, V, F, LV, LF>
 where
     S: ResolverState,
+    V: Resolver<S, f64>,
+    F: Resolver<S, ExprFn>
 {
     vars: V,
     fns: F,

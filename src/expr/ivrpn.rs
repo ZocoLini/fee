@@ -20,6 +20,8 @@ pub enum IVRpn<'e>
 impl<'a, 'c, S, V, F, LV, LF> ParseableToken<'a, 'c, S, V, F, LV, LF> for IVRpn<'a>
 where
     S: ResolverState,
+    V: Resolver<S, f64>,
+    F: Resolver<S, ExprFn>
 {
     #[inline]
     fn f64(num: f64) -> Self
