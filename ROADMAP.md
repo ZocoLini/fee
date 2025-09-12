@@ -6,6 +6,7 @@
 - [ ] Study the performance impact of using function in the expressions
 - [ ] Study the possibility of multithreading to improve performance
 - [x] Extend the operator support to include %, logic, comparison and bitwise
+- [ ] Ternary operator UwU
 - [ ] Support for matrices and vectors
 
 ## v0.3

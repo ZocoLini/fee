@@ -8,7 +8,8 @@ fn parsers(c: &mut Criterion)
         + abs((2 + 3) * 4, sqrt(5))
         + 3 - 35 - ((5 * 80) + 5)
         + 10 + p0 - p0^p0 * p1
-        - abs((2 + 3) * 4, sqrt(5))";
+        - abs((2 + 3) * 4, sqrt(5))
+        + ((p0 + 3 * p1) << 2) & 255 | ((10 ^ 2) % 7)";
 
     c.bench_function("internal/parse/rpn", |b| {
         let context = Context::empty();

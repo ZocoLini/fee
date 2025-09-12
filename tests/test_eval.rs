@@ -1,3 +1,5 @@
+use std::f64;
+
 use fee::{prelude::*, *};
 
 fn f0(args: &[f64]) -> f64
@@ -205,4 +207,59 @@ fn test_eval_operators()
     let expr = "6 & 3 == 2 && 6 | 3 == 7 && 6 ^^ 3 == 5";
     let expr = Expr::compile(expr, &ctx).unwrap();
     assert_eq!(expr.eval(&ctx, &mut stack).unwrap(), 1.0);
+}
+
+#[test]
+fn test_hard_expressions()
+{
+    fn min(x: &[f64]) -> f64
+    {
+        let mut res = f64::MAX;
+
+        for x in x.iter() {
+            if *x < res {
+                res = *x;
+            }
+        }
+
+        res
+    }
+    fn max(x: &[f64]) -> f64
+    {
+        let mut res = f64::MIN;
+
+        for x in x.iter() {
+            if *x > res {
+                res = *x;
+            }
+        }
+
+        res
+    }
+
+    let mut v_resolver = SmallResolver::new();
+    v_resolver.insert("x", 0.0);
+    v_resolver.insert("y", 0.0);
+    v_resolver.insert("z", 1.0);
+    v_resolver.insert("a", 1.0);
+    v_resolver.insert("b", 1.0);
+    v_resolver.insert("c", 10.0);
+
+    let mut f_resolver = SmallResolver::new();
+    f_resolver.insert("max", ExprFn::new(max));
+    f_resolver.insert("min", ExprFn::new(min));
+    f_resolver.insert("abs", ExprFn::new(|x| x[0].abs()));
+
+    let ctx = Context::new(v_resolver, f_resolver);
+    let mut stack = Vec::new();
+
+    let expr = "
+        ((x + 3 * y) << 2) & 255 | ((10 ^ 2) % 7)
+        ^^ (true && (z > 5 || false))
+        + max(a, b, c)
+        - min(1, 2, 3)
+        * abs(-42)
+        ";
+    let expr = Expr::compile(expr, &ctx).unwrap();
+    assert_eq!(expr.eval(&ctx, &mut stack).unwrap(), -30.0);
 }

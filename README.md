@@ -3,16 +3,26 @@
 [![Crates.io](https://img.shields.io/crates/v/fee.svg)](https://crates.io/crates/fee)
 [![Docs.rs](https://docs.rs/fee/badge.svg)](https://docs.rs/fee)
 
-`fee` is a fast and flexible library for evaluating mathematical
-expressions from strings. It focuses on **runtime performance**
-while keeping parsing simple and efficient.
+`fee` is a **fast and flexible** library for evaluating mathematical
+expressions from strings. It focuses on **runtime performance** while
+keeping the parsing layer simple and efficient.
 
-This crate was born to power scientific and engineering software
-where expressions cannot be hardcoded:
-- The source code may be unavailable to recompile.
-- Or you may want to ship closed/private tools with configurable formulas.
+This crate was originally designed to power scientific and engineering
+software where expressions cannot be hardcoded:
 
-Contributions, ideas, bug reports and recommendations are welcome.
+- The source code may be unavailable for recompilation.
+- You may want to ship closed/private tools with configurable formulas.
+
+Over time, `fee` has grown into a more general-purpose expression engine.
+It already supports:
+
+- **`f64` arithmetic**
+- **Boolean logic**
+- **Comparisons**
+- **Bitwise operators**
+
+This makes it suitable not only for numerical/scientific use cases, but also for
+building **DSLs, config evaluators, and high-performance runtimes**.
 
 ## Usage
 
@@ -20,7 +30,7 @@ First step is add the dependency to your Cargo.toml.
 
 ```toml
 [dependencies]
-fee = { version = "0.2.1" }
+fee = { version = "0.2.2" }
 ```
 
 The following code shows the default use case
@@ -71,30 +81,46 @@ To learn more about their pros and cons read each struct's documentation.
 
 ## Features
 
-### Supported Expressions
-
-- Binary operators: +, \*, -, /, ^, %
-- Logical operators: &&, ||
-- Comparisons: >, <, ==, !=, <=, >=
-- Bitwise: &, |, ^^
-- Shifts: <<, >>
-- Unitary operators: -, !
-- Keywords: true, false
 - Variables
 - Functions with no limit in the number of arguments.
 - f64 operations.
 
+### Supported Operators
+
+|       Operator       | Priority | Description                             |
+| :------------------: | :------: | :-------------------------------------- |
+|          ^           |    8     | Power (exponentiation)                  |
+|         -, !         |    7     | Unary negation / logical NOT            |
+|       \*, /, %       |    6     | Multiplication, division, remainder     |
+|         +, -         |    5     | Addition, subtraction                   |
+|        <<, >>        |    4     | Bitwise shift left, bitwise shift right |
+|      &, \|, ^^       |    3     | Bitwise AND, OR, XOR                    |
+| ==, !=, <=, =>, <, > |    2     | Equality and comparison operators       |
+|          &&          |    1     | Logical AND                             |
+|         \|\|         |    0     | Logical OR                              |
+
+### Keywords
+
+- `true`: Boolean literal, equivalent to `1.0` (Values greater than 0.0 are also considered true).
+- `false`: Boolean literal, equivalent to `0.0`.
+
 Example of a valid expression:
 
+```Rust
+((x + 3 * y) << 2 ) & 255 | ((10 ^ 2) % 7 )
+^^ ((true && (z > 5 || false)) ? 1 : 0 )
++ max(a, b, c)
+- min(1, 2, 3)
+* abs(-42)
 ```
-2 * 4 - max(abs(p0 + (-p3) * 25), p3 * 45, 0) + sqrt(5)
-```
+
+**Note**: short-circuit not yet implemented.
 
 ### Smart compilation
 
 One of the goals of this library is provide a simple but powerful API. To archive
 this, the `Expr::compile()` method, depending on the context provided and thanks to
-Rust’s type system, it automatically picks the best `Expr<T>` specialization for
+Rust’s type system, automatically picks the best `Expr<T>` for
 your `Context`. You only need to choose the right resolvers, and `fee` will compile
 to the most efficient form at **compile time**.
 
@@ -126,10 +152,25 @@ let expr = Expr::compile("abs(2 / p1) + abs(-2)", &context).unwrap();
 
 ## Benchmarking
 
-To execute the library benches use the following script, where `$CORES` is the
-CPU core range to be used. It is recommended to use the best available cores
-(isolated cores if posible), with turbo disabled and a fixed frequency to reduce
-noise as much as possible.
+### Benchmarking Recommendations
+
+To get **accurate and reproducible results**, it is recommended to run
+benchmarks on isolated CPU cores with a fixed frequency and Turbo Boost
+disabled.
+
+### System Configuration Example
+
+| Feature             | Value                              |
+| ------------------- | ---------------------------------- |
+| Architecture        | x86_64                             |
+| CPU Model           | 12th Gen Intel® Core™ i9-12900HK   |
+| CPU Cores / Threads | 14 / 2 per core                    |
+| Online CPUs         | 0-19                               |
+| Isolated Cores      | 0-3                                |
+| CPU Frequency       | 400–2500 MHz                       |
+| Turbo Boost         | Disabled                           |
+
+The following script executes the lib benches.
 
 ```bash
 CORES=0
@@ -144,17 +185,15 @@ CORES=0
 taskset -c $CORES cargo bench cmp
 ```
 
-- Simple Expr -> 3 * 3 - 3 / 3
+- Simple Expr -> 3 \* 3 - 3 / 3
 - Power Expr -> 2 ^ 3 ^ 4
-- Var Expr -> x0 * 2
+- Var Expr -> x0 \* 2
 - Trig Expr -> s0(x0) + c0(x0)
-- Quadratic Expr -> (-x2 + (x2^2 - 4\*x0\*x1)^0.5) / (2*x0)
-- Large Expr -> ((((87))) - 73) + (97 + (((15 / 55 * ((31)) + 35))) + (15 - (9)) - (39 / 26) / 20 / 91 + 27 / (33 * 26 + 28 - (7) / 10 + 66 * 6) + 60 / 35 - ((29) - (69) / 44 / (92)) / (89) + 2 + 87 / 47 * ((2)) * 83 / 98 * 42 / (((67)) * ((97))) / (34 / 89 + 77) - 29 + 70 * (20)) + ((((((92))) + 23 * (98) / (95) + (((99) * (41))) + (5 + 41) + 10) - (36) / (6 + 80 * 52 + (90))))
-
+- Quadratic Expr -> (-x2 + (x2^2 - 4\*x0\*x1)^0.5) / (2\*x0)
+- Large Expr -> ((((87))) - 73) + (97 + (((15 / 55 _ ((31)) + 35))) + (15 - (9)) - (39 / 26) / 20 / 91 + 27 / (33 _ 26 + 28 - (7) / 10 + 66 _ 6) + 60 / 35 - ((29) - (69) / 44 / (92)) / (89) + 2 + 87 / 47 _ ((2)) _ 83 / 98 _ 42 / (((67)) _ ((97))) / (34 / 89 + 77) - 29 + 70 _ (20)) + ((((((92))) + 23 _ (98) / (95) + (((99) _ (41))) + (5 + 41) + 10) - (36) / (6 + 80 \* 52 + (90))))
 
 ![Parse comparations benchmarks](plots/cmp_parse_bench.png)
 ![Eval comparations benchmarks](plots/cmp_eval_bench.png)
-
 
 ## Additional Resources
 

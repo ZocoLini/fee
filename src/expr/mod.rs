@@ -9,9 +9,9 @@ pub mod rpn;
 use std::borrow::Borrow;
 use std::hash::Hash;
 
+use crate::ExprFn;
 use crate::prelude::Resolver;
 use crate::resolver::ResolverState;
-use crate::ExprFn;
 use crate::{
     ConstantResolver, DefaultResolver, EmptyResolver, Error, SmallResolver, context::Context,
 };
@@ -173,7 +173,7 @@ trait ParseableToken<'a, 'c, S, V, F, LV, LF>
 where
     S: ResolverState,
     V: Resolver<S, f64>,
-    F: Resolver<S, ExprFn>
+    F: Resolver<S, ExprFn>,
 {
     fn f64(num: f64) -> Self;
     fn i64(num: i64) -> Self;
@@ -187,7 +187,7 @@ pub trait ExprCompiler<'e, 'c, S, V, F, LV, LF, T>
 where
     S: ResolverState,
     V: Resolver<S, f64>,
-    F: Resolver<S, ExprFn>
+    F: Resolver<S, ExprFn>,
 {
     fn compile(expr: &'e str, ctx: &'c Context<S, V, F, LV, LF>) -> Result<Expr<T>, Error<'e>>;
 }
@@ -196,7 +196,7 @@ pub trait ExprEvaluator<'e, S, V, F, LV, LF>
 where
     S: ResolverState,
     V: Resolver<S, f64>,
-    F: Resolver<S, ExprFn>
+    F: Resolver<S, ExprFn>,
 {
     fn eval(&self, ctx: &Context<S, V, F, LV, LF>, stack: &mut Vec<f64>) -> Result<f64, Error<'e>>;
 }

@@ -206,99 +206,88 @@ impl State
     {
         let chars = &mut data.chars;
 
-        let &(_, second_char) = chars
-            .peek()
-            .ok_or_else(|| Error::ParseError(ParseError::UnexpectedEnd))?;
+        #[inline]
+        fn bump_if(chars: &mut Peekable<CharIndices<'_>>, expected: char) -> bool
+        {
+            if chars.peek().map(|&(_, c)| c) == Some(expected) {
+                chars.next();
+                true
+            } else {
+                false
+            }
+        }
+
+        #[inline]
+        fn unexpected(c: char, i: usize) -> Error<'static>
+        {
+            Error::ParseError(ParseError::UnexpectedChar(Cow::Owned(c), i))
+        }
 
         let op = match c {
             '+' => Op::Add,
             '-' => Op::Sub,
             '*' => Op::Mul,
             '/' => Op::Div,
-            '^' => match second_char {
-                '^' => {
-                    chars.next();
-                    Op::BitXor
-                }
-                _ => Op::Pow,
-            },
             '%' => Op::Mod,
-            '!' => match second_char {
-                '=' => {
-                    chars.next();
+
+            '^' => {
+                if bump_if(chars, '^') {
+                    Op::BitXor
+                } else {
+                    Op::Pow
+                }
+            }
+            '!' => {
+                if bump_if(chars, '=') {
                     Op::NotEq
+                } else {
+                    return Err(unexpected(c, i));
                 }
-                _ => {
-                    return Err(Error::ParseError(ParseError::UnexpectedChar(
-                        Cow::Owned(second_char),
-                        i,
-                    )));
-                }
-            },
-            '>' => match second_char {
-                '=' => {
-                    chars.next();
+            }
+            '>' => {
+                if bump_if(chars, '=') {
                     Op::GreatEq
-                }
-                '>' => {
-                    chars.next();
+                } else if bump_if(chars, '>') {
                     Op::Shr
+                } else {
+                    Op::Great
                 }
-                _ => Op::Great,
-            },
-            '<' => match second_char {
-                '=' => {
-                    chars.next();
+            }
+            '<' => {
+                if bump_if(chars, '=') {
                     Op::LowEq
-                }
-                '<' => {
-                    chars.next();
+                } else if bump_if(chars, '<') {
                     Op::Shl
+                } else {
+                    Op::Low
                 }
-                _ => Op::Low,
-            },
-            '=' => match second_char {
-                '=' => {
-                    chars.next();
+            }
+            '=' => {
+                if bump_if(chars, '=') {
                     Op::Eq
+                } else {
+                    return Err(unexpected(c, i));
                 }
-                _ => {
-                    return Err(Error::ParseError(ParseError::UnexpectedChar(
-                        Cow::Owned(second_char),
-                        i,
-                    )));
-                }
-            },
-            '&' => match second_char {
-                '&' => {
-                    chars.next();
+            }
+            '&' => {
+                if bump_if(chars, '&') {
                     Op::And
-                }
-                _ => {
-                    chars.next();
+                } else {
                     Op::BitAnd
                 }
-            },
-            '|' => match second_char {
-                '|' => {
-                    chars.next();
+            }
+            '|' => {
+                if bump_if(chars, '|') {
                     Op::Or
-                }
-                _ => {
-                    chars.next();
+                } else {
                     Op::BitOr
                 }
-            },
-            _ => {
-                return Err(Error::ParseError(ParseError::UnexpectedChar(
-                    Cow::Owned(c),
-                    i,
-                )));
             }
+
+            _ => return Err(unexpected(c, i)),
         };
 
         process_operator(buffers, op);
-
         Ok(State::Default)
     }
 
