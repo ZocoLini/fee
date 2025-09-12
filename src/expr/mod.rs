@@ -18,7 +18,7 @@ pub enum Operand
 {
     F64(f64),
     I64(i64),
-    Bool(bool)
+    Bool(bool),
 }
 
 #[derive(Debug, PartialEq, Eq, Copy, Clone)]
@@ -29,35 +29,53 @@ pub enum Op
     Mul,
     Div,
     Pow,
-    Neg,
     Mod,
+
+    Neg,
+    Not,
+
+    Or,
+    And,
+
+    Low,
+    Great,
+    LowEq,
+    GreatEq,
+    Eq,
+    Diff,
 }
 
 impl Op
 {
+    #[inline]
     fn precedence(&self) -> u8
     {
         match self {
+            Op::Or | Op::And => 0,
+            Op::Low | Op::Great | Op::LowEq | Op::GreatEq | Op::Eq | Op::Diff => 5,
             Op::Add | Op::Sub => 10,
             Op::Mul | Op::Div | Op::Mod => 20,
-            Op::Neg => 30,
+            Op::Neg | Op::Not => 30,
             Op::Pow => 40,
         }
     }
 
+    #[inline]
     fn num_operands(&self) -> usize
     {
         match self {
-            Op::Add | Op::Sub | Op::Mul | Op::Div | Op::Pow | Op::Mod => 2,
-            Op::Neg => 1,
+            Op::Neg | Op::Not => 1,
+            _ => 2,
         }
     }
 
+    #[inline]
     fn is_right_associative(&self) -> bool
     {
-        matches!(self, Op::Pow)
+        *self == Op::Pow
     }
 
+    #[inline]
     fn apply(&self, x: &[f64]) -> f64
     {
         match self {
@@ -74,8 +92,29 @@ impl Op
             }
             Op::Neg => -x[0],
             Op::Mod => x[0] % x[1],
+            Op::Not => bool_to_f64(!f64_to_bool(x[0])),
+            Op::Or => bool_to_f64(f64_to_bool(x[0]) || f64_to_bool(x[1])),
+            Op::And => bool_to_f64(f64_to_bool(x[0]) && f64_to_bool(x[1])),
+            Op::Low => bool_to_f64(x[0] < x[1]),
+            Op::Great => bool_to_f64(x[0] > x[1]),
+            Op::LowEq => bool_to_f64(x[0] <= x[1]),
+            Op::GreatEq => bool_to_f64(x[0] >= x[1]),
+            Op::Eq => bool_to_f64(x[0] == x[1]),
+            Op::Diff => bool_to_f64(x[0] != x[1]),
         }
     }
+}
+
+#[inline]
+fn f64_to_bool(num: f64) -> bool
+{
+    num == 0.0
+}
+
+#[inline]
+fn bool_to_f64(a: bool) -> f64
+{
+    if a { 1.0 } else { 0.0 }
 }
 
 /// Represents the compiled expression.

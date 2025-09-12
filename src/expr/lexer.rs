@@ -272,9 +272,9 @@ impl State
                 let token = match identifier {
                     "true" => T::bool(true),
                     "false" => T::bool(false),
-                    _ => T::var(identifier, ctx)
+                    _ => T::var(identifier, ctx),
                 };
-                
+
                 buffers.output.push(token);
                 buffers.f64_cache.clear();
                 Ok(State::ExpectingOperator)
