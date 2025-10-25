@@ -3,26 +3,21 @@
 [![Crates.io](https://img.shields.io/crates/v/fee.svg)](https://crates.io/crates/fee)
 [![Docs.rs](https://docs.rs/fee/badge.svg)](https://docs.rs/fee)
 
-`fee` is a **fast and flexible** library for evaluating mathematical
-expressions from strings. It focuses on **runtime performance** while
-keeping the parsing layer simple and efficient.
+`fee` is a **fast and flexible** library for evaluating mathematical expressions from strings. It focuses on **runtime performance** while keeping the parsing layer simple and efficient.
 
-This crate was originally designed to power scientific and engineering
-software where expressions cannot be hardcoded:
+This crate was originally designed to power scientific and engineering software where expressions cannot be hardcoded:
 
 - The source code may be unavailable for recompilation.
 - You may want to ship closed/private tools with configurable formulas.
 
-Over time, `fee` has grown into a more general-purpose expression engine.
-It already supports:
+Over time, `fee` has grown into a more general-purpose expression engine and it already supports:
 
 - **`f64` arithmetic**
 - **Boolean logic**
 - **Comparisons**
 - **Bitwise operators**
 
-This makes it suitable not only for numerical/scientific use cases, but also for
-building **DSLs, config evaluators, and high-performance runtimes**.
+This makes it suitable not only for numerical/scientific use cases, but also for building **DSLs, config evaluators, and high-performance runtimes**.
 
 ## Usage
 
@@ -65,9 +60,7 @@ fn abs(x: &[f64]) -> f64 {
 
 ## Resolvers
 
-The resolvers are the objects that give meaning to the variables and
-functions used in an expression. They can be freely combined in a
-`Context` depending on your needs.
+The resolvers are the objects that give meaning to the variables and functions used in an expression. They can be freely combined in a `Context` depending on your needs.
 
 The current available resolvers are:
 
@@ -118,11 +111,7 @@ Example of a valid expression:
 
 ### Smart compilation
 
-One of the goals of this library is provide a simple but powerful API. To archive
-this, the `Expr::compile()` method, depending on the context provided and thanks to
-Rust’s type system, automatically picks the best `Expr<T>` for
-your `Context`. You only need to choose the right resolvers, and `fee` will compile
-to the most efficient form at **compile time**.
+One of the goals of this library is provide a simple but powerful API. To archive this, the `Expr::compile()` method, depending on the context provided and thanks to Rust’s type system, automatically picks the best `Expr<T>` for your `Context`. You only need to choose the right resolvers, and `fee` will compile to the most efficient form at **compile time**.
 
 The different types of `Expr` are:
 
@@ -134,16 +123,9 @@ The different types of `Expr` are:
 
 ## Locking
 
-The context has a method called `lock()` that allows the context to lock
-the resolvers it holds. Locking implies that the resolvers will no
-longer be able to grow in size, avoiding any further reallocations. This enables
-the use of pointers to get and set the resolver's items values. Using a locked
-context, the expression can be compiled to a more optimized form, reducing the
-number of operations required to evaluate the expression in exchange of not being
-able to add new items to the resolvers.
+The context has a method called `lock()` that allows the context to lock the resolvers it holds. Locking implies that the resolvers will no longer be able to grow in size, avoiding any further reallocations. This enables the use of pointers to get and set the resolver's items values. Using a locked context, the expression can be compiled to a more optimized form, reducing the number of operations required to evaluate the expression in exchange of not being able to add new items to the resolvers.
 
-When building this type of expression, the context should be able to resolve
-the expression's variables and functions at compile time instead of eval time.
+When building this type of expression, the context should be able to resolve the expression's variables and functions at compile time instead of eval time.
 
 ```Rust
 let context = Context::new(var_resolver, fn_resolver).lock();
@@ -154,9 +136,7 @@ let expr = Expr::compile("abs(2 / p1) + abs(-2)", &context).unwrap();
 
 ### Benchmarking Recommendations
 
-To get **accurate and reproducible results**, it is recommended to run
-benchmarks on isolated CPU cores with a fixed frequency and Turbo Boost
-disabled.
+To get **accurate and reproducible results**, it is recommended to run benchmarks on isolated CPU cores with a fixed frequency and Turbo Boost disabled.
 
 ### System Configuration Example
 
@@ -177,8 +157,7 @@ CORES=0
 taskset -c $CORES cargo bench internal
 ```
 
-The following script executes the benches related to comparations with
-other similar libraries available in crates.io.
+The following script executes the benches related to comparations with other similar libraries available in crates.io.
 
 ```bash
 CORES=0
