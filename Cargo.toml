@@ -1,6 +1,6 @@
 [package]
 name = "fee"
-version = "0.2.2"
+version = "0.2.3"
 edition = "2024"
 
 authors = ["Borja Castellano <borjacastellano1@gmail.com>"]
