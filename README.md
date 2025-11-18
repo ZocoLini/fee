@@ -162,8 +162,8 @@ To get **accurate and reproducible results**, it is recommended to run benchmark
 | CPU Model           | 12th Gen Intel® Core™ i9-12900HK   |
 | CPU Cores / Threads | 14 / 2 per core                    |
 | Online CPUs         | 0-19                               |
-| Isolated Cores      | 0-3                                |
-| CPU Frequency       | 400–2500 MHz                       |
+| Isolated Cores      | 0-11                               |
+| CPU Frequency       | 2500 MHz                           |
 | Turbo Boost         | Disabled                           |
 
 The following script executes the lib benches.
@@ -181,11 +181,9 @@ taskset -c $CORES cargo bench cmp
 ```
 
 - Simple Expr -> 3 \* 3 - 3 / 3
-- Power Expr -> 2 ^ 3 ^ 4
 - Var Expr -> x0 \* 2
-- Trig Expr -> s0(x0) + c0(x0)
-- Quadratic Expr -> (-x2 + (x2^2 - 4\*x0\*x1)^0.5) / (2\*x0)
-- Large Expr -> ((((87))) - 73) + (97 + (((15 / 55 _ ((31)) + 35))) + (15 - (9)) - (39 / 26) / 20 / 91 + 27 / (33 _ 26 + 28 - (7) / 10 + 66 _ 6) + 60 / 35 - ((29) - (69) / 44 / (92)) / (89) + 2 + 87 / 47 _ ((2)) _ 83 / 98 _ 42 / (((67)) _ ((97))) / (34 / 89 + 77) - 29 + 70 _ (20)) + ((((((92))) + 23 _ (98) / (95) + (((99) _ (41))) + (5 + 41) + 10) - (36) / (6 + 80 \* 52 + (90))))
+- Var and Fn Expr -> s0(x0) + c0(x0)
+- Complex Expr -> (-x2 + s0(x2 ^ 2 - 4 \* x0 \* x1) ^ 0.5) / c0(2 \* x0)
 
 ![Parse comparations benchmarks](plots/cmp_parse_bench.png)
 ![Eval comparations benchmarks](plots/cmp_eval_bench.png)

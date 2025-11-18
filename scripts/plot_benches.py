@@ -19,7 +19,7 @@ class Bench:
 
 ##### MAIN #####
 
-cmp_categories = [ "simple", "power", "var", "trig", "quadratic", "large" ]
+cmp_categories = [ "simple", "var", "var&fn", "complex" ]
 cmp_types = [ "parse", "eval" ]
 cmp_crates = [ "fee", "fasteval", "meval", "evalexpr" ]
 
