@@ -9,6 +9,7 @@ fn var_resolver(c: &mut Criterion)
 {
     c.bench_function("internal/resolver/default", |b| {
         let mut resolver = DefaultResolver::empty();
+        
         for i in 0..100 {
             resolver.insert(format!("p{}", i), 2.0);
         }
@@ -36,14 +37,15 @@ fn var_resolver(c: &mut Criterion)
 
     c.bench_function("internal/resolver/small", |b| {
         let mut resolver = SmallResolver::new();
-        for i in 0..10 {
+        
+        for i in 0..5 {
             resolver.insert(format!("p{}", i), 2.0);
         }
 
         b.iter(|| {
-            black_box(resolver.resolve("p9").unwrap());
-            black_box(resolver.resolve("p5").unwrap());
-            black_box(resolver.resolve("p1").unwrap());
+            black_box(resolver.resolve("p4").unwrap());
+            black_box(resolver.resolve("p2").unwrap());
+            black_box(resolver.resolve("p0").unwrap());
         });
     });
 

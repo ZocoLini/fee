@@ -53,7 +53,7 @@ where
     fn resolve(&self, name: &str) -> Option<&V>
     {
         for (key, value) in &self.cache {
-            if key.as_ref() == name {
+            if key.as_ref().len() == name.len() && key.as_ref() == name {
                 return Some(value);
             }
         }

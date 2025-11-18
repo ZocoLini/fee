@@ -1,4 +1,5 @@
 use std::{borrow::Borrow, collections::HashMap, hash::Hash};
+use ahash::RandomState;
 
 use super::Resolver;
 use crate::{
@@ -36,7 +37,7 @@ where
     S: ResolverState,
     K: Borrow<str> + PartialEq<String> + Eq + Hash,
 {
-    vars: HashMap<K, V>,
+    vars: HashMap<K, V, RandomState>,
     _state: S,
 }
 
@@ -75,7 +76,7 @@ where
     pub fn empty() -> Self
     {
         DefaultResolver {
-            vars: HashMap::new(),
+            vars: HashMap::default(),
             _state: Unlocked,
         }
     }
@@ -90,7 +91,7 @@ impl DefaultResolver<Unlocked, String, f64>
 {
     pub fn new_vars() -> Self
     {
-        let mut hashmap = HashMap::new();
+        let mut hashmap = HashMap::default();
 
         hashmap.insert("pi".to_string(), std::f64::consts::PI);
         hashmap.insert("e".to_string(), std::f64::consts::E);
@@ -108,7 +109,7 @@ impl DefaultResolver<Unlocked, String, ExprFn>
 {
     pub fn new_fns() -> Self
     {
-        let mut hashmap: HashMap<String, ExprFn> = HashMap::new();
+        let mut hashmap: HashMap<String, ExprFn, RandomState> = HashMap::default();
 
         hashmap.insert("abs".to_string(), ExprFn(abs));
         hashmap.insert("sqrt".to_string(), ExprFn(sqrt));

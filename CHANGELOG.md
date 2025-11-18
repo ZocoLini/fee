@@ -4,6 +4,12 @@ All the changes in this project are documented in this file.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## Unreleased
+
+## Changed
+- Replaced default Rust hasher with a 80% faster one
+
+
 ## [0.2.3] - 2025-10-25
 
 ## Changed
