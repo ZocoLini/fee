@@ -19,9 +19,8 @@ const CACHE_SIZE: usize = 10; // 30 is the 'limit'
 /// - Limited cache size. Not recommended more than 10 items.
 ///
 /// # Performance
-/// - **Up to 10 variables:** Maximum performance is achieved thanks to cache locality.
-/// - **10 to 30 variables:** Performance remains good, though cache misses may occur more frequently.
-/// - **More than 30 variables:** Not recommended; beyond this point, the default resolver is typically faster.
+/// - **Up to 5 variables:** Maximum performance is achieved thanks to cache locality.
+/// - **More than 5 variables:** Not recommended; beyond this point, the default resolver is typically faster.
 pub struct SmallResolver<S, K, V>
 where
     S: ResolverState,
